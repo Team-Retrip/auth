@@ -1,0 +1,14 @@
+name: PR to Discord
+
+on:
+  pull_request:
+    branches: [ "develop" ]
+    types: [opened, reopened]
+
+jobs:
+  PR:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Team-Retrip/PR-to-Discord@main
+        with:
+          discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
