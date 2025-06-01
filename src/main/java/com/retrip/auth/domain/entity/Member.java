@@ -5,6 +5,7 @@ import com.retrip.auth.domain.vo.MemberName;
 import com.retrip.auth.domain.vo.MemberPassword;
 import jakarta.persistence.*;
 
+import java.util.List;
 import java.util.UUID;
 
 import lombok.*;
@@ -15,7 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Builder
 @AllArgsConstructor
 @Getter
-public class Member {
+public class Member extends BaseEntity {
     @Id
     @Column(columnDefinition = "varbinary(16)")
     private UUID id;
@@ -32,18 +33,18 @@ public class Member {
     @Embedded
     private MemberPassword password;
 
-
-    public void matchPassword(PasswordEncoder passwordEncoder, String password) {
-        this.password.matches(passwordEncoder, password);
-    }
+    @Embedded
+    private Authorities authorities;
 
 
-    public static Member create(String name, String email, String password) {
-        return Member.builder()
+    public static Member create(String name, String email, String password,  List<String> authorities) {
+        Member member = Member.builder()
                 .id(UUID.randomUUID())
                 .name(new MemberName(name))
                 .email(new MemberEmail(email))
                 .password(new MemberPassword(password))
                 .build();
+        member.authorities = new Authorities(authorities, member);
+        return member;
     }
 }

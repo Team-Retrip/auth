@@ -29,3 +29,12 @@ logging:
         web:
           client:
             RestTemplate: DEBUG
+token:
+  jwt:
+    secret: 123
+    header: Authorization
+    prefix: Bearer
+    access:
+      expire-min: 120
+    refresh:
+      expire-min: 1051200 #2년

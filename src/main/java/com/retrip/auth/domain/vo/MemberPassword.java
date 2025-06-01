@@ -31,10 +31,4 @@ public class MemberPassword {
             throw new InvalidValueException("유저 비밀번호는 " + PASSWORD_LENGTH_LIMIT + "자를 넘을 수 없습니다.");
         }
     }
-
-    public void matches(PasswordEncoder passwordEncoder, String password) {
-        if (!passwordEncoder.matches(password, this.value)){
-            throw new PasswordNotMatchException();
-        }
-    }
 }
