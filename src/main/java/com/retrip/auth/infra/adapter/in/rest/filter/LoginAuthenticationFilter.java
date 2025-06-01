@@ -75,7 +75,14 @@ public class LoginAuthenticationFilter extends OncePerRequestFilter {
 
         String accessToken = Jwts.builder()
                 .subject(authentication.getName())
-                .claims(Map.of("username", authentication.getName(), "authorities", authorities))
+                .claims(
+                        Map.of(
+                                "username",
+                                authentication.getName(),
+                                "authorities",
+                                authorities
+                        )
+                )
                 .expiration(accessTokenExpireDate)
                 .issuedAt(issuedDate)
                 .signWith(key)

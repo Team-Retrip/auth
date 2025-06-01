@@ -30,7 +30,11 @@ public class UsernamePasswordAuthenticationProvider implements AuthenticationPro
             throw new BadCredentialsException("Bad credentials");
         }
 
-        return new UsernamePasswordAuthenticationToken(username, password);
+        return new UsernamePasswordAuthenticationToken(
+                username,
+                password, 
+                user.getAuthorities().stream().toList()
+        );
     }
 
     @Override

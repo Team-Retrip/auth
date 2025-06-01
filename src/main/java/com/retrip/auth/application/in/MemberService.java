@@ -2,6 +2,7 @@ package com.retrip.auth.application.in;
 
 import com.retrip.auth.application.config.CustomUserDetails;
 import com.retrip.auth.application.in.usercase.ManageMemberUseCase;
+import com.retrip.auth.application.out.repository.MemberQueryRepository;
 import com.retrip.auth.application.out.repository.MemberRepository;
 import com.retrip.auth.domain.entity.Member;
 import com.retrip.auth.domain.exception.MemberNotFoundException;
@@ -17,11 +18,11 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class MemberService implements ManageMemberUseCase, UserDetailsService {
 
-    private final MemberRepository memberRepository;
+    private final MemberQueryRepository memberQueryRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Member member = memberRepository.findByEmailValue(username).orElseThrow(MemberNotFoundException::new);
+        Member member = memberQueryRepository.findByEmailWithAuthorities(username).orElseThrow(MemberNotFoundException::new);
         return new CustomUserDetails(member);
     }
 }

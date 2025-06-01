@@ -1,5 +1,6 @@
 package com.retrip.auth.application.config;
 
+import com.retrip.auth.application.in.MemberService;
 import com.retrip.auth.infra.adapter.in.rest.filter.JwtAuthenticationFilter;
 import com.retrip.auth.infra.adapter.in.rest.filter.LoginAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +34,12 @@ public class SecurityConfig {
         return new JwtAuthenticationFilter(jwtConfig);
     }
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http, UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider) throws Exception {
+    public AuthenticationManager authenticationManager(
+            HttpSecurity http,
+            UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider,
+            MemberService memberService) throws Exception {
         return http.authenticationProvider(usernamePasswordAuthenticationProvider)
+                .userDetailsService(memberService)
                 .getSharedObject(AuthenticationManagerBuilder.class)
                 .build();
     }

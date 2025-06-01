@@ -2,8 +2,10 @@ package com.retrip.auth.application.config;
 
 import java.util.Collection;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.stereotype.Component;
 
 public class UsernamePasswordAuthentication extends UsernamePasswordAuthenticationToken {
     //인증 완료

@@ -31,7 +31,7 @@ logging:
             RestTemplate: DEBUG
 token:
   jwt:
-    secret: 123
+    secret: Kf9uX!7zQa2$rB3cP#dLmV8@eYtNwZxGjHsTrC1o
     header: Authorization
     prefix: Bearer
     access:

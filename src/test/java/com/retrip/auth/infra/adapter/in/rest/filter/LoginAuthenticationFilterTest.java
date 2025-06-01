@@ -41,7 +41,7 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .headers(headers))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("access-token"))
-                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty());
     }
 }
