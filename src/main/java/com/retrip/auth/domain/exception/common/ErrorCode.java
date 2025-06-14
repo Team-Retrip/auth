@@ -12,7 +12,10 @@ public enum ErrorCode {
     HANDLE_ACCESS_DENIED(FORBIDDEN, "Common-003", "Access is denied"),
     ENTITY_NOT_FOUND(BAD_REQUEST, "Common-004", "Entity not found"),
     ILLEGAL_STATE(BAD_REQUEST, "Common-005", "Illegal state"),
-    INVALID_ACCESS(FORBIDDEN, "Common-006","접근 권한이 존재하지 않습니다.")
+    INVALID_ACCESS(FORBIDDEN, "Common-006","접근 권한이 존재하지 않습니다."),
+
+    MEMBER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "Member-001", "멤버 엔티티를 찾을 수 없습니다."),
+    PASSWORD_NOT_MATCH(HttpStatus.UNAUTHORIZED, "Member-001", "비밀 번호가 다릅니다."),
     ;
 
     private final HttpStatus status;
