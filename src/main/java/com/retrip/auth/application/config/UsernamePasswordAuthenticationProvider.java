@@ -1,6 +1,6 @@
 package com.retrip.auth.application.config;
 
-import com.retrip.auth.application.in.MemberService;
+import com.retrip.auth.application.in.MemberQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UsernamePasswordAuthenticationProvider implements AuthenticationProvider {
 
-    private final MemberService memberService;
+    private final MemberQueryService memberQueryService;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -24,7 +24,7 @@ public class UsernamePasswordAuthenticationProvider implements AuthenticationPro
         String username = authentication.getName();
         String password = String.valueOf(authentication.getCredentials());
 
-        UserDetails user = memberService.loadUserByUsername(username);
+        UserDetails user = memberQueryService.loadUserByUsername(username);
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("Bad credentials");

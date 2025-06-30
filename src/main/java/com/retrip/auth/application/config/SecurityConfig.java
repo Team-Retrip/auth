@@ -1,6 +1,6 @@
 package com.retrip.auth.application.config;
 
-import com.retrip.auth.application.in.MemberService;
+import com.retrip.auth.application.in.MemberQueryService;
 import com.retrip.auth.infra.adapter.in.rest.filter.JwtAuthenticationFilter;
 import com.retrip.auth.infra.adapter.in.rest.filter.LoginAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -37,9 +37,9 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             HttpSecurity http,
             UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider,
-            MemberService memberService) throws Exception {
+            MemberQueryService memberQueryService) throws Exception {
         return http.authenticationProvider(usernamePasswordAuthenticationProvider)
-                .userDetailsService(memberService)
+                .userDetailsService(memberQueryService)
                 .getSharedObject(AuthenticationManagerBuilder.class)
                 .build();
     }
@@ -50,7 +50,11 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .addFilterAt(loginAuthenticationFilter, BasicAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+        http.authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("users").permitAll();
+                    auth.anyRequest().authenticated();
+                }
+        );
 
         return http.build();
     }
