@@ -6,6 +6,7 @@ import com.retrip.auth.infra.adapter.in.rest.filter.LoginAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,9 +31,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtConfig jwtConfig){
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtConfig jwtConfig) {
         return new JwtAuthenticationFilter(jwtConfig);
     }
+
     @Bean
     public AuthenticationManager authenticationManager(
             HttpSecurity http,
@@ -51,7 +53,7 @@ public class SecurityConfig {
                 .addFilterAt(loginAuthenticationFilter, BasicAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("users").permitAll();
+                    auth.requestMatchers(HttpMethod.POST, "users").permitAll();
                     auth.anyRequest().authenticated();
                 }
         );
