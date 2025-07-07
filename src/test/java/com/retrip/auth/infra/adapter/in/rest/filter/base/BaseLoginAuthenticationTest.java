@@ -1,7 +1,7 @@
 package com.retrip.auth.infra.adapter.in.rest.filter.base;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.retrip.auth.application.in.MemberService;
+import com.retrip.auth.application.in.MemberQueryService;
 import com.retrip.auth.application.out.repository.MemberQueryRepository;
 import com.retrip.auth.application.out.repository.MemberRepository;
 import com.retrip.auth.domain.entity.Member;
@@ -23,14 +23,14 @@ public abstract class BaseLoginAuthenticationTest {
     @Autowired
     protected JPAQueryFactory jpaQueryFactory;
     protected MemberQueryRepository memberQueryRepository;
-    protected MemberService memberService;
+    protected MemberQueryService memberQueryService;
 
     protected Member member;
 
     @BeforeEach
     void setUp() {
         memberQueryRepository = new MemberQuerydslRepository(jpaQueryFactory);
-        memberService = new MemberService(memberQueryRepository);
+        memberQueryService = new MemberQueryService(memberQueryRepository);
         member = Member.create(
                 "테스트",
                 "test@naver.com",

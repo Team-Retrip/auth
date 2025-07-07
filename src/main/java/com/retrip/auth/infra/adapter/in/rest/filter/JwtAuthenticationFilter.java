@@ -27,12 +27,14 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final List<String> URI = List.of("/login", "/users");
     private final JwtConfig jwtConfig;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String token = getToken(request.getHeader("Authorization"));
+        String token = getToken(request.getHeader(AUTHORIZATION_HEADER));
         SecretKey key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes(StandardCharsets.UTF_8));
         if (token == null || !validToken(token, key)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -86,6 +88,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         //로그인 제외 모든 필터 타기
-        return request.getRequestURI().equals("/login");
+        return URI.contains(request.getRequestURI())
+                || request.getRequestURI().startsWith("/swagger-ui")
+                || request.getRequestURI().startsWith("/v3/api-docs")
+                || request.getRequestURI().startsWith("/swagger-resources")
+                || request.getRequestURI().startsWith("/webjars");
     }
 }

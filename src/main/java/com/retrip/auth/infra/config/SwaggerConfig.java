@@ -23,11 +23,4 @@ public class SwaggerConfig {
                                 .version("v0.0.1")
                 );
     }
-    @Bean
-    public GroupedOpenApi authApi(){
-        return GroupedOpenApi.builder()
-                .group("auth")
-                .pathsToMatch("/auth/**")
-                .build();
-    }
 }

@@ -1,11 +1,12 @@
 package com.retrip.auth.application.config;
 
-import com.retrip.auth.application.in.MemberService;
+import com.retrip.auth.application.in.MemberQueryService;
 import com.retrip.auth.infra.adapter.in.rest.filter.JwtAuthenticationFilter;
 import com.retrip.auth.infra.adapter.in.rest.filter.LoginAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,16 +31,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtConfig jwtConfig){
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtConfig jwtConfig) {
         return new JwtAuthenticationFilter(jwtConfig);
     }
+
     @Bean
     public AuthenticationManager authenticationManager(
             HttpSecurity http,
             UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider,
-            MemberService memberService) throws Exception {
+            MemberQueryService memberQueryService) throws Exception {
         return http.authenticationProvider(usernamePasswordAuthenticationProvider)
-                .userDetailsService(memberService)
+                .userDetailsService(memberQueryService)
                 .getSharedObject(AuthenticationManagerBuilder.class)
                 .build();
     }
@@ -50,7 +52,18 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .addFilterAt(loginAuthenticationFilter, BasicAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+        http.authorizeHttpRequests(auth -> {
+                    auth
+                            .requestMatchers(HttpMethod.POST, "users").permitAll()
+                            .requestMatchers(
+                                    "/swagger-ui/**",
+                                    "/v3/api-docs/**",
+                                    "/swagger-resources/**",
+                                    "/webjars/**"
+                            ).permitAll()
+                            .anyRequest().authenticated();
+                }
+        );
 
         return http.build();
     }

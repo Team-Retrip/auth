@@ -1,7 +1,9 @@
 package com.retrip.auth.infra.adapter.in.rest.filter;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.retrip.auth.application.in.request.LoginRequest;
+import com.retrip.auth.application.in.request.MemberCreateRequest;
 import com.retrip.auth.infra.adapter.in.rest.filter.base.BaseLoginAuthenticationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,5 +45,23 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+    }
+
+    @Test
+    void 유저_생성_성공() throws Exception {
+        // given
+        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1234", "test");
+
+        //when
+        String json = new ObjectMapper().writeValueAsString(request);
+
+        // when & then
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.email").isNotEmpty());
     }
 }
