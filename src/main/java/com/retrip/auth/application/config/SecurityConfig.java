@@ -53,8 +53,15 @@ public class SecurityConfig {
                 .addFilterAt(loginAuthenticationFilter, BasicAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.authorizeHttpRequests(auth -> {
-                    auth.requestMatchers(HttpMethod.POST, "users").permitAll();
-                    auth.anyRequest().authenticated();
+                    auth
+                            .requestMatchers(HttpMethod.POST, "users").permitAll()
+                            .requestMatchers(
+                                    "/swagger-ui/**",
+                                    "/v3/api-docs/**",
+                                    "/swagger-resources/**",
+                                    "/webjars/**"
+                            ).permitAll()
+                            .anyRequest().authenticated();
                 }
         );
 

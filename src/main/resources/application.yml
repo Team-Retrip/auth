@@ -38,3 +38,7 @@ token:
       expire-min: 120
     refresh:
       expire-min: 1051200 #2년
+
+springdoc:
+  swagger-ui:
+    use-root-path: true

@@ -88,6 +88,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         //로그인 제외 모든 필터 타기
-        return URI.contains(request.getRequestURI());
+        return URI.contains(request.getRequestURI())
+                || request.getRequestURI().startsWith("/swagger-ui")
+                || request.getRequestURI().startsWith("/v3/api-docs")
+                || request.getRequestURI().startsWith("/swagger-resources")
+                || request.getRequestURI().startsWith("/webjars");
     }
 }

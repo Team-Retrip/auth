@@ -3,6 +3,7 @@ package com.retrip.auth.infra.adapter.in.rest.in;
 import com.retrip.auth.application.in.request.MemberCreateRequest;
 import com.retrip.auth.application.in.response.MemberCreateResponse;
 import com.retrip.auth.application.in.usercase.ManageMemberUseCase;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ public class MemberController {
     private final ManageMemberUseCase manageMemberUseCase;
 
     @PostMapping
+    @Schema(description = "회원 가입")
     public MemberCreateResponse createUser(
         @RequestBody MemberCreateRequest request
     ){
