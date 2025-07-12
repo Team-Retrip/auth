@@ -1,15 +1,14 @@
 package com.retrip.auth.infra.adapter.in.rest.in;
 
 import com.retrip.auth.application.in.request.MemberCreateRequest;
+import com.retrip.auth.application.in.request.MemberUpdateRequest;
 import com.retrip.auth.application.in.response.MemberCreateResponse;
+import com.retrip.auth.application.in.response.MemberUpdateResponse;
 import com.retrip.auth.application.in.usercase.ManageMemberUseCase;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
@@ -25,5 +24,13 @@ public class MemberController {
         @RequestBody MemberCreateRequest request
     ){
         return manageMemberUseCase.createUser(request);
+    }
+
+    @PutMapping
+    @Schema(description = "회원 정보 수정")
+    public MemberUpdateResponse updateUser(
+            @RequestBody MemberUpdateRequest request
+    ){
+        return manageMemberUseCase.updateUser(request);
     }
 }

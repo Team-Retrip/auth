@@ -57,4 +57,9 @@ public class Member extends BaseEntity {
         member.authorities = new Authorities(List.of("user"), member);
         return member;
     }
+
+    public void update(String password, String name) {
+        this.password = new MemberPassword(password);
+        this.name = new MemberName(name);
+    }
 }
