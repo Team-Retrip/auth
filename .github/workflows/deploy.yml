@@ -56,10 +56,10 @@ jobs:
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker stop auth-app || true
-          docker rm auth-app || true
+          docker stop auth-server || true
+          docker rm auth-server || true
           docker pull bjisu/auth-server:latest
-          docker run -d --name auth-app -p 8080:8080 bjisu/auth-server:latest
+          docker run -d --name auth-server -p 8080:8080 bjisu/auth-server:latest
 
     - name: IP 제거 (SSH 포트)
       if: ${{ always() }}
