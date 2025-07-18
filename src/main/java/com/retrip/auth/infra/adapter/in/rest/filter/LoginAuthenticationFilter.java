@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.retrip.auth.application.config.JwtConfig;
 import com.retrip.auth.application.config.UsernamePasswordAuthentication;
 import com.retrip.auth.application.in.response.LoginResponse;
+import com.retrip.auth.infra.adapter.in.rest.common.ApiResponse;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
@@ -13,11 +14,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -47,9 +46,9 @@ public class LoginAuthenticationFilter extends OncePerRequestFilter {
         Authentication authentication = new UsernamePasswordAuthentication(id, password);
         Authentication auth = manager.authenticate(authentication);
         LoginResponse.TokenResponse tokenResponse = generateToken(auth);
-
+        ApiResponse<LoginResponse.TokenResponse> result = ApiResponse.ok(tokenResponse);
         // JSON 직렬화
-        String json = getResponseBody(tokenResponse);
+        String json = getResponseBody(result);
 
         // 응답 Header 설정
         response.setContentType("application/json");
@@ -98,7 +97,7 @@ public class LoginAuthenticationFilter extends OncePerRequestFilter {
         return new LoginResponse.TokenResponse(accessToken, refreshToken);
     }
 
-    private static String getResponseBody(LoginResponse.TokenResponse tokenResponse) throws JsonProcessingException {
+    private static String getResponseBody(ApiResponse<LoginResponse.TokenResponse> tokenResponse) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(tokenResponse);
     }

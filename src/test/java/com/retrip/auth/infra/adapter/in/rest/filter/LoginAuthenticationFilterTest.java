@@ -4,6 +4,8 @@ package com.retrip.auth.infra.adapter.in.rest.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.retrip.auth.application.in.request.LoginRequest;
 import com.retrip.auth.application.in.request.MemberCreateRequest;
+import com.retrip.auth.application.in.request.MemberDeleteRequest;
+import com.retrip.auth.application.in.request.MemberUpdateRequest;
 import com.retrip.auth.infra.adapter.in.rest.filter.base.BaseLoginAuthenticationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,13 +14,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@Transactional
 @AutoConfigureMockMvc(addFilters = true)
 class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
 
@@ -43,8 +46,10 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .headers(headers))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+                .andExpect(jsonPath("$.success").isBoolean())
+                .andExpect(jsonPath("$.status").isNotEmpty())
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
     }
 
     @Test
@@ -61,7 +66,50 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
                         .content(json)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").isNotEmpty())
-                .andExpect(jsonPath("$.email").isNotEmpty());
+                .andExpect(jsonPath("$.success").isBoolean())
+                .andExpect(jsonPath("$.status").isNotEmpty())
+                .andExpect(jsonPath("$.data.id").isNotEmpty())
+                .andExpect(jsonPath("$.data.email").isNotEmpty());
+    }
+    @Test
+    void 유저_수정_성공() throws Exception {
+        memberRepository.save(member);
+
+        // given
+        MemberUpdateRequest request = new MemberUpdateRequest("test@naver.com", "1234", "1111",
+                "수정 테스트");
+        //when
+        String json = new ObjectMapper().writeValueAsString(request);
+
+        // when & then
+        mockMvc.perform(put("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").isBoolean())
+                .andExpect(jsonPath("$.status").isNotEmpty())
+                .andExpect(jsonPath("$.data.id").isNotEmpty())
+                .andExpect(jsonPath("$.data.email").isNotEmpty());
+    }
+
+    @Test
+    void 유저_삭제_성공() throws Exception {
+        memberRepository.save(member);
+
+        // given
+        MemberDeleteRequest request = new MemberDeleteRequest("test@naver.com", "1234");
+        //when
+        String json = new ObjectMapper().writeValueAsString(request);
+
+        // when & then
+        mockMvc.perform(delete("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").isBoolean())
+                .andExpect(jsonPath("$.status").isNotEmpty())
+                .andExpect(jsonPath("$.message").isNotEmpty());
     }
 }

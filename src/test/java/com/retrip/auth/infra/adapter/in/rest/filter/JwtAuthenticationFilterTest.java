@@ -47,8 +47,9 @@ class JwtAuthenticationFilterTest extends BaseLoginAuthenticationTest {
         // JSON 파싱
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(responseBody);
-        String accessToken = jsonNode.get("accessToken").asText();
-        String refreshToken = jsonNode.get("refreshToken").asText();
+        JsonNode data = jsonNode.get("data");
+        String accessToken = data.get("accessToken").asText();
+        String refreshToken = data.get("refreshToken").asText();
 
 
         // when & then

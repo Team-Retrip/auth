@@ -34,6 +34,8 @@ public class Member extends BaseEntity {
     @Embedded
     private Authorities authorities;
 
+    private Boolean isDeleted;
+
 
     public static Member create(String name, String email, String password, List<String> authorities) {
         Member member = Member.builder()
@@ -41,6 +43,7 @@ public class Member extends BaseEntity {
                 .name(new MemberName(name))
                 .email(new MemberEmail(email))
                 .password(new MemberPassword(password))
+                .isDeleted(false)
                 .build();
         member.authorities = new Authorities(authorities, member);
         return member;
@@ -52,6 +55,7 @@ public class Member extends BaseEntity {
                 .id(UUID.randomUUID())
                 .name(new MemberName(name))
                 .email(new MemberEmail(email))
+                .isDeleted(false)
                 .password(new MemberPassword(password))
                 .build();
         member.authorities = new Authorities(List.of("user"), member);
@@ -61,5 +65,9 @@ public class Member extends BaseEntity {
     public void update(String password, String name) {
         this.password = new MemberPassword(password);
         this.name = new MemberName(name);
+    }
+
+    public void delete() {
+        this.isDeleted = true;
     }
 }
