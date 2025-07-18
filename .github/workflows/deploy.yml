@@ -13,7 +13,7 @@ jobs:
     steps:
     - name: Github Actions 호스트 IP 가져오기
       id: ip
-      uses: candidob/get-runner-ip@v1
+      uses: candidob/get-runner-ip@2e5406f1492227920ba96df909e648be5e8b8cb2
 
     - name: IP 허용 (SSH 포트)
       run: |
