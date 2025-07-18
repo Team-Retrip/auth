@@ -11,10 +11,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Github Actions 호스트 IP 가져오기
+      id: ip
+      uses: candidob/get-runner-ip@v1
+
+    - name: IP 허용 (SSH 포트)
+      run: |
+        aws ec2 authorize-security-group-ingress \
+          --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
+          --protocol tcp \
+          --port 22 \
+          --cidr "${{ steps.ip.outputs.ipv4 }}/32"
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
     - name: 코드 체크아웃
       uses: actions/checkout@v4
 
-    - name: JDK 17 설치
+    - name: JDK 21 설치
       uses: actions/setup-java@v3
       with:
         java-version: '21'
@@ -27,12 +43,10 @@ jobs:
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     - name: Docker 이미지 빌드
-      run: |
-        docker build -t bjisu/auth-server:latest .
+      run: docker build -t bjisu/auth-server:latest .
 
     - name: DockerHub에 이미지 푸시
-      run: |
-        docker push bjisu/auth-server:latest
+      run: docker push bjisu/auth-server:latest
 
     - name: EC2에 접속하여 배포
       uses: appleboy/ssh-action@master
@@ -42,7 +56,20 @@ jobs:
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker pull bjisu/auth-server:latest
           docker stop auth-app || true
           docker rm auth-app || true
+          docker pull bjisu/auth-server:latest
           docker run -d --name auth-app -p 8080:8080 bjisu/auth-server:latest
+
+    - name: IP 제거 (SSH 포트)
+      if: ${{ always() }}
+      run: |
+        aws ec2 revoke-security-group-ingress \
+          --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
+          --protocol tcp \
+          --port 22 \
+          --cidr "${{ steps.ip.outputs.ipv4 }}/32"
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
