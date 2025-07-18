@@ -17,7 +17,7 @@ jobs:
     - name: JDK 17 설치
       uses: actions/setup-java@v3
       with:
-        java-version: '17'
+        java-version: '21'
         distribution: 'corretto'
 
     - name: Gradle 빌드 (테스트 생략)
