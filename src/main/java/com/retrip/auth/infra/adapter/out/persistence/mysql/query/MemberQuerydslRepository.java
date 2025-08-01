@@ -24,7 +24,7 @@ public class MemberQuerydslRepository implements MemberQueryRepository {
         return Optional.ofNullable(query.selectFrom(member)
                 .leftJoin(member.authorities.values, authority)
                 .fetchJoin()
-                .where(member.email.value.eq(email))
+                .where(member.email.value.eq(email), member.isDeleted.isFalse())
                 .fetchOne());
     }
 }
