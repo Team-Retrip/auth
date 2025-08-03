@@ -3,11 +3,15 @@ package com.retrip.auth.application.config;
 import com.retrip.auth.application.in.MemberQueryService;
 import com.retrip.auth.infra.adapter.in.rest.filter.JwtAuthenticationFilter;
 import com.retrip.auth.infra.adapter.in.rest.filter.LoginAuthenticationFilter;
+
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -16,6 +20,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @RequiredArgsConstructor
@@ -46,10 +53,25 @@ public class SecurityConfig {
                 .build();
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+
+        config.setAllowedOrigins(List.of("http://3.39.117.218:8080"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, LoginAuthenticationFilter loginAuthenticationFilter, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
                 .addFilterAt(loginAuthenticationFilter, BasicAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.authorizeHttpRequests(auth -> {
