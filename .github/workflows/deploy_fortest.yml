@@ -16,6 +16,9 @@ jobs:
           distribution: corretto
           java-version: '21'
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+      
       - name: Build (skip tests)
         run: ./gradlew clean build -x test
 
