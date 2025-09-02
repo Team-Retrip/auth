@@ -37,10 +37,6 @@ jobs:
     steps:
       - id: ip
         uses: candidob/get-runner-ip@2e5406f1492227920ba96df909e648be5e8b8cb2
-
-      - name: Print runner IP
-        run: echo "Runner IPv4: ${{ steps.ip.outputs.ipv4 }}"
-
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
