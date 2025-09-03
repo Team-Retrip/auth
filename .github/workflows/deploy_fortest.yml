@@ -71,6 +71,21 @@ jobs:
 
       - name: Wait for SG propagation
         run: sleep 8
+        
+      - name: Egress IP and open SG (same job)
+        id: gate
+        shell: bash
+        run: |
+          set -e
+          IP=$(curl -s https://checkip.amazonaws.com | tr -d '\r\n')
+          echo "EGRESS IPv4: $IP"
+          CIDR="$IP/32"
+          echo "cidr=$CIDR" >> "$GITHUB_OUTPUT"
+          aws ec2 authorize-security-group-ingress \
+            --group-id "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
+            --protocol tcp --port 22 --cidr "$CIDR" || true
+          sleep 8
+
 
       - name: Probe 22/tcp
         run: |
