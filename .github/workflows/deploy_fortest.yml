@@ -47,7 +47,7 @@ jobs:
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
           # 임시자격(STS) 사용 시:
           # aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-
+  
       - name: Get egress IPv4 (this job)
         id: egress
         run: |
@@ -55,7 +55,7 @@ jobs:
           if [ -z "$IP" ]; then echo "Failed to get egress IP"; exit 1; fi
           echo "ip=$IP" >> "$GITHUB_OUTPUT"
           echo "EGRESS IPv4: $IP"
-
+  
       - name: Allow SSH and capture rule-id
         id: add
         run: |
@@ -68,54 +68,52 @@ jobs:
           echo "$OUT"
           RID=$(echo "$OUT" | jq -r '.SecurityGroupRules[0].SecurityGroupRuleId // empty')
           echo "rule_id=$RID" >> "$GITHUB_OUTPUT"
-
+  
       - name: Wait for SG propagation
         run: sleep 8
-        
-      - name: Egress IP and open SG (same job)
-        id: gate
-        shell: bash
-        run: |
-          set -e
-          IP=$(curl -s https://checkip.amazonaws.com | tr -d '\r\n')
-          echo "EGRESS IPv4: $IP"
-          CIDR="$IP/32"
-          echo "cidr=$CIDR" >> "$GITHUB_OUTPUT"
-          aws ec2 authorize-security-group-ingress \
-            --group-id "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
-            --protocol tcp --port 22 --cidr "$CIDR" || true
-          sleep 8
-
-
+  
       - name: Probe 22/tcp
         run: |
           timeout 5 bash -c "echo > /dev/tcp/${{ secrets.EC2_HOST }}/22" \
             && echo "22 open" || (echo "22 closed"; exit 1)
-
-      - name: Deploy auth via compose (partial update)
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          timeout: 120s
-          command_timeout: 15m
-          script: |
+  
+      # ▼▼ appleboy 스텝을 아래 두 스텝으로 교체 ▼▼
+      - name: Write SSH key
+        shell: bash
+        run: |
+          umask 077
+          printf "%s" "${{ secrets.EC2_PRIVATE_KEY }}" > key.pem
+  
+      - name: Deploy auth via native ssh (partial update)
+        shell: bash
+        run: |
+          set -euo pipefail
+          SSH_OPTS="-i key.pem -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o ServerAliveInterval=10 -o ServerAliveCountMax=6"
+          HOST="${{ secrets.EC2_HOST }}"
+          USER="${{ secrets.EC2_USER }}"
+          # 접속 확인
+          ssh $SSH_OPTS "$USER@$HOST" 'echo "[OK] SSH connected"; uname -a'
+          # 실제 배포
+          ssh $SSH_OPTS "$USER@$HOST" '
             set -e
             cd ~/all-in-one
             test -f docker-compose.yml || (echo "compose file not found"; ls -la; exit 1)
             docker compose pull auth
             docker compose up -d auth
             docker compose ps
-
+          '
+  
       - name: Revoke SSH (by rule-id or CIDR)
         if: always()
+        shell: bash
         run: |
           RID="${{ steps.add.outputs.rule_id }}"
           CIDR="${{ steps.egress.outputs.ip }}/32"
           if [ -n "$RID" ]; then
+            echo "Revoking by rule-id $RID"
             aws ec2 revoke-security-group-ingress --security-group-rule-ids "$RID" || true
           else
+            echo "Fallback revoke by CIDR $CIDR"
             aws ec2 revoke-security-group-ingress \
               --group-id "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
               --protocol tcp --port 22 --cidr "$CIDR" || true
