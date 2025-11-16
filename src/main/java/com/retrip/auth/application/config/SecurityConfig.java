@@ -29,6 +29,9 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService; // [신규 주입]
 
+    // [4주차 신규 추가] OAuth2 성공 핸들러 주입
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -74,11 +77,13 @@ public class SecurityConfig {
                 .addFilterAt(loginAuthenticationFilter, BasicAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
-                // [신규 추가] OAuth2 로그인 설정
+                // [수정] OAuth2 로그인 설정 (SuccessHandler 추가)
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
+                        // [4주차 신규 추가] 로그인 성공 시 JWT 발급 핸들러 등록
+                        .successHandler(oAuth2LoginSuccessHandler)
                 );
 
         http.authorizeHttpRequests(auth -> {
