@@ -6,6 +6,7 @@ import com.retrip.auth.domain.entity.Member;
 import com.retrip.auth.domain.vo.MemberEmail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate; // ★ import 추가
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -25,15 +26,22 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        // 1. 소셜 서비스에서 사용자 정보 가져오기
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails()
                 .getUserInfoEndpoint().getUserNameAttributeName();
 
+        // 2. 데이터 파싱
         OAuthAttributes attributes = OAuthAttributes.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
 
+        // 3. 회원 저장/업데이트
         Member member = saveOrUpdate(attributes);
+
+        // ★ [핵심 수정] 지연 로딩 문제 해결 ★
+        // 트랜잭션이 끝나기 전에 권한 목록을 미리 읽어서 메모리에 올려둡니다.
+        Hibernate.initialize(member.getAuthorities().getValues());
 
         return new CustomUserDetails(member, oAuth2User.getAttributes());
     }
@@ -47,7 +55,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             member = memberOptional.get();
             if (member.getProvider() == null || member.getProvider().equals("local")) {
                 log.warn("기존 로컬 계정({})으로 소셜 로그인을 시도했습니다.", attributes.getEmail());
-                // TODO: 추후 계정 연동 정책에 따라 로직 수정 필요 (현재는 정보 업데이트만 수행)
             }
             member.updateSocialInfo(attributes.getName());
         } else {

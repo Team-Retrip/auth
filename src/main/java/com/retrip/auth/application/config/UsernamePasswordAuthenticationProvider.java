@@ -30,10 +30,11 @@ public class UsernamePasswordAuthenticationProvider implements AuthenticationPro
             throw new BadCredentialsException("Bad credentials");
         }
 
+        // [🔥핵심 수정] username(String) 대신 user(UserDetails 객체)를 넣어야 함!
         return new UsernamePasswordAuthenticationToken(
-                username,
-                password, 
-                user.getAuthorities().stream().toList()
+                user,      // <-- 여기를 user로 변경
+                password,
+                user.getAuthorities() // stream().toList() 없이 바로 넣어도 됨 (Collection 타입)
         );
     }
 

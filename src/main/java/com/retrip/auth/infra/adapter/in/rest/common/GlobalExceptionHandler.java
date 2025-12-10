@@ -44,6 +44,12 @@ public class GlobalExceptionHandler {
         return handle(ErrorCode.SERVER_ERROR, request);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ApiResponse<ErrorResponse> handleIllegalArgumentException(HttpServletRequest request, IllegalArgumentException e) {
+        log.error("handleIllegalArgumentException: ", e);
+        return handle(ErrorCode.INVALID_INPUT_VALUE, request); // INVALID_INPUT_VALUE는 보통 400으로 매핑됨
+    }
+
     private static ApiResponse<ErrorResponse> handle(ErrorCode errorCode, HttpServletRequest request) {
         return ApiResponse.of(
                 ErrorResponse.of(

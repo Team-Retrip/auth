@@ -1,0 +1,55 @@
+### 1. 로컬 회원가입
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "email": "test-user@naver.com",
+  "password": "1234",
+  "name": "테스트유저"
+}
+
+### 2. 로컬 로그인 (JSON Body)
+POST http://localhost:8080/login
+Content-Type: application/json
+
+{
+  "email": "test-user@naver.com",
+  "password": "1234"
+}
+
+> {%
+    // 1. 응답 구조에 맞게 `token`으로 접근합니다.
+    const body = response.body;
+    client.global.set("accessToken", body.data.accessToken);
+    client.log("Access Token: " + body.data.accessToken);
+
+    // 2. 응답 헤더에서 refreshToken 쿠키 값을 추출하여 변수에 저장합니다.
+    const setCookieHeader = response.headers.valueOf("Set-Cookie");
+    client.log("Set-Cookie Header: " + setCookieHeader);
+    const refreshTokenCookie = setCookieHeader.split(';')[0]; // "refreshToken=value" 부분만 추출
+    client.global.set("refreshTokenCookie", refreshTokenCookie);
+%}
+
+### 3. 인증 테스트
+GET http://localhost:8080/test
+Authorization: Bearer {{accessToken}}
+
+### 4. 토큰 재발급 (Cookie 명시)
+POST http://localhost:8080/auth/reissue
+Cookie: {{refreshTokenCookie}}
+
+> {%
+    const body = response.body;
+    client.global.set("newAccessToken", body.data.accessToken);
+    client.log("New Access Token: " + body.data.accessToken);
+%}
+
+### 5. 로그아웃
+POST http://localhost:8080/auth/logout
+
+
+### 소셜 로그인 사용자 재발급 테스트
+POST http://localhost:8080/auth/reissue
+Content-Type: application/json
+# 쿠키 포맷: 이름=값
+Cookie: refreshToken=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwX2Nhc29AbmF2ZXIuY29tIiwiYXV0aG9yaXRpZXMiOiJ1c2VyIiwidXNlcm5hbWUiOiJwX2Nhc29AbmF2ZXIuY29tIiwiaWF0IjoxNzY1MzMxODM3LCJleHAiOjE4Mjg0MDM4Mzd9.9ELow1FxV0euYkTDn7Tn2KHVTxv26ka5OmW0-FbXDa0

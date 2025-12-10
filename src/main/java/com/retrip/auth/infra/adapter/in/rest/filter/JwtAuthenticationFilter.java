@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -28,7 +27,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
-    private static final List<String> URI = List.of("/login", "/users");
+
+    // [수정] 필터를 거치지 않을 경로에 '/auth/reissue', '/auth/logout' 추가
+    private static final List<String> URI = List.of("/login", "/users", "/auth/reissue", "/auth/logout");
+
     private final JwtConfig jwtConfig;
 
     @Override
@@ -36,21 +38,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String token = getToken(request.getHeader(AUTHORIZATION_HEADER));
         SecretKey key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes(StandardCharsets.UTF_8));
-        if (token == null || !validToken(token, key)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        }
-        Claims payload = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token).getPayload();
-        String username = String.valueOf(payload.get("username"));
-        List<GrantedAuthority> authorities = getAuthorities(String.valueOf(payload.get("authorities")));
 
-        UsernamePasswordAuthentication auth = new UsernamePasswordAuthentication(username, null, authorities);
-        SecurityContextHolder.getContext().setAuthentication(auth);
+        // [수정] 토큰이 없거나 유효하지 않으면, 그냥 다음 필터로 넘깁니다.
+        // (401 에러는 SecurityConfig가 판단하게 맡김)
+        if (token != null && validToken(token, key)) {
+            Claims payload = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token).getPayload();
+            String username = String.valueOf(payload.get("username"));
+            List<GrantedAuthority> authorities = getAuthorities(String.valueOf(payload.get("authorities")));
+
+            UsernamePasswordAuthentication auth = new UsernamePasswordAuthentication(username, null, authorities);
+            SecurityContextHolder.getContext().setAuthentication(auth);
+        }
+
         filterChain.doFilter(request, response);
     }
-
 
     private String getToken(String authorization) {
         if (StringUtils.hasText(authorization) && authorization.startsWith("Bearer ")) {
@@ -65,7 +69,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .verifyWith(key)
                     .build()
                     .parseSignedClaims(token);
-            return true; // 검증 성공
+            return true;
         } catch (SecurityException | MalformedJwtException e) {
             log.info("Invalid JWT Token", e);
         } catch (ExpiredJwtException e) {
@@ -87,11 +91,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        //로그인 제외 모든 필터 타기
-        return URI.contains(request.getRequestURI())
-                || request.getRequestURI().startsWith("/swagger-ui")
-                || request.getRequestURI().startsWith("/v3/api-docs")
-                || request.getRequestURI().startsWith("/swagger-resources")
-                || request.getRequestURI().startsWith("/webjars");
+        // [수정] URI 리스트에 포함된 경로거나, Swagger 관련 경로는 필터 제외
+        String path = request.getRequestURI();
+        return URI.contains(path)
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-resources")
+                || path.startsWith("/webjars");
     }
 }

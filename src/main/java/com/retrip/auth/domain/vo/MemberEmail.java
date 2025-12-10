@@ -15,12 +15,17 @@ import lombok.NoArgsConstructor;
 public class MemberEmail {
     private static final int EMAIL_LENGTH_LIMIT = 50;
 
-    @Column(name = "email", nullable = false, length = EMAIL_LENGTH_LIMIT)
+    @Column(name = "email", nullable = true, length = EMAIL_LENGTH_LIMIT)
     private String value;
 
     public MemberEmail(String value) {
-        validate(value);
-        this.value = value;
+
+        if (value != null) {
+            validate(value);
+            this.value = value;
+        }else {
+            this.value = null;
+        }
     }
 
     private void validate(String value) {
