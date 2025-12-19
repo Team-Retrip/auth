@@ -38,9 +38,8 @@ public class JwtProvider {
         Instant now = Instant.now();
         String authorities = String.join(",", getAuthorities(authentication));
 
-        // [수정] Principal에서 ID(UUID)와 Email 추출 로직 추가
-        String memberId = authentication.getName(); // 기본값
-        String email = authentication.getName();    // 기본값
+        String memberId = authentication.getName();
+        String email = authentication.getName();
 
         Object principal = authentication.getPrincipal();
         if (principal instanceof CustomUserDetails userDetails) {
@@ -67,17 +66,16 @@ public class JwtProvider {
         return new LoginResponse.TokenResponse(accessToken, refreshToken);
     }
 
-    // [수정] 파라미터에 username(email) 추가
     private String createToken(String subject, String username, String authorities, Instant issuedAt, long expirationMinutes) {
         try {
             PrivateKey privateKey = getPrivateKey(jwtConfig.getPrivateKey());
             Instant expiration = issuedAt.plus(expirationMinutes, ChronoUnit.MINUTES);
 
             return Jwts.builder()
-                    .subject(subject) // 여기에는 UUID가 들어감
+                    .subject(subject)
                     .claims(
                             Map.of(
-                                    "username", username, // 여기에는 이메일이 들어감
+                                    "username", username,
                                     "authorities", authorities
                             )
                     )
@@ -135,7 +133,6 @@ public class JwtProvider {
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());
 
-            // UserContext나 CustomUserDetails 대신 표준 토큰 객체 사용
             return new UsernamePasswordAuthenticationToken(username, null, authorities);
 
         } catch (Exception e) {
@@ -143,8 +140,23 @@ public class JwtProvider {
         }
     }
 
-    // --- Key Parsing Helpers ---
+    public Claims parseClaims(String token) {
+        try {
+            PublicKey publicKey = getPublicKey(jwtConfig.getPublicKey());
+            return Jwts.parser()
+                    .verifyWith(publicKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException e) {
+            // 만료된 토큰이어도 정보를 꺼내기 위해 Claims 반환
+            return e.getClaims();
+        } catch (Exception e) {
+            throw new RuntimeException("토큰 파싱 실패", e);
+        }
+    }
 
+//키 파싱 헬퍼
     private PrivateKey getPrivateKey(String key) throws Exception {
         String sanitizedKey = key
                 .replace("-----BEGIN PRIVATE KEY-----", "")

@@ -20,7 +20,6 @@ public class OAuthAttributes {
         if ("kakao".equals(registrationId)) {
             return ofKakao(userNameAttributeName, attributes);
         }
-        // [4주차 신규 추가] 네이버 분기
         if ("naver".equals(registrationId)) {
             return ofNaver(userNameAttributeName, attributes);
         }
@@ -52,18 +51,17 @@ public class OAuthAttributes {
                 .build();
     }
 
-    // [4주차 신규 추가] 네이버 파싱 메서드
     private static OAuthAttributes ofNaver(String userNameAttributeName, Map<String, Object> attributes) {
-        // 네이버 응답은 'response' 키 안에 실제 사용자 정보가 중첩되어 있습니다.
+        // 네이버 응답은 'response' 키 안에 실제 사용자 정보가 중첩되어 있음
         Map<String, Object> response = (Map<String, Object>) attributes.get(userNameAttributeName);
 
         return OAuthAttributes.builder()
                 .name((String) response.get("name")) // 네이버는 'name' 필드를 제공 (WBS 스코프에 nickname이 아닌 name으로 되어있어 name 사용)
                 .email((String) response.get("email"))
                 .provider("naver")
-                .providerId((String) response.get("id")) // 네이버 고유 ID
+                .providerId((String) response.get("id"))
                 .attributes(attributes)
-                .nameAttributeKey(userNameAttributeName) // "response"
+                .nameAttributeKey(userNameAttributeName)
                 .build();
     }
 

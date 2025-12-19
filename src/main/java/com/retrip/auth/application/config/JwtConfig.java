@@ -9,7 +9,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties("token.jwt")
 public class JwtConfig {
 
-    //  기존 secret 삭제 -> RSA 키 쌍으로 변경
     private final String privateKey;
     private final String publicKey;
 
