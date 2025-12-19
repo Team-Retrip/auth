@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.0'
+    id 'org.springframework.boot' version '3.4.1'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -28,6 +28,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // [신규 추가] OAuth2 클라이언트 및 WebClient 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.5"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5"
     compileOnly 'org.projectlombok:lombok'

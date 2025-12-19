@@ -31,8 +31,8 @@ public class UsernamePasswordAuthenticationProvider implements AuthenticationPro
         }
 
         return new UsernamePasswordAuthenticationToken(
-                username,
-                password, 
+                user,
+                password,
                 user.getAuthorities().stream().toList()
         );
     }

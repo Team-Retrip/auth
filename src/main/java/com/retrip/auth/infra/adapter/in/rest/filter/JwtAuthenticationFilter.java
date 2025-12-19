@@ -1,56 +1,52 @@
 package com.retrip.auth.infra.adapter.in.rest.filter;
 
-import com.retrip.auth.application.config.JwtConfig;
-import com.retrip.auth.application.config.UsernamePasswordAuthentication;
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
+import com.retrip.auth.application.config.JwtProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Component; // [필수]
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private static final String AUTHORIZATION_HEADER = "Authorization";
+
+    // [유지] 사용자 정의 제외 URI
     private static final List<String> URI = List.of("/login", "/users");
-    private final JwtConfig jwtConfig;
+
+    //  JwtConfig 대신 JwtProvider를 주입받아 사용 (책임 분리)
+    private final JwtProvider jwtProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String token = getToken(request.getHeader(AUTHORIZATION_HEADER));
-        SecretKey key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes(StandardCharsets.UTF_8));
-        if (token == null || !validToken(token, key)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        }
-        Claims payload = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token).getPayload();
-        String username = String.valueOf(payload.get("username"));
-        List<GrantedAuthority> authorities = getAuthorities(String.valueOf(payload.get("authorities")));
 
-        UsernamePasswordAuthentication auth = new UsernamePasswordAuthentication(username, null, authorities);
-        SecurityContextHolder.getContext().setAuthentication(auth);
+        String token = getToken(request.getHeader(AUTHORIZATION_HEADER));
+
+        // 토큰이 유효한 경우에만 인증 처리
+        if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
+            // 유효하면 인증 객체 생성 후 SecurityContext에 저장
+            Authentication auth = jwtProvider.getAuthentication(token);
+            SecurityContextHolder.getContext().setAuthentication(auth);
+        }
+        // 토큰이 없거나 유효하지 않으면 그냥 통과시킴 (SecurityConfig의 .authenticated()에서 걸러짐)
+        // 만약 여기서 401을 직접 리턴하고 싶다면 else 블록에서 처리하고 return 해야 함.
+        // 현재 로직은 "인증 정보가 있으면 넣고, 없으면 안 넣고 다음 필터로 넘김" 방식입니다.
+
         filterChain.doFilter(request, response);
     }
-
 
     private String getToken(String authorization) {
         if (StringUtils.hasText(authorization) && authorization.startsWith("Bearer ")) {
@@ -59,39 +55,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private boolean validToken(String token, SecretKey key) {
-        try {
-            Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(token);
-            return true; // 검증 성공
-        } catch (SecurityException | MalformedJwtException e) {
-            log.info("Invalid JWT Token", e);
-        } catch (ExpiredJwtException e) {
-            log.info("Expired JWT Token", e);
-        } catch (UnsupportedJwtException e) {
-            log.info("Unsupported JWT Token", e);
-        } catch (IllegalArgumentException e) {
-            log.info("JWT claims string is empty.", e);
-        }
-        return false;
-    }
-
-    private List<GrantedAuthority> getAuthorities(String authorities) {
-        return Arrays.stream(authorities.split(","))
-                .map(String::trim)
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-    }
-
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        //로그인 제외 모든 필터 타기
-        return URI.contains(request.getRequestURI())
-                || request.getRequestURI().startsWith("/swagger-ui")
-                || request.getRequestURI().startsWith("/v3/api-docs")
-                || request.getRequestURI().startsWith("/swagger-resources")
-                || request.getRequestURI().startsWith("/webjars");
+        // [유지] 기존에 작성하신 제외 로직 그대로 사용
+        String path = request.getRequestURI();
+        return URI.contains(path)
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-resources")
+                || path.startsWith("/webjars");
     }
 }

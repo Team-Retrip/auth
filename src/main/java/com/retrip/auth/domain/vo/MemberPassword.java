@@ -1,6 +1,5 @@
 package com.retrip.auth.domain.vo;
 
-import com.retrip.auth.domain.exception.PasswordNotMatchException;
 import com.retrip.auth.domain.exception.common.InvalidValueException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -8,8 +7,6 @@ import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Getter
 @Embeddable
@@ -18,12 +15,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class MemberPassword {
     private static final int PASSWORD_LENGTH_LIMIT = 60;
 
-    @Column(name = "password", nullable = false, length = PASSWORD_LENGTH_LIMIT)
+    // [수정] 소셜 로그인을 위해 nullable = true로 변경
+    @Column(name = "password", nullable = true, length = PASSWORD_LENGTH_LIMIT)
     private String value;
 
     public MemberPassword(String value) {
-        validate(value);
-        this.value = value;
+        // [신규] value가 null이 아닐 때만 유효성 검사 수행
+        if (value != null) {
+            validate(value);
+            this.value = value;
+        } else {
+            this.value = null;
+        }
     }
 
     private void validate(String value) {
