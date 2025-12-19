@@ -1,0 +1,50 @@
+### 전역 변수 설정 (필요시 변경)
+@auth_host = http://localhost:8080
+@trip_host = http://localhost:8081
+@email = test@naver.com
+@password = password1234
+
+### 1. [Auth] 회원가입
+POST {{auth_host}}/users
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "name": "테스터"
+}
+
+### 2. [Auth] 로그인 및 토큰 발급
+# 주의: LoginAuthenticationFilter 구현에 따라 id, password를 헤더로 전송합니다.
+POST {{auth_host}}/login
+Content-Type: application/json
+id: {{email}}
+password: {{password}}
+
+> {%
+    // 응답에서 accessToken을 추출하여 전역 변수 'auth_token'에 저장
+    client.global.set("auth_token", response.body.data.accessToken);
+    client.log("Acquired Token: " + response.body.data.accessToken);
+%}
+
+### 3. [Trip] 여행 생성 (토큰 사용)
+POST {{trip_host}}/trips
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "locationId": "550e8400-e29b-41d4-a716-446655440001",
+  "title": "제주도 우정 여행",
+  "description": "친구들과 함께하는 즐거운 제주도 여행입니다.",
+  "start": "2026-07-01",
+  "end": "2026-07-05",
+  "open": true,
+  "maxParticipants": 4,
+  "category": "DOMESTIC",
+  "hashTags": ["제주도", "우정여행", "맛집탐방"]
+}
+
+### 4. [Trip] 생성된 여행 목록 조회 (검증)
+GET {{trip_host}}/trips
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}

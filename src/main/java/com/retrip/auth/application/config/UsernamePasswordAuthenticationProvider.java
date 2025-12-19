@@ -30,9 +30,10 @@ public class UsernamePasswordAuthenticationProvider implements AuthenticationPro
             throw new BadCredentialsException("Bad credentials");
         }
 
+        //  principal에 username(String) 대신 user(UserDetails) 객체를 넘겨줍니다.
         return new UsernamePasswordAuthenticationToken(
-                username,
-                password, 
+                user, // <--- 수정된 부분 (기존: username)
+                password,
                 user.getAuthorities().stream().toList()
         );
     }

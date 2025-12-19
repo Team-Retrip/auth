@@ -4,12 +4,15 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-
 @Getter
 @RequiredArgsConstructor
 @ConfigurationProperties("token.jwt")
 public class JwtConfig {
-    private final String secret;
+
+    //  기존 secret 삭제 -> RSA 키 쌍으로 변경
+    private final String privateKey;
+    private final String publicKey;
+
     private final String header;
     private final String prefix;
     private final AccessConfig access;

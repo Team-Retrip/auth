@@ -14,10 +14,10 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: update # 스키마 변경을 위해 update로 임시 변경 (운영 환경에서는 validate 또는 none 권장)
+      ddl-auto: update
     open-in-view: false
 
-  # [수정] OAuth2 설정 (네이버 추가)
+  #  OAuth2 설정
   security:
     oauth2:
       client:
@@ -80,7 +80,45 @@ logging:
             RestTemplate: DEBUG
 token:
   jwt:
-    secret: Kf9uX!7zQa2$rB3cP#dLmV8@eYtNwZxGjHsTrC1o
+#    secret: Kf9uX!7zQa2$rB3cP#dLmV8@eYtNwZxGjHsTrC1o
+
+    # [추가] RSA 키 설정
+    private-key: |
+      -----BEGIN PRIVATE KEY-----
+      MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCV878Khf0TOGySkApf0AMfTB8R
+      Bk/isCqm2qrzRbZho4cCde76hTVSs/Rv1xwopLMwJUPB2Zet5xkHR0Us+ehrMwRtU5/oxLCuEZ/G
+      6k9GaYmwhiCZDCjz++eNqr8ZgV+cfILLrIovjUb4ZlWqB4p2Gv7DWNTDgv0WzSXYn8BirBPFk6fP
+      GtTl6s8ZITkN3cDBa39uvG7ADuxF9VLeZtuxjJgTGNSsRuy3xW0Xc+KzflPxh9IMow5SCIOenfQQ
+      B0ZTVSm7n0nf5OgtGsioizNFmqZqytZMvb+KE87vo9JMgwCwkxJyMDCNRcDjtg47LpWTPLyvds9N
+      genkLU0q5xbDAgMBAAECggEAFTRcMg1DfdnPRKR4yxa7skvN4tbtKgW2alTmsrMLeOAqgdcSfbuj
+      kDfhW4VkNn0f17GVVM7Dy7Qvzl8uMY9/ZdVXjWwzYzOZNmxIl1Tf8/mNnnhBGNNm4SWgl2BrWJx6
+      XEMhLdMO0W2deRfjikE5u7zShOZFZAZcasKE1Q62Il2ylaPgY1mLfCSSUXozJULMzEL2SSRhYT2+
+      rLAdhH2+dmX5cvgTHEBX4f+zRoVEtf141YAOY5qv6eu4aDJnjcSz2yD8DAnH52qDx1oGq5mQRScb
+      Y2wvnQOCr+KU47EN/4bVpukOsB/xe5G9ybbJigIaHjererENXD2dbfYyRHXR8QKBgQDK8f/Buf0r
+      cPjyZjzRhcMw71H0Ur8wT8OeLM5Zup3j2e5QjebJpAIUDTRznySa1Vez7JsDNTjNfoVYek3sEeCj
+      0tBS0NGEviHUCfukAyv8OIH/woj+XEcCUn8sqr9VXVpSXRr40hud82Vd18/NGIpLtZwyRVFmzasg
+      teWhfQPJkwKBgQC9JzVtB8oXhGJ73RKZ528Ezd3ATySpcspnGWujq4Tu1UWj2mY1LTdudWcah3I0
+      QwbLQCqeUQZoa+EiYzPZMaXPPih2QyJo59oOU37iougweIbzPgsJpGKxWxG7lBObu2k7YNVFas4T
+      IepngkcKNjkNC0DHV4buZVI67pAl7B78EQKBgQDF2Fnu8HRhL0dieEz+LZr2T7jjqO9+F6SqxR99
+      1jIqeMCdg1jkZqEoDx99QD4dO7K+UwFjhTUVECzK7qCcbWlEDDbPJYe8EudDoV/Sqszsm+IQBgQr
+      hKYtG2OjlenlPJbbCK1MuPf3adr+O2/3j97yo9/cGjubLxGPWAS/A/L3RQKBgQCaxc9gdIQ3M/rF
+      sUH8LrPXsX+mUNwFzsixDcrWtIzkRBxkk1sYXfRCbMw9l+CpxMJ1Yv68Zj4hCUzBL30IVih/aDQB
+      eLNaNYRmPonPdk8ZAjYiKH0tmZWr24GqA+L7haD4liZMU7VlUFYV9jKct3t9Id0Sf5sHzF45nGTU
+      st0zkQKBgQCcPDI4dRJAeFyUiaggdqZLl8rdJWVxUEov8q/UZm4+nyy/uz4SV0owfXCQrncvmsRo
+      OLddwAnDT1aBWo9qxkvNEtLd+jwmI3oZqwM8UtjH2SHok7D5ZQ+PwO+A2jNhOvo3T+OqpQ9v0X9Q
+      +5dLqqZlucrBJ12EccMRWkoZ1DIoig==
+      -----END PRIVATE KEY-----
+
+    public-key: |
+      -----BEGIN PUBLIC KEY-----
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlfO/CoX9EzhskpAKX9ADH0wfEQZP4rAq
+      ptqq80W2YaOHAnXu+oU1UrP0b9ccKKSzMCVDwdmXrecZB0dFLPnoazMEbVOf6MSwrhGfxupPRmmJ
+      sIYgmQwo8/vnjaq/GYFfnHyCy6yKL41G+GZVqgeKdhr+w1jUw4L9Fs0l2J/AYqwTxZOnzxrU5erP
+      GSE5Dd3AwWt/brxuwA7sRfVS3mbbsYyYExjUrEbst8VtF3Pis35T8YfSDKMOUgiDnp30EAdGU1Up
+      u59J3+ToLRrIqIszRZqmasrWTL2/ihPO76PSTIMAsJMScjAwjUXA47YOOy6Vkzy8r3bPTYHp5C1N
+      KucWwwIDAQAB
+      -----END PUBLIC KEY-----
+
     header: Authorization
     prefix: Bearer
     access:
@@ -91,3 +129,4 @@ token:
 springdoc:
   swagger-ui:
     use-root-path: true
+
