@@ -14,6 +14,9 @@ Content-Type: application/json
   "name": "테스터"
 }
 
+### 2. DB에 저장된 토큰 조회 (디버깅)
+GET http://localhost:8080/debug/tokens
+
 ### 2. [Auth] 로그인 및 토큰 발급
 # 주의: LoginAuthenticationFilter 구현에 따라 id, password를 헤더로 전송합니다.
 POST {{auth_host}}/login
@@ -24,6 +27,7 @@ password: {{password}}
 > {%
     // 응답에서 accessToken을 추출하여 전역 변수 'auth_token'에 저장
     client.global.set("auth_token", response.body.data.accessToken);
+    client.global.set("refresh_token", response.body.data.refreshToken);
     client.log("Acquired Token: " + response.body.data.accessToken);
 %}
 
@@ -48,3 +52,14 @@ Authorization: Bearer {{auth_token}}
 GET {{trip_host}}/trips
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
+
+### 5. [Auth] 토큰 재발급 (Reissue)
+POST {{auth_host}}/auth/reissue
+Content-Type: application/json
+Cookie: refreshToken={{refresh_token}}
+
+> {%
+    client.global.set("auth_token", response.body.data.accessToken);
+    client.global.set("refresh_token", response.body.data.refreshToken);
+    client.log("Reissued Token: " + response.body.data.accessToken);
+%}
