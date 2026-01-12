@@ -86,17 +86,15 @@ jobs:
               docker rm $CONTAINER
             fi
 
-            docker run -d \
-              --name auth \
+            docker run -d --name auth \
               -p 8081:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
-              -e DB_URL=jdbc:mysql://172.31.46.83:3306/auth_db?useSSL=false&serverTimezone=Asia/Seoul \
+              -e DB_URL="jdbc:mysql://172.31.46.83:3306/auth_db?useSSL=false&serverTimezone=Asia/Seoul" \
               -e DB_USERNAME=retrip \
               -e DB_PASSWORD=retrippw \
               -e SERVER_PORT=8080 \
               --restart always \
               $IMAGE
-
 
             docker ps
 
@@ -108,5 +106,3 @@ jobs:
           aws ec2 revoke-security-group-ingress \
             --group-id "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
             --protocol tcp --port 22 --cidr "$CIDR" || true
-
-          fi
