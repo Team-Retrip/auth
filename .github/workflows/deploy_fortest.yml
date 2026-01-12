@@ -52,16 +52,15 @@ jobs:
           IP=$(curl -s https://checkip.amazonaws.com | tr -d '\r\n')
           echo "ip=$IP" >> "$GITHUB_OUTPUT"
 
-      - name: Allow SSH and capture rule-id
+      - name: Allow SSH
         id: add
         run: |
           CIDR="${{ steps.egress.outputs.ip }}/32"
-          OUT=$(aws ec2 authorize-security-group-ingress \
+          echo "Authorizing SSH from $CIDR"
+          aws ec2 authorize-security-group-ingress \
             --group-id "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
-            --protocol tcp --port 22 --cidr "$CIDR" \
-            --output json 2>&1) || true
-          RID=$(echo "$OUT" | jq -r '.SecurityGroupRules[0].SecurityGroupRuleId // empty')
-          echo "rule_id=$RID" >> "$GITHUB_OUTPUT"
+            --protocol tcp --port 22 --cidr "$CIDR" || true
+
 
       - name: Wait for SG propagation
         run: sleep 8
@@ -104,12 +103,10 @@ jobs:
       - name: Revoke SSH
         if: always()
         run: |
-          RID="${{ steps.add.outputs.rule_id }}"
           CIDR="${{ steps.egress.outputs.ip }}/32"
-          if [ -n "$RID" ]; then
-            aws ec2 revoke-security-group-ingress --security-group-rule-ids "$RID" || true
-          else
-            aws ec2 revoke-security-group-ingress \
-              --group-id "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
-              --protocol tcp --port 22 --cidr "$CIDR" || true
+          echo "Revoking SSH from $CIDR"
+          aws ec2 revoke-security-group-ingress \
+            --group-id "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
+            --protocol tcp --port 22 --cidr "$CIDR" || true
+
           fi
