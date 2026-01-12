@@ -1,11 +1,9 @@
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21
 
 WORKDIR /app
 
 COPY build/libs/*.jar app.jar
 
-ENV SPRING_PROFILES_ACTIVE=prod
-
-EXPOSE 8080
+EXPOSE 8081
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
