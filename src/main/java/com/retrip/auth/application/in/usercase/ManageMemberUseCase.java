@@ -1,16 +1,19 @@
 package com.retrip.auth.application.in.usercase;
 
+import com.retrip.auth.application.in.request.*;
+import com.retrip.auth.application.in.response.*;
 
-import com.retrip.auth.application.in.request.MemberCreateRequest;
-import com.retrip.auth.application.in.request.MemberDeleteRequest;
-import com.retrip.auth.application.in.request.MemberUpdateRequest;
-import com.retrip.auth.application.in.response.MemberCreateResponse;
-import com.retrip.auth.application.in.response.MemberUpdateResponse;
+import java.util.UUID;
 
 public interface ManageMemberUseCase {
     MemberCreateResponse createUser(MemberCreateRequest request);
 
-    MemberUpdateResponse updateUser(MemberUpdateRequest request);
+    MemberUpdateResponse updateUser(UUID memberId, MemberUpdateRequest request);
+    void deleteUser(UUID memberId, MemberDeleteRequest request);
+    ChangePasswordResponse changePassword(UUID memberId, ChangePasswordRequest request);
 
-    void deleteUser(MemberDeleteRequest request);
+    MemberInfoResponse getMyInfo(UUID memberId);
+    VerifyPasswordResponse verifyPassword(UUID memberId, VerifyPasswordRequest request);
+
+    UUID findIdByEmail(String email);
 }

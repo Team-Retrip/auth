@@ -36,55 +36,60 @@ public class Member extends BaseEntity {
 
     private Boolean isDeleted;
 
-    // [신규 추가] 소셜 로그인 정보 및 본인인증 정보 필드
     @Column(length = 20)
-    private String provider; // e.g., "local", "kakao", "google"
+    private String provider;
 
     @Column(unique = true)
-    private String providerId; // 소셜 플랫폼의 고유 사용자 ID
+    private String providerId;
 
     @Column(length = 88, unique = true)
-    private String ci; // 본인인증 연계정보 (CI)
+    private String ci;
 
     @Column(nullable = false)
-    private boolean isVerified = false; // 본인인증 여부
+    @Builder.Default
+    private boolean isVerified = false;
 
-    public static Member create(String name, String email, String password, List<String> authorities) {
+    @Column(name = "gender")
+    private String gender;
+
+    @Column(name = "age")
+    private Integer age;
+
+    public String getPasswordValue() {
+        return this.password != null ? this.password.getValue() : null;
+    }
+
+    public String getEmailValue() {
+        return this.email != null ? this.email.getValue() : null;
+    }
+
+    public String getNameValue() {
+        return this.name != null ? this.name.getValue() : null;
+    }
+
+    public static Member create(String name, String email, String password, List<String> authorities, String gender, Integer age) {
         Member member = Member.builder()
                 .id(UUID.randomUUID())
                 .name(new MemberName(name))
                 .email(new MemberEmail(email))
                 .password(new MemberPassword(password))
                 .isDeleted(false)
-                .provider("local") // [신규] 기본값 설정
-                .isVerified(false) // [신규] 기본값 설정
+                .provider("local")
+                .isVerified(false)
+                .gender(gender)
+                .age(age)
                 .build();
         member.authorities = new Authorities(authorities, member);
         return member;
     }
 
-    public static Member create(String name, String email, String password) {
-        Member member = Member.builder()
-                .id(UUID.randomUUID())
-                .name(new MemberName(name))
-                .email(new MemberEmail(email))
-                .isDeleted(false)
-                .password(new MemberPassword(password))
-                .provider("local") // [신규] 기본값 설정
-                .isVerified(false) // [신규] 기본값 설정
-                .build();
-        member.authorities = new Authorities(List.of("user"), member);
-        return member;
-    }
-
-    // [신규 추가] 소셜 로그인 회원 생성 메서드
     public static Member createSocialMember(String name, String email, String provider, String providerId) {
         Member member = Member.builder()
                 .id(UUID.randomUUID())
                 .name(new MemberName(name))
                 .email(new MemberEmail(email))
                 .isDeleted(false)
-                .password(new MemberPassword(null)) // 비밀번호 없음
+                .password(new MemberPassword(null))
                 .provider(provider)
                 .providerId(providerId)
                 .isVerified(false)
@@ -93,14 +98,19 @@ public class Member extends BaseEntity {
         return member;
     }
 
-    public void update(String password, String name) {
-        this.password = new MemberPassword(password);
+    public void update(String name, String password, String gender, Integer age) {
+        if (name != null) this.name = new MemberName(name);
+        if (password != null) this.password = new MemberPassword(password);
+        if (gender != null) this.gender = gender;
+        if (age != null) this.age = age;
+    }
+
+    public void updateSocialInfo(String name) {
         this.name = new MemberName(name);
     }
 
-    // [신규 추가] 소셜 회원 정보 업데이트 메서드
-    public void updateSocialInfo(String name) {
-        this.name = new MemberName(name);
+    public void updatePassword(String encodedPassword) {
+        this.password = new MemberPassword(encodedPassword);
     }
 
     public void delete() {

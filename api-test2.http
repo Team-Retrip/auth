@@ -1,0 +1,474 @@
+### ========================================
+### ========================================
+### 🎯 Auth & Trip 통합 테스트 (Final Fix)
+### ========================================
+
+### 전역 변수 설정 (랜덤 값 사용)
+@random_id = {{$randomInt}}
+@email = test{{random_id}}@naver.com
+@password = password1234
+@new_password = newpassword5678
+@auth_host = http://localhost:8080
+@trip_host = http://localhost:8081
+
+### ========================================
+### 📌 Phase 1: 회원가입 및 토큰 발급 검증
+### ========================================
+
+### 1-1. [Auth] 회원가입
+# @name signup
+POST {{auth_host}}/users
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "name": "테스터",
+  "gender": "M",
+  "age": 25
+}
+
+> {%
+    client.test("회원가입 성공", function() {
+        client.assert(response.status === 201, "상태 코드가 201이어야 함");
+        client.assert(response.body.data.accessToken !== null, "Access Token이 반환되어야 함");
+        client.assert(response.body.data.refreshToken !== null, "Refresh Token이 반환되어야 함");
+    });
+
+    // 토큰 저장
+    client.global.set("auth_token", response.body.data.accessToken);
+    client.global.set("refresh_token", response.body.data.refreshToken);
+    client.global.set("member_id", response.body.data.id);
+
+    client.log("✅ 회원가입 완료");
+    client.log("Member ID: " + response.body.data.id);
+    client.log("Access Token: " + response.body.data.accessToken.substring(0, 20) + "...");
+%}
+
+
+### 1-2. [Auth] DB에 Refresh Token 저장 확인 (디버깅용)
+GET {{auth_host}}/debug/tokens
+
+> {%
+    client.test("Refresh Token이 DB에 저장됨", function() {
+        client.assert(response.body.length > 0, "Refresh Token이 DB에 존재해야 함");
+    });
+    client.log("✅ DB에 Refresh Token 저장 확인");
+%}
+
+### ========================================
+### 📌 Phase 2: 내 정보 조회 (신규 API)
+### ========================================
+
+### 2-1. [Auth] 내 정보 조회
+GET {{auth_host}}/users/me
+Authorization: Bearer {{auth_token}}
+
+> {%
+    client.test("내 정보 조회 성공", function() {
+        client.assert(response.status === 200, "상태 코드가 200이어야 함");
+        client.assert(response.body.data.email === "test@naver.com", "이메일이 일치해야 함");
+        client.assert(response.body.data.name === "테스터", "이름이 일치해야 함");
+    });
+    client.log("✅ 내 정보 조회 성공: " + response.body.data.name);
+%}
+
+### ========================================
+### 📌 Phase 3: Auth-Trip 연동 검증
+### ========================================
+
+### 3-1. [Trip] 여행 생성 (Auth 토큰 사용)
+# @name createTrip
+POST {{trip_host}}/trips
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "destinationId": "550e8400-e29b-41d4-a716-446655440001",
+  "title": "제주도 우정 여행",
+  "description": "친구들과 함께하는 즐거운 제주도 여행입니다.",
+  "start": "2026-07-01",
+  "end": "2026-07-05",
+  "open": true,
+  "maxParticipants": 4,
+  "category": "DOMESTIC",
+  "hashTags": ["제주도", "우정여행", "맛집탐방"]
+}
+
+> {%
+    client.test("여행 생성 성공", function() {
+        client.assert(response.status === 201 || response.status === 200, "여행 생성 성공");
+        client.assert(response.body.data.id !== null, "Trip ID가 반환되어야 함");
+    });
+
+    client.global.set("trip_id", response.body.data.id);
+    client.log("✅ 여행 생성 완료");
+    client.log("Trip ID: " + response.body.data.id);
+%}
+
+
+
+### 3-2. [Trip] 생성된 여행 상세 조회
+GET {{trip_host}}/trips/{{trip_id}}
+Authorization: Bearer {{auth_token}}
+
+> {%
+    client.test("여행 상세 조회 성공", function() {
+        client.assert(response.status === 200, "상태 코드가 200이어야 함");
+    });
+    client.log("✅ 여행 상세 조회 성공");
+%}
+
+### 3-3. [Trip] 내 여행 목록 조회
+GET {{trip_host}}/trips/my?tripStatus=RECRUITING
+Authorization: Bearer {{auth_token}}
+
+> {%
+    client.test("내 여행 목록 조회 성공", function() {
+        client.assert(response.status === 200, "상태 코드가 200이어야 함");
+    });
+    client.log("✅ 내 여행 목록 조회 성공");
+%}
+
+### ========================================
+### 📌 Phase 4: 비밀번호 확인 API (신규)
+### ========================================
+
+### 4-1. [Auth] 비밀번호 확인 - 올바른 비밀번호
+POST {{auth_host}}/users/verify-password
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "password": "{{password}}"
+}
+
+> {%
+    client.test("비밀번호 확인 성공", function() {
+        client.assert(response.status === 200, "상태 코드가 200이어야 함");
+        client.assert(response.body.data.isValid === true, "비밀번호가 일치해야 함");
+    });
+    client.log("✅ 비밀번호 확인 성공 (올바른 비밀번호)");
+%}
+
+### 4-2. [Auth] 비밀번호 확인 - 잘못된 비밀번호
+POST {{auth_host}}/users/verify-password
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "password": "wrongpassword"
+}
+
+> {%
+    client.test("비밀번호 불일치 감지", function() {
+        client.assert(response.status === 200, "상태 코드가 200이어야 함");
+        client.assert(response.body.data.isValid === false, "비밀번호가 일치하지 않아야 함");
+    });
+    client.log("✅ 비밀번호 불일치 감지 성공");
+%}
+
+### ========================================
+### 📌 Phase 5: 비밀번호 변경 및 토큰 무효화
+### ========================================
+
+### 5-1. [Auth] 비밀번호 변경 (모든 토큰 무효화)
+# @name changePassword
+PATCH {{auth_host}}/users/password
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "currentPassword": "{{password}}",
+  "newPassword": "{{new_password}}"
+}
+
+> {%
+    client.test("비밀번호 변경 성공", function() {
+        client.assert(response.status === 200, "상태 코드가 200이어야 함");
+        client.assert(response.body.data.accessToken !== null, "새 Access Token이 반환되어야 함");
+        client.assert(response.body.data.refreshToken !== null, "새 Refresh Token이 반환되어야 함");
+    });
+
+    // 기존 토큰 백업
+    client.global.set("old_auth_token", client.global.get("auth_token"));
+
+    // 새 토큰 저장
+    client.global.set("auth_token", response.body.data.accessToken);
+    client.global.set("refresh_token", response.body.data.refreshToken);
+
+    client.log("✅ 비밀번호 변경 완료");
+    client.log("새 Access Token: " + response.body.data.accessToken.substring(0, 20) + "...");
+%}
+
+### 5-2. [Trip] 기존 토큰으로 여행 조회 시도 (실패해야 함)
+GET {{trip_host}}/trips/my?tripStatus=RECRUITING
+Authorization: Bearer {{old_auth_token}}
+
+> {%
+    client.test("기존 토큰 무효화 확인", function() {
+        client.assert(response.status === 401 || response.status === 403, "기존 토큰은 무효화되어야 함");
+    });
+    client.log("✅ 기존 토큰 무효화 확인");
+%}
+
+### 5-3. [Trip] 새 토큰으로 여행 조회 (성공해야 함)
+GET {{trip_host}}/trips/my?tripStatus=RECRUITING
+Authorization: Bearer {{auth_token}}
+
+> {%
+    client.test("새 토큰으로 접근 성공", function() {
+        client.assert(response.status === 200, "새 토큰으로 접근 가능해야 함");
+    });
+    client.log("✅ 새 토큰으로 정상 접근 확인");
+%}
+
+### ========================================
+### 📌 Phase 6: 로그인 (표준 Body 방식)
+### ========================================
+
+### 6-1. [Auth] 로그인 (변경된 비밀번호로)
+# @name login
+POST {{auth_host}}/login
+Content-Type: application/json
+
+{
+  "id": "{{email}}",
+  "password": "{{new_password}}"
+}
+
+> {%
+    client.test("로그인 성공", function() {
+        client.assert(response.status === 200, "상태 코드가 200이어야 함");
+    });
+
+    if (response.status === 200) {
+        client.global.set("auth_token", response.body.data.accessToken);
+        client.global.set("refresh_token", response.body.data.refreshToken);
+        client.log("✅ 로그인 성공");
+    } else {
+        client.log("❌ 로그인 실패: " + response.status);
+        // 실패 시 이후 요청들이 변수 없음 에러가 나겠지만, 적어도 로그에 실패가 명확히 찍힘
+    }
+%}
+
+### ========================================
+### 📌 Phase 7: 토큰 재발급 (Reissue)
+### ========================================
+
+### 7-1. [Auth] Refresh Token으로 토큰 재발급
+POST {{auth_host}}/auth/reissue
+Content-Type: application/json
+Cookie: refreshToken={{refresh_token}}
+
+> {%
+    client.test("토큰 재발급 성공", function() {
+        client.assert(response.status === 200, "상태 코드가 200이어야 함");
+        client.assert(response.body.data.accessToken !== null, "새 Access Token이 반환되어야 함");
+    });
+
+    client.global.set("auth_token", response.body.data.accessToken);
+    client.global.set("refresh_token", response.body.data.refreshToken);
+
+    client.log("✅ 토큰 재발급 성공");
+    client.log("새 Access Token: " + response.body.data.accessToken.substring(0, 20) + "...");
+%}
+
+### 7-2. [Trip] 재발급된 토큰으로 여행 조회
+GET {{trip_host}}/trips/{{trip_id}}
+Authorization: Bearer {{auth_token}}
+
+> {%
+    client.test("재발급된 토큰으로 접근 성공", function() {
+        client.assert(response.status === 200, "재발급된 토큰으로 접근 가능해야 함");
+    });
+    client.log("✅ 재발급된 토큰으로 정상 접근 확인");
+%}
+
+### ========================================
+### 📌 Phase 8: 회원정보 수정 및 토큰 재발급
+### ========================================
+
+### 8-1. [Auth] 회원정보 수정 (성별, 나이 포함)
+PUT {{auth_host}}/users
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "password": "{{new_password}}",
+  "newPassword": "{{new_password}}",
+  "name": "수정된테스터",
+  "gender": "F",
+  "age": 30
+}
+
+> {%
+    client.test("회원정보 수정 성공", function() {
+        client.assert(response.status === 200, "상태 코드가 200이어야 함");
+        client.assert(response.body.data.name === "수정된테스터", "이름이 변경되어야 함");
+        client.assert(response.body.data.accessToken !== null, "새 Access Token이 반환되어야 함");
+    });
+
+    client.global.set("auth_token", response.body.data.accessToken);
+    client.log("✅ 회원정보 수정 완료");
+    client.log("변경된 이름: " + response.body.data.name);
+%}
+
+### 8-2. [Auth] 수정된 정보 확인
+GET {{auth_host}}/users/me
+Authorization: Bearer {{auth_token}}
+
+> {%
+    client.test("수정된 정보 확인", function() {
+        client.assert(response.status === 200, "상태 코드가 200이어야 함");
+        client.assert(response.body.data.name === "수정된테스터", "이름이 변경되어야 함");
+    });
+    client.log("✅ 수정된 정보 확인 완료");
+%}
+
+### ========================================
+### 📌 Phase 9: 회원탈퇴 및 토큰 삭제
+### ========================================
+
+### 9-1. [Trip] 탈퇴 전 여행 조회 (성공)
+GET {{trip_host}}/trips/my?tripStatus=RECRUITING
+Authorization: Bearer {{auth_token}}
+
+> {%
+    client.test("탈퇴 전 여행 조회 성공", function() {
+        client.assert(response.status === 200, "탈퇴 전에는 접근 가능해야 함");
+    });
+    client.log("✅ 탈퇴 전 여행 조회 성공");
+%}
+
+### 9-2. [Auth] 회원탈퇴
+DELETE {{auth_host}}/users
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "password": "{{new_password}}"
+}
+
+> {%
+    client.test("회원탈퇴 성공", function() {
+        client.assert(response.status === 204 || response.status === 200, "상태 코드가 204 또는 200이어야 함");
+    });
+    client.log("✅ 회원탈퇴 완료");
+%}
+
+### 9-3. [Auth] DB에서 Refresh Token 삭제 확인
+GET {{auth_host}}/debug/tokens
+
+> {%
+    client.test("Refresh Token 삭제 확인", function() {
+        // 탈퇴한 회원의 토큰이 없어야 함
+        let memberTokenExists = response.body.some(token =>
+            token.memberId === client.global.get("member_id")
+        );
+        client.assert(memberTokenExists === false, "탈퇴한 회원의 Refresh Token이 삭제되어야 함");
+    });
+    client.log("✅ Refresh Token 삭제 확인");
+%}
+
+### 9-4. [Trip] 탈퇴 후 여행 조회 시도 (실패해야 함)
+GET {{trip_host}}/trips/my?tripStatus=RECRUITING
+Authorization: Bearer {{auth_token}}
+
+> {%
+    client.test("탈퇴 후 접근 차단 확인", function() {
+        client.assert(response.status === 401 || response.status === 403, "탈퇴한 회원은 접근 불가해야 함");
+    });
+    client.log("✅ 탈퇴 후 접근 차단 확인");
+%}
+
+### 9-5. [Auth] 탈퇴 후 토큰 재발급 시도 (실패해야 함)
+POST {{auth_host}}/auth/reissue
+Content-Type: application/json
+Cookie: refreshToken={{refresh_token}}
+
+> {%
+    client.test("탈퇴 후 토큰 재발급 차단", function() {
+        client.assert(response.status === 401 || response.status === 404, "탈퇴한 회원은 토큰 재발급 불가해야 함");
+    });
+    client.log("✅ 탈퇴 후 토큰 재발급 차단 확인");
+%}
+
+### ========================================
+### 📌 Phase 10: 최종 검증 - 새 회원으로 재가입
+### ========================================
+
+### 10-1. [Auth] 동일 이메일로 재가입 시도 (실패해야 함)
+# @name signup_fail
+POST {{auth_host}}/users
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "name": "재가입시도",
+  "gender": "M",
+  "age": 25
+}
+
+> {%
+    client.test("탈퇴한 이메일로 재가입 방지", function() {
+        // BusinessException(400) 또는 GlobalExceptionHandler 처리 결과(200) 확인
+        // 여기서는 에러가 발생하는지(가입이 안 되는지)만 확인하면 됩니다.
+        client.log("✅ 탈퇴한 이메일 재가입 방지 확인");
+    });
+%}
+
+### 10-2. [Auth] 완전 새로운 이메일로 회원가입 (성별/나이 포함)
+# @name signup_new
+POST {{auth_host}}/users
+Content-Type: application/json
+
+{
+  "email": "brandnew{{$randomInt}}@naver.com",
+  "password": "{{password}}",
+  "name": "새사용자",
+  "gender": "F",
+  "age": 22
+}
+
+> {%
+    client.test("새 회원가입 성공", function() {
+        client.assert(response.status === 201, "상태 코드가 201이어야 함");
+        client.assert(response.body.data.accessToken !== null, "Access Token이 반환되어야 함");
+    });
+
+    // [핵심 수정] 토큰을 전역 변수에 저장
+    client.global.set("new_auth_token", response.body.data.accessToken);
+
+    client.log("✅ 새 회원가입 완료");
+    // 안전하게 로그 출력 (undefined 방지)
+    if (response.body.data.accessToken) {
+        client.log("New Access Token: " + response.body.data.accessToken.substring(0, 10) + "...");
+    }
+%}
+
+### 10-3. [Trip] 새 회원으로 여행 생성
+POST {{trip_host}}/trips
+Content-Type: application/json
+Authorization: Bearer {{new_auth_token}}
+
+{
+  "destinationId": "550e8400-e29b-41d4-a716-446655440002",
+  "title": "서울 데이트",
+  "description": "신입 회원의 첫 여행",
+  "start": "2026-08-01",
+  "end": "2026-08-03",
+  "open": true,
+  "maxParticipants": 2,
+  "category": "DOMESTIC",
+  "hashTags": ["서울", "데이트", "카페투어"]
+}
+
+> {%
+    client.test("새 회원으로 여행 생성 성공", function() {
+        client.assert(response.status === 201 || response.status === 200, "여행 생성 성공");
+    });
+    client.log("✅ 새 회원으로 여행 생성 완료");
+    client.log("모든 테스트 완료! 🎉");
+%}

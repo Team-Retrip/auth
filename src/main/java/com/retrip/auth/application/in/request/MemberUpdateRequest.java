@@ -1,17 +1,18 @@
 package com.retrip.auth.application.in.request;
 
-import com.retrip.auth.domain.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "Member 회원가입 Request")
+@Schema(description = "Member 정보 수정 Request")
 public record MemberUpdateRequest(
-        @Schema(description = "이메일")
-        String email,
         @Schema(description = "기존 비밀번호")
         String password,
         @Schema(description = "새로운 비밀번호")
         String newPassword,
         @Schema(description = "사용자 이름")
-        String name
+        String name,
+        @Schema(description = "성별 (M/F)")
+        String gender,
+        @Schema(description = "나이")
+        Integer age
 ) {
 }

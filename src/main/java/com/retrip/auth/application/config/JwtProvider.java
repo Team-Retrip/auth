@@ -1,6 +1,9 @@
 package com.retrip.auth.application.config;
 
 import com.retrip.auth.application.in.response.LoginResponse;
+import com.retrip.auth.domain.entity.Member;
+import com.retrip.auth.domain.vo.MemberEmail;
+import com.retrip.auth.domain.vo.MemberName;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,11 +22,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import com.retrip.auth.application.config.CustomUserDetails;
 
-/**
- * JWT 토큰의 생성(Sign) 및 검증(Verify)을 담당하는 클래스 (RSA 방식)
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -31,54 +30,53 @@ public class JwtProvider {
 
     private final JwtConfig jwtConfig;
 
-    /**
-     * [생성] 인증 정보를 기반으로 RSA 서명된 Access/Refresh Token 생성
-     */
+    // ... createToken, generateTokens 등 생성 로직은 기존 유지 ...
+    // (위에 작성하신 코드 그대로 두셔도 됩니다. 아래 getAuthentication만 수정하면 됩니다.)
+
     public LoginResponse.TokenResponse generateTokens(Authentication authentication) {
         Instant now = Instant.now();
         String authorities = String.join(",", getAuthorities(authentication));
 
         String memberId = authentication.getName();
-        String email = authentication.getName();
+        String email = "";
+        String name = "";
+        String gender = null;
+        Integer age = null;
 
         Object principal = authentication.getPrincipal();
         if (principal instanceof CustomUserDetails userDetails) {
-            memberId = userDetails.getName();      // CustomUserDetails.getName()은 UUID(String) 반환
-            email = userDetails.getUsername();     // CustomUserDetails.getUsername()은 이메일 반환
+            memberId = userDetails.getName();      // UUID
+            email = userDetails.getEmail();
+            name = userDetails.getRealName();
+            gender = userDetails.getGender();
+            age = userDetails.getAge();
+        } else {
+            // principal이 String인 경우 (방어 코드)
+            memberId = authentication.getName();
         }
 
-        String accessToken = createToken(
-                memberId,   // sub (UUID)
-                email,      // claim: username (Email)
-                authorities,
-                now,
-                jwtConfig.getAccess().getExpireMin()
-        );
-
-        String refreshToken = createToken(
-                memberId,   // sub (UUID)
-                email,      // claim: username (Email)
-                authorities,
-                now,
-                jwtConfig.getRefresh().getExpireMin()
-        );
+        String accessToken = createToken(memberId, email, name, gender, age, authorities, now, jwtConfig.getAccess().getExpireMin());
+        String refreshToken = createToken(memberId, email, name, gender, age, authorities, now, jwtConfig.getRefresh().getExpireMin());
 
         return new LoginResponse.TokenResponse(accessToken, refreshToken);
     }
 
-    private String createToken(String subject, String username, String authorities, Instant issuedAt, long expirationMinutes) {
+    private String createToken(String subject, String email, String name, String gender, Integer age,
+                               String authorities, Instant issuedAt, long expirationMinutes) {
         try {
             PrivateKey privateKey = getPrivateKey(jwtConfig.getPrivateKey());
             Instant expiration = issuedAt.plus(expirationMinutes, ChronoUnit.MINUTES);
 
-            return Jwts.builder()
+            JwtBuilder builder = Jwts.builder()
                     .subject(subject)
-                    .claims(
-                            Map.of(
-                                    "username", username,
-                                    "authorities", authorities
-                            )
-                    )
+                    .claim("username", email)
+                    .claim("name", name)
+                    .claim("authorities", authorities);
+
+            if (gender != null) builder.claim("gender", gender);
+            if (age != null) builder.claim("age", age);
+
+            return builder
                     .issuedAt(Date.from(issuedAt))
                     .expiration(Date.from(expiration))
                     .signWith(privateKey, Jwts.SIG.RS256)
@@ -88,34 +86,7 @@ public class JwtProvider {
         }
     }
 
-    /**
-     * [검증] 토큰 유효성 검사 (RSA Public Key 사용)
-     */
-    public boolean validateToken(String token) {
-        try {
-            PublicKey publicKey = getPublicKey(jwtConfig.getPublicKey());
-            Jwts.parser()
-                    .verifyWith(publicKey)
-                    .build()
-                    .parseSignedClaims(token);
-            return true;
-        } catch (SecurityException | MalformedJwtException e) {
-            log.info("Invalid JWT Token", e);
-        } catch (ExpiredJwtException e) {
-            log.info("Expired JWT Token", e);
-        } catch (UnsupportedJwtException e) {
-            log.info("Unsupported JWT Token", e);
-        } catch (IllegalArgumentException e) {
-            log.info("JWT claims string is empty.", e);
-        } catch (Exception e) {
-            log.error("JWT validation error", e);
-        }
-        return false;
-    }
-
-    /**
-     * [파싱] 토큰에서 인증 객체 추출
-     */
+    // [중요 수정] Authentication 객체 생성 시 CustomUserDetails 재구성
     public Authentication getAuthentication(String token) {
         try {
             PublicKey publicKey = getPublicKey(jwtConfig.getPublicKey());
@@ -125,19 +96,50 @@ public class JwtProvider {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            String username = claims.get("username", String.class);
+            // 1. Claims에서 정보 추출
+            String memberId = claims.getSubject(); // UUID
+            String email = claims.get("username", String.class);
+            String name = claims.get("name", String.class);
             String authoritiesStr = claims.get("authorities", String.class);
+            String gender = claims.get("gender", String.class);
+            Integer age = claims.get("age", Integer.class);
 
+            // 2. 권한 목록 생성
             List<GrantedAuthority> authorities = Arrays.stream(authoritiesStr.split(","))
                     .map(String::trim)
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());
 
-            return new UsernamePasswordAuthenticationToken(username, null, authorities);
+            // 3. 임시 Member 객체 생성 (비밀번호는 null 처리)
+            Member member = Member.builder()
+                    .id(UUID.fromString(memberId))
+                    .email(new MemberEmail(email))
+                    .name(new MemberName(name))
+                    .gender(gender)
+                    .age(age)
+                    .password(null) // 인증된 상태이므로 비밀번호 불필요
+                    .build();
+
+            // 4. CustomUserDetails 생성
+            CustomUserDetails principal = new CustomUserDetails(member);
+
+            // 5. Authentication 리턴 (이제 Principal은 CustomUserDetails임)
+            return new UsernamePasswordAuthenticationToken(principal, token, authorities);
 
         } catch (Exception e) {
             throw new RuntimeException("인증 정보 추출 실패", e);
         }
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            PublicKey publicKey = getPublicKey(jwtConfig.getPublicKey());
+            Jwts.parser().verifyWith(publicKey).build().parseSignedClaims(token);
+            return true;
+        } catch (Exception e) {
+            log.error("JWT validation error: {}", e.getMessage());
+        }
+        return false;
     }
 
     public Claims parseClaims(String token) {
@@ -149,29 +151,21 @@ public class JwtProvider {
                     .parseSignedClaims(token)
                     .getPayload();
         } catch (ExpiredJwtException e) {
-            // 만료된 토큰이어도 정보를 꺼내기 위해 Claims 반환
             return e.getClaims();
         } catch (Exception e) {
             throw new RuntimeException("토큰 파싱 실패", e);
         }
     }
 
-//키 파싱 헬퍼
     private PrivateKey getPrivateKey(String key) throws Exception {
-        String sanitizedKey = key
-                .replace("-----BEGIN PRIVATE KEY-----", "")
-                .replace("-----END PRIVATE KEY-----", "")
-                .replaceAll("\\s", "");
+        String sanitizedKey = key.replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "").replaceAll("\\s", "");
         byte[] keyBytes = Base64.getDecoder().decode(sanitizedKey);
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
         return KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
 
     private PublicKey getPublicKey(String key) throws Exception {
-        String sanitizedKey = key
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-                .replaceAll("\\s", "");
+        String sanitizedKey = key.replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replaceAll("\\s", "");
         byte[] keyBytes = Base64.getDecoder().decode(sanitizedKey);
         X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
         return KeyFactory.getInstance("RSA").generatePublic(spec);
