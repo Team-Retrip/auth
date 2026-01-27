@@ -89,12 +89,13 @@ jobs:
             docker run -d --name auth \
               -p 8081:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
-              -e DB_URL="jdbc:mysql://172.31.46.83:3306/auth_db?useSSL=false&serverTimezone=Asia/Seoul" \
-              -e DB_USERNAME=retrip \
-              -e DB_PASSWORD=retrippw \
+              -e DB_URL="jdbc:mysql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.AUTH_DB_NAME }}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true" \
+              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
               -e SERVER_PORT=8080 \
               --restart always \
               $IMAGE
+
 
             docker ps
 
