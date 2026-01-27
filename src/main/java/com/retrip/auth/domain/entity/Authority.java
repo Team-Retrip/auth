@@ -19,7 +19,7 @@ public class Authority extends BaseEntity {
     @Column(columnDefinition = "varbinary(16)")
     private UUID id;
 
-    @Column(name = "grant", length = 50, nullable = false)
+    @Column(name = "is_granted", length = 50, nullable = false)
     private AuthorityGrant grant;
 
     @ManyToOne(fetch = FetchType.LAZY)

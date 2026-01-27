@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 public class RefreshToken {
 
     @Id
-    @Column(length = 1024)
+    @Column(length = 700)
     private String tokenValue;
 
     private String memberId;
