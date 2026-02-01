@@ -1,17 +1,22 @@
 package com.retrip.auth.infra.adapter.in.rest.in;
 
-import com.retrip.auth.application.in.request.MemberCreateRequest;
-import com.retrip.auth.application.in.request.MemberDeleteRequest;
-import com.retrip.auth.application.in.request.MemberUpdateRequest;
-import com.retrip.auth.application.in.response.MemberCreateResponse;
-import com.retrip.auth.application.in.response.MemberUpdateResponse;
+import com.retrip.auth.application.in.request.*;
+import com.retrip.auth.application.in.response.*;
 import com.retrip.auth.application.in.usercase.ManageMemberUseCase;
+import com.retrip.auth.domain.exception.MemberNotFoundException;
 import com.retrip.auth.infra.adapter.in.rest.common.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
+@Slf4j
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -22,26 +27,90 @@ public class MemberController {
 
     @PostMapping
     @Schema(description = "회원 가입")
-    public ApiResponse<MemberCreateResponse> createUser(
-        @RequestBody MemberCreateRequest request
-    ){
-        return ApiResponse.created(manageMemberUseCase.createUser(request));
+    public ResponseEntity<ApiResponse<MemberCreateResponse>> createUser(
+            @RequestBody MemberCreateRequest request) {
+        MemberCreateResponse response = manageMemberUseCase.createUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created(response));
     }
 
     @PutMapping
     @Schema(description = "회원 정보 수정")
     public ApiResponse<MemberUpdateResponse> updateUser(
-            @RequestBody MemberUpdateRequest request
-    ){
-        return ApiResponse.ok(manageMemberUseCase.updateUser(request));
+            Authentication authentication,
+            @RequestBody MemberUpdateRequest request) {
+        UUID memberId = extractMemberId(authentication);
+        return ApiResponse.ok(manageMemberUseCase.updateUser(memberId, request));
     }
 
-    @DeleteMapping()
+    @DeleteMapping
     @Schema(description = "회원 정보 삭제")
-    public ApiResponse<?> deleteUser(
-            @RequestBody MemberDeleteRequest request
-    ){
-        manageMemberUseCase.deleteUser(request);
-        return ApiResponse.noContent();
+    public ResponseEntity<ApiResponse<?>> deleteUser(
+            Authentication authentication,
+            @RequestBody MemberDeleteRequest request) {
+        UUID memberId = extractMemberId(authentication);
+        manageMemberUseCase.deleteUser(memberId, request);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(ApiResponse.noContent());
+    }
+
+    @PatchMapping("/password")
+    @Schema(description = "비밀번호 변경")
+    public ApiResponse<ChangePasswordResponse> changePassword(
+            Authentication authentication,
+            @RequestBody ChangePasswordRequest request) {
+        UUID memberId = extractMemberId(authentication);
+        return ApiResponse.ok(manageMemberUseCase.changePassword(memberId, request));
+    }
+
+    @GetMapping("/me")
+    @Schema(description = "내 정보 조회")
+    public ApiResponse<MemberInfoResponse> getMyInfo(Authentication authentication) {
+        log.info("=== Controller /users/me ===");
+        log.info("Authentication: {}", authentication);
+        log.info("Principal: {}", authentication != null ? authentication.getPrincipal() : "null");
+        log.info("Authorities: {}", authentication != null ? authentication.getAuthorities() : "null");
+
+        UUID memberId = extractMemberId(authentication);
+        log.info("Extracted Member ID: {}", memberId);
+
+        return ApiResponse.ok(manageMemberUseCase.getMyInfo(memberId));
+    }
+
+    @PostMapping("/verify-password")
+    @Schema(description = "비밀번호 확인")
+    public ApiResponse<VerifyPasswordResponse> verifyPassword(
+            Authentication authentication,
+            @RequestBody VerifyPasswordRequest request) {
+        UUID memberId = extractMemberId(authentication);
+        return ApiResponse.ok(manageMemberUseCase.verifyPassword(memberId, request));
+    }
+
+    // JWT에서 memberId 추출
+    private UUID extractMemberId(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            log.error("인증 정보가 없습니다.");
+            throw new MemberNotFoundException();
+        }
+
+        Object principal = authentication.getPrincipal();
+        String memberIdStr;
+
+        if (principal instanceof String) {
+            memberIdStr = (String) principal;
+        } else if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            // UserDetails 구현체라면 username(여기서는 memberId)을 가져옴
+            memberIdStr = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+        } else {
+            log.error("알 수 없는 Principal 타입: {}", principal.getClass().getName());
+            throw new MemberNotFoundException();
+        }
+
+        try {
+            return UUID.fromString(memberIdStr);
+        } catch (IllegalArgumentException e) {
+            log.error("유효하지 않은 UUID 형식: {}", memberIdStr);
+            throw new MemberNotFoundException();
+        }
     }
 }

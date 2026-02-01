@@ -1,6 +1,8 @@
 package com.retrip.auth.application.config;
 
 import com.retrip.auth.application.in.MemberQueryService;
+import com.retrip.auth.domain.entity.Member;
+import com.retrip.auth.domain.exception.PasswordNotMatchException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -19,21 +21,23 @@ public class UsernamePasswordAuthenticationProvider implements AuthenticationPro
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public Authentication authenticate(Authentication authentication)
-            throws AuthenticationException {
-        String username = authentication.getName();
-        String password = String.valueOf(authentication.getCredentials());
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        String email = authentication.getName();
+        String password = (String) authentication.getCredentials();
 
-        UserDetails user = memberQueryService.loadUserByUsername(username);
+        Member member = memberQueryService.getMemberByEmail(email);
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new BadCredentialsException("Bad credentials");
+        if (!passwordEncoder.matches(password, member.getPasswordValue())) {
+            throw new PasswordNotMatchException();
         }
 
+        // ★ 핵심: 여기서 CustomUserDetails를 만들어서 넣어줘야 JwtProvider가 정보를 꺼낼 수 있음
+        CustomUserDetails userDetails = new CustomUserDetails(member);
+
         return new UsernamePasswordAuthenticationToken(
-                user,
-                password,
-                user.getAuthorities().stream().toList()
+                userDetails,
+                null,
+                userDetails.getAuthorities()
         );
     }
 

@@ -1,9 +1,7 @@
 package com.retrip.auth.application.in.request;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-public record LoginRequest (
-        String email,
+public record LoginRequest(
+        String id,       // email -> id로 변경 (JSON의 "id" 필드와 매핑됨)
         String password
 ) {
 }

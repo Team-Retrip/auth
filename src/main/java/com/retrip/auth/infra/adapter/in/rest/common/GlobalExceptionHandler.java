@@ -4,6 +4,7 @@ import com.retrip.auth.domain.exception.common.BusinessException;
 import com.retrip.auth.domain.exception.common.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -42,6 +43,17 @@ public class GlobalExceptionHandler {
     public ApiResponse<ErrorResponse> handleException(HttpServletRequest request, Exception e) {
         log.error("handleException: ", e);
         return handle(ErrorCode.SERVER_ERROR, request);
+    }
+
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ApiResponse<ErrorResponse> handleBadCredentialsException(HttpServletRequest request, BadCredentialsException e) {
+        log.error("handleBadCredentialsException: ", e);
+        return ApiResponse.of(
+                ErrorResponse.of(
+                        ErrorCode.MEMBER_NOT_FOUND, // 401 상태 코드 (Member-001)
+                        request.getRequestURL().toString(),
+                        request.getMethod()
+                ));
     }
 
     private static ApiResponse<ErrorResponse> handle(ErrorCode errorCode, HttpServletRequest request) {

@@ -2,6 +2,7 @@ package com.retrip.auth.infra.adapter.in.rest.in;
 
 import com.retrip.auth.application.in.AuthService;
 import com.retrip.auth.application.in.response.LoginResponse;
+import com.retrip.auth.domain.exception.common.InvalidValueException;
 import com.retrip.auth.infra.adapter.in.rest.common.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         if (refreshToken == null) {
-            throw new IllegalArgumentException("Refresh Token이 쿠키에 없습니다.");
+            throw new InvalidValueException("Refresh Token이 쿠키에 없습니다.");
         }
 
         LoginResponse.TokenResponse tokenResponse = authService.reissue(refreshToken);
@@ -35,7 +36,7 @@ public class AuthController {
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
 
-        return ApiResponse.success(tokenResponse);
+        return ApiResponse.ok(tokenResponse);
     }
 
     @PostMapping("/logout")
@@ -57,6 +58,6 @@ public class AuthController {
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
 
-        return ApiResponse.success(null);
+        return ApiResponse.ok(null);
     }
 }

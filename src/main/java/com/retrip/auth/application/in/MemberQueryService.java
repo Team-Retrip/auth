@@ -20,7 +20,13 @@ public class MemberQueryService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Member member = memberQueryRepository.findByEmailWithAuthorities(username).orElseThrow(MemberNotFoundException::new);
+        Member member = memberQueryRepository.findByEmailWithAuthorities(username)
+                .orElseThrow(MemberNotFoundException::new);
         return new CustomUserDetails(member);
+    }
+
+    public Member getMemberByEmail(String email) {
+        return memberQueryRepository.findByEmailWithAuthorities(email)
+                .orElseThrow(MemberNotFoundException::new);
     }
 }

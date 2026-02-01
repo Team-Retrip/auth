@@ -3,88 +3,77 @@ package com.retrip.auth.infra.adapter.in.rest.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.retrip.auth.application.config.JwtConfig;
 import com.retrip.auth.application.config.JwtProvider;
-import com.retrip.auth.application.config.UsernamePasswordAuthentication;
+import com.retrip.auth.application.in.request.LoginRequest;
 import com.retrip.auth.application.in.response.LoginResponse;
 import com.retrip.auth.application.out.repository.RefreshTokenRepository;
 import com.retrip.auth.domain.entity.RefreshToken;
 import com.retrip.auth.infra.adapter.in.rest.common.ApiResponse;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.util.StringUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
-import java.util.stream.Collectors;
 
-@Slf4j
-@RequiredArgsConstructor
-public class LoginAuthenticationFilter extends OncePerRequestFilter {
+public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-    private final JwtConfig jwtConfig;
-    private final AuthenticationManager manager;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
+    public LoginAuthenticationFilter(JwtConfig jwtConfig,
+                                     AuthenticationManager authenticationManager,
+                                     JwtProvider jwtProvider,
+                                     RefreshTokenRepository refreshTokenRepository) {
+        super.setAuthenticationManager(authenticationManager);
+
+        this.jwtProvider = jwtProvider;
+        this.refreshTokenRepository = refreshTokenRepository;
+        setFilterProcessesUrl("/login"); // POST /login 요청을 가로채도록 설정
+    }
+
+    // 1. 로그인 시도
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
-
-        // 1. 요청 검증
-        String id = request.getHeader("id");
-        String password = request.getHeader("password");
-
-        if (!StringUtils.hasText(id) || !StringUtils.hasText(password)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
-        }
-
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
-            // 2. 인증 시도
-            Authentication authentication = new UsernamePasswordAuthentication(id, password);
-            Authentication auth = manager.authenticate(authentication);
+            LoginRequest loginRequest = objectMapper.readValue(request.getInputStream(), LoginRequest.class);
 
-            // 3. 토큰 생성
-            LoginResponse.TokenResponse tokenResponse = jwtProvider.generateTokens(auth);
-
-            //  3-1. Refresh Token DB에 저장
-            String authorities = auth.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .collect(Collectors.joining(","));
-
-            RefreshToken refreshToken = new RefreshToken(
-                    tokenResponse.refreshToken(),
-                    auth.getName(), // memberId
-                    authorities
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    loginRequest.id(),
+                    loginRequest.password()
             );
-            refreshTokenRepository.save(refreshToken);
 
-            // 4. 응답 작성
-            ApiResponse<LoginResponse.TokenResponse> result = ApiResponse.ok(tokenResponse);
-
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.setStatus(HttpServletResponse.SC_OK);
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            response.getWriter().write(objectMapper.writeValueAsString(result));
-            response.getWriter().flush();
-
-        } catch (AuthenticationException e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            // ★ [수정] 부모 클래스의 메서드를 통해 매니저를 호출
+            return this.getAuthenticationManager().authenticate(authToken);
+        } catch (IOException e) {
+            throw new RuntimeException("로그인 요청 파싱 실패", e);
         }
     }
 
-
+    // 2. 로그인 성공 시
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        return !request.getRequestURI().equals("/login");
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException {
+
+        LoginResponse.TokenResponse tokenResponse = jwtProvider.generateTokens(authResult);
+
+        // CustomUserDetails.getName()은 UUID String을 반환하도록 설정했으므로 바로 사용 가능
+        String memberId = authResult.getName();
+
+        RefreshToken refreshToken = new RefreshToken(
+                tokenResponse.refreshToken(),
+                memberId,
+                "ROLE_USER"
+        );
+        refreshTokenRepository.save(refreshToken);
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        ApiResponse<LoginResponse.TokenResponse> apiResponse = ApiResponse.success(tokenResponse);
+        response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
     }
 }

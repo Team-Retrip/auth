@@ -15,7 +15,11 @@ public enum ErrorCode {
     INVALID_ACCESS(FORBIDDEN, "Common-006","접근 권한이 존재하지 않습니다."),
 
     MEMBER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "Member-001", "멤버 엔티티를 찾을 수 없습니다."),
-    PASSWORD_NOT_MATCH(HttpStatus.UNAUTHORIZED, "Member-001", "비밀 번호가 다릅니다."),
+    PASSWORD_NOT_MATCH(HttpStatus.UNAUTHORIZED, "Member-002", "비밀 번호가 다릅니다."),
+
+    // ✅ 추가
+    DELETED_MEMBER_CANNOT_REJOIN(HttpStatus.BAD_REQUEST, "Member-003", "탈퇴한 이메일은 재가입할 수 없습니다."),
+    EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "Member-004", "이미 존재하는 이메일입니다."),
     ;
 
     private final HttpStatus status;
