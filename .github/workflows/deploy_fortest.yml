@@ -86,15 +86,20 @@ jobs:
               docker rm $CONTAINER
             fi
 
-            docker run -d --name auth \
+             docker run -d --name "$CONTAINER" \
               -p 8081:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
-              -e DB_URL="jdbc:mysql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.AUTH_DB_NAME }}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true" \
-              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
               -e SERVER_PORT=8080 \
+              -e DB_URL="$DB_URL" \
+              -e DB_USERNAME="$DB_USERNAME" \
+              -e DB_PASSWORD="$DB_PASSWORD" \
+              -e JWT_PRIVATE_KEY="$JWT_PRIVATE_KEY" \
+              -e JWT_PUBLIC_KEY="$JWT_PUBLIC_KEY" \
+              -e PORTONE_STORE_ID="$PORTONE_STORE_ID" \
+              -e PORTONE_CHANNEL_KEY="$PORTONE_CHANNEL_KEY" \
+              -e PORTONE_API_SECRET="$PORTONE_API_SECRET" \
               --restart always \
-              $IMAGE
+              "$IMAGE"
 
 
             docker ps
