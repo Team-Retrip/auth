@@ -1,3 +1,26 @@
+# ====================================
+# 민감 정보 파일 (절대 커밋 금지!)
+# ====================================
+
+# 환경별 설정 파일
+application-local.yml
+application-prod.yml
+application-prod-debug.yml
+
+# 환경 변수 파일
+.env
+.env.local
+.env.production
+.env.*.local
+
+# 테스트 파일
+test.html
+*.test.html
+
+# ====================================
+# 기존 .gitignore 내용
+# ====================================
+
 HELP.md
 .gradle
 build/
@@ -35,3 +58,19 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Mac ###
+.DS_Store
+
+### Windows ###
+Thumbs.db
+
+### Logs ###
+*.log
+logs/
+
+### Temporary files ###
+*.tmp
+*.bak
+*.swp
+*~.nib

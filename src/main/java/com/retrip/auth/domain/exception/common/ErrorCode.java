@@ -13,13 +13,13 @@ public enum ErrorCode {
     ENTITY_NOT_FOUND(BAD_REQUEST, "Common-004", "Entity not found"),
     ILLEGAL_STATE(BAD_REQUEST, "Common-005", "Illegal state"),
     INVALID_ACCESS(FORBIDDEN, "Common-006","접근 권한이 존재하지 않습니다."),
+    EXTERNAL_API_ERROR(INTERNAL_SERVER_ERROR, "Common-007", "외부 API 호출 중 오류가 발생했습니다."),
 
     MEMBER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "Member-001", "멤버 엔티티를 찾을 수 없습니다."),
     PASSWORD_NOT_MATCH(HttpStatus.UNAUTHORIZED, "Member-002", "비밀 번호가 다릅니다."),
-
-    // ✅ 추가
     DELETED_MEMBER_CANNOT_REJOIN(HttpStatus.BAD_REQUEST, "Member-003", "탈퇴한 이메일은 재가입할 수 없습니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "Member-004", "이미 존재하는 이메일입니다."),
+    DUPLICATE_USER(HttpStatus.CONFLICT, "Member-005", "이미 가입된 정보입니다."),
     ;
 
     private final HttpStatus status;

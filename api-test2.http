@@ -5,11 +5,11 @@
 
 ### 전역 변수 설정 (랜덤 값 사용)
 @random_id = {{$randomInt}}
-@email = test{{random_id}}@naver.com
+@email = test2{{random_id}}@naver.com
 @password = password1234
 @new_password = newpassword5678
-@auth_host = http://localhost:8080
-@trip_host = http://localhost:8081
+@auth_host = http://15.164.112.64:8081
+@trip_host = http://15.164.112.64:8080
 
 ### ========================================
 ### 📌 Phase 1: 회원가입 및 토큰 발급 검증
