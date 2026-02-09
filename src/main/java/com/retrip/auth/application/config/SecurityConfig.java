@@ -67,7 +67,6 @@ public class SecurityConfig {
             JwtConfig jwtConfig,
             AuthenticationManager authenticationManager,
             JwtProvider jwtProvider) {
-        // 생성자에 refreshTokenRepository가 포함되어야 합니다.
         LoginAuthenticationFilter filter = new LoginAuthenticationFilter(jwtConfig, authenticationManager, jwtProvider, refreshTokenRepository);
         return filter;
     }
@@ -77,8 +76,6 @@ public class SecurityConfig {
             HttpSecurity http,
             LoginAuthenticationFilter loginAuthenticationFilter) throws Exception {
 
-        // [핵심] 401 에러 해결을 위한 SecurityContextRepository 설정
-        // 이 부분이 빠져있어서 인증 정보가 유지되지 않았습니다.
         SecurityContextRepository securityContextRepository = new DelegatingSecurityContextRepository(
                 new RequestAttributeSecurityContextRepository(),
                 new HttpSessionSecurityContextRepository()
@@ -90,7 +87,6 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
 
-                // [핵심] SecurityContext 설정 추가
                 .securityContext(context -> context
                         .securityContextRepository(securityContextRepository)
                 )
@@ -113,10 +109,14 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                        // ✅ 수정: /api/users 경로 추가
+                        .requestMatchers(HttpMethod.POST, "/users", "/api/users").permitAll()
                         .requestMatchers("/login/**", "/oauth2/**", "/auth/reissue", "/auth/logout", "/").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
                         .requestMatchers("/debug/**").permitAll()
+                        // ✅ 추가: 본인인증 및 여행 스타일 조회 API 허용
+                        .requestMatchers(HttpMethod.GET, "/api/travel-styles").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/verify-identity").authenticated()
                         .anyRequest().authenticated()
                 );
 
@@ -126,11 +126,18 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+
+        // 개발 환경: 모든 localhost 포트 허용
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*"
+        ));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setExposedHeaders(List.of("Authorization"));
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

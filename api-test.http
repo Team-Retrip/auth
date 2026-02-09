@@ -1,5 +1,5 @@
 ### 전역 변수 설정 (필요시 변경)
-@auth_host = http://localhost:8080
+@auth_host = http://15.164.112.64:8081
 @trip_host = http://localhost:8081
 @email = test@naver.com
 @password = password1234

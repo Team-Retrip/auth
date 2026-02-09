@@ -6,6 +6,7 @@ import com.retrip.auth.domain.vo.MemberPassword;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,18 +43,40 @@ public class Member extends BaseEntity {
     @Column(unique = true)
     private String providerId;
 
+    // 본인인증 관련
     @Column(length = 88, unique = true)
     private String ci;
+
+    @Column(length = 64)
+    private String di;
 
     @Column(nullable = false)
     @Builder.Default
     private boolean isVerified = false;
 
-    @Column(name = "gender")
+    private LocalDateTime verifiedAt;
+
+    // 기본 정보
+    @Column(name = "gender", length = 1)
     private String gender;
 
     @Column(name = "age")
     private Integer age;
+
+    // 프로필 관련
+    @Column(length = 500)
+    private String profileImageUrl;
+
+    @Column(length = 30)
+    private String bio;
+
+    @Column(length = 4)
+    private String mbti;
+
+    // 설정
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean notificationEnabled = true;
 
     public String getPasswordValue() {
         return this.password != null ? this.password.getValue() : null;
@@ -103,6 +126,44 @@ public class Member extends BaseEntity {
         if (password != null) this.password = new MemberPassword(password);
         if (gender != null) this.gender = gender;
         if (age != null) this.age = age;
+    }
+
+    public void updateProfile(String bio, String mbti, String profileImageUrl) {
+        if (bio != null) this.bio = bio;
+        if (mbti != null) this.mbti = mbti;
+        if (profileImageUrl != null) this.profileImageUrl = profileImageUrl;
+    }
+
+    public void updateNotificationSettings(boolean enabled) {
+        this.notificationEnabled = enabled;
+    }
+
+    public void updateIdentityVerification(String name, String gender, String birthday, String ci, String di) {
+        this.name = new MemberName(name);
+        this.gender = gender;
+        this.age = calculateAge(birthday);
+        this.ci = ci;
+        this.di = di;
+        this.isVerified = true;
+        this.verifiedAt = LocalDateTime.now();
+    }
+
+    public int calculateAge(String birthday) {
+        // V2: "1990-01-01" 형식
+        // V1: "19900101" 형식
+
+        String yearStr;
+        if (birthday.contains("-")) {
+            // V2 형식: YYYY-MM-DD
+            yearStr = birthday.substring(0, 4);
+        } else {
+            // V1 형식: YYYYMMDD
+            yearStr = birthday.substring(0, 4);
+        }
+
+        int birthYear = Integer.parseInt(yearStr);
+        int currentYear = LocalDateTime.now().getYear();
+        return currentYear - birthYear;
     }
 
     public void updateSocialInfo(String name) {

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReTrip 통합 테스트 (V3)</title>
+
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 30px auto; padding: 20px; background: #f0f2f5; }
+        .container { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .section { background: #fff; padding: 20px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; border-left: 5px solid #667eea; }
+        h1 { text-align: center; color: #333; }
+        h3 { margin-top: 0; color: #444; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #667eea; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        button:hover:not(:disabled) { background: #5a6fd6; }
+        .result { background: #2d2d2d; color: #50ff50; padding: 15px; margin-top: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; font-size: 13px; display: none; }
+        .error { color: #ff5050; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .checkbox-group label { display: flex; align-items: center; background: #eee; padding: 5px 10px; border-radius: 20px; cursor: pointer; font-size: 13px; }
+        .checkbox-group input { width: auto; margin-right: 5px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>ReTrip 기능 테스트</h1>
+
+    <div class="section">
+        <h3>⚙️ Step 0: PortOne 설정</h3>
+        <input type="text" id="storeId" placeholder="Store ID 입력">
+        <input type="text" id="channelKey" placeholder="Channel Key 입력">
+        <button onclick="saveConfig()">설정 저장</button>
+    </div>
+
+    <div class="section">
+        <h3>👤 Step 1: 회원가입</h3>
+        <input type="email" id="signupEmail" value="user@test.com" placeholder="이메일">
+        <input type="password" id="signupPassword" value="1234" placeholder="비밀번호">
+        <input type="text" id="signupName" value="테스트유저" placeholder="이름">
+        <div style="display: flex; gap: 10px;">
+            <select id="signupGender"><option value="M">남성</option><option value="F">여성</option></select>
+            <input type="number" id="signupAge" value="25" placeholder="나이">
+        </div>
+        <button onclick="signup()">회원가입</button>
+        <div id="signupResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h3>🔐 Step 2: 로그인</h3>
+        <button onclick="login()">로그인 (Step 1 정보로)</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h3>✨ Step 3: 본인인증 (PortOne V2)</h3>
+        <button id="certBtn" onclick="startCertificationV2()" disabled>본인인증 시작</button>
+        <div id="certResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h3>📋 Step 4: 내 프로필 조회</h3>
+        <button id="profileBtn" onclick="getProfile()" disabled>프로필 조회</button>
+        <div id="profileResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h3>✏️ Step 5: 프로필 수정 (추가 정보)</h3>
+        <textarea id="updateBio" placeholder="한 줄 소개 (최대 30자)" rows="2">여행을 좋아하는 개발자입니다.</textarea>
+        <select id="updateMbti">
+            <option value="">MBTI 선택</option>
+            <option value="ISTJ">ISTJ</option> <option value="ISFJ">ISFJ</option>
+            <option value="INFJ">INFJ</option> <option value="INTJ">INTJ</option>
+            <option value="ISTP">ISTP</option> <option value="ISFP">ISFP</option>
+            <option value="INFP">INFP</option> <option value="INTP">INTP</option>
+            <option value="ESTP">ESTP</option> <option value="ESFP">ESFP</option>
+            <option value="ENFP">ENFP</option> <option value="ENTP">ENTP</option>
+            <option value="ESTJ">ESTJ</option> <option value="ESFJ">ESFJ</option>
+            <option value="ENFJ">ENFJ</option> <option value="ENTJ">ENTJ</option>
+        </select>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="styles" value="계획철저"> 계획철저</label>
+            <label><input type="checkbox" name="styles" value="즉흥적"> 즉흥적</label>
+            <label><input type="checkbox" name="styles" value="맛집탐방"> 맛집탐방</label>
+            <label><input type="checkbox" name="styles" value="휴양지"> 휴양지</label>
+            <label><input type="checkbox" name="styles" value="가성비"> 가성비</label>
+            <label><input type="checkbox" name="styles" value="플렉스"> 플렉스</label>
+        </div>
+        <button id="updateBtn" onclick="updateProfile()" disabled>정보 수정 저장</button>
+        <div id="updateResult" class="result"></div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:8080';
+    let CONFIG = { storeId: '', channelKey: '', accessToken: '' };
+
+    function saveConfig() {
+        CONFIG.storeId = document.getElementById('storeId').value;
+        CONFIG.channelKey = document.getElementById('channelKey').value;
+        alert('설정 저장됨');
+    }
+
+    async function signup() {
+        try {
+            const res = await axios.post(`${API_BASE}/users`, {
+                email: document.getElementById('signupEmail').value,
+                password: document.getElementById('signupPassword').value,
+                name: document.getElementById('signupName').value,
+                gender: document.getElementById('signupGender').value,
+                age: parseInt(document.getElementById('signupAge').value)
+            });
+            showResult('signupResult', '✅ 가입 성공! accessToken 자동 발급됨.');
+            CONFIG.accessToken = res.data.data.accessToken;
+            enableButtons();
+        } catch (e) { showResult('signupResult', e.response?.data?.message || e.message, true); }
+    }
+
+    async function login() {
+        try {
+            const res = await axios.post(`${API_BASE}/login`, {
+                id: document.getElementById('signupEmail').value,
+                password: document.getElementById('signupPassword').value
+            });
+            CONFIG.accessToken = res.data.data.accessToken;
+            showResult('loginResult', `✅ 로그인 성공\nToken: ${CONFIG.accessToken.substring(0,20)}...`);
+            enableButtons();
+        } catch (e) { showResult('loginResult', e.response?.data?.message || e.message, true); }
+    }
+
+    async function startCertificationV2() {
+        if (!CONFIG.storeId) return alert('Step 0 설정을 먼저 해주세요.');
+        try {
+            const response = await PortOne.requestIdentityVerification({
+                storeId: CONFIG.storeId,
+                identityVerificationId: `identity_${Date.now()}`,
+                channelKey: CONFIG.channelKey,
+            });
+            if (response.code) throw new Error(response.message);
+
+            const verifyRes = await axios.post(`${API_BASE}/api/auth/verify-identity`,
+                { impUid: response.identityVerificationId },
+                { headers: { 'Authorization': `Bearer ${CONFIG.accessToken}` } }
+            );
+
+            const d = verifyRes.data.data;
+            showResult('certResult', `✅ 인증 완료\n이름: ${d.name}, 성별: ${d.gender}, 나이: ${d.age}, 인증여부: ${d.isVerified}`);
+        } catch (e) { showResult('certResult', e.message, true); }
+    }
+
+    async function getProfile() {
+        try {
+            const res = await axios.get(`${API_BASE}/api/users/profile`, {
+                headers: { 'Authorization': `Bearer ${CONFIG.accessToken}` }
+            });
+            const d = res.data.data;
+            showResult('profileResult', `📋 프로필\n이메일: ${d.email}\n이름: ${d.name} (${d.age}세/${d.gender})\n본인인증: ${d.isVerified}\n소개: ${d.bio}\nMBTI: ${d.mbti}\n스타일: ${d.travelStyles?.join(', ')}`);
+        } catch (e) { showResult('profileResult', e.message, true); }
+    }
+
+    async function updateProfile() {
+        const styles = Array.from(document.querySelectorAll('input[name="styles"]:checked')).map(cb => cb.value);
+        try {
+            const res = await axios.put(`${API_BASE}/api/users/profile`, {
+                bio: document.getElementById('updateBio').value,
+                mbti: document.getElementById('updateMbti').value,
+                travelStyles: styles
+            }, { headers: { 'Authorization': `Bearer ${CONFIG.accessToken}` } });
+
+            const d = res.data.data;
+            showResult('updateResult', `✅ 수정 완료\n소개: ${d.bio}\nMBTI: ${d.mbti}\n스타일: ${d.travelStyles?.join(', ')}`);
+            // 프로필 다시 조회하여 갱신 확인
+            getProfile();
+        } catch (e) { showResult('updateResult', e.response?.data?.message || e.message, true); }
+    }
+
+    function showResult(id, msg, isError = false) {
+        const el = document.getElementById(id);
+        el.style.display = 'block';
+        el.className = isError ? 'result error' : 'result';
+        el.innerText = msg;
+    }
+
+    function enableButtons() {
+        ['certBtn', 'profileBtn', 'updateBtn'].forEach(id => document.getElementById(id).disabled = false);
+    }
+</script>
+</body>
+</html>

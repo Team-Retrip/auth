@@ -1,0 +1,48 @@
+# ====================================
+# 로컬 개발 환경 설정 템플릿
+# ====================================
+# 이 파일을 복사하여 사용하세요:
+# 1. cp application-local.yml.example application-local.yml
+# 2. 팀 공유 문서에서 실제 키를 복사하여 아래 값 교체
+# 3. IntelliJ Active profiles: local로 실행
+# ====================================
+
+# PortOne V2 설정
+portone:
+  public:
+    # PortOne 콘솔 → Developers → API Keys에서 확인
+    store-id: store-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    channel-key: channel-key-xxxxxxxxxxxxxxxxxxxxxxxxxx
+  # API Secret (절대 공개하지 마세요!)
+  api_secret: your-api-secret-here
+
+# OAuth2 설정 (선택사항)
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: your-google-client-id
+            client-secret: your-google-client-secret
+          kakao:
+            client-id: your-kakao-rest-api-key
+            client-secret: your-kakao-client-secret
+          naver:
+            client-id: your-naver-client-id
+            client-secret: your-naver-client-secret
+
+# JWT 키 설정
+token:
+  jwt:
+    # RSA Private Key (개행 포함하여 전체 복사)
+    private-key: |
+      -----BEGIN PRIVATE KEY-----
+      your-private-key-content-here
+      -----END PRIVATE KEY-----
+
+    # RSA Public Key (개행 포함하여 전체 복사)
+    public-key: |
+      -----BEGIN PUBLIC KEY-----
+      your-public-key-content-here
+      -----END PUBLIC KEY-----

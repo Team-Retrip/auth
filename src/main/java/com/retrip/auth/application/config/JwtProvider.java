@@ -30,9 +30,6 @@ public class JwtProvider {
 
     private final JwtConfig jwtConfig;
 
-    // ... createToken, generateTokens 등 생성 로직은 기존 유지 ...
-    // (위에 작성하신 코드 그대로 두셔도 됩니다. 아래 getAuthentication만 수정하면 됩니다.)
-
     public LoginResponse.TokenResponse generateTokens(Authentication authentication) {
         Instant now = Instant.now();
         String authorities = String.join(",", getAuthorities(authentication));
@@ -45,13 +42,12 @@ public class JwtProvider {
 
         Object principal = authentication.getPrincipal();
         if (principal instanceof CustomUserDetails userDetails) {
-            memberId = userDetails.getName();      // UUID
+            memberId = userDetails.getName();
             email = userDetails.getEmail();
             name = userDetails.getRealName();
             gender = userDetails.getGender();
             age = userDetails.getAge();
         } else {
-            // principal이 String인 경우 (방어 코드)
             memberId = authentication.getName();
         }
 
@@ -71,7 +67,7 @@ public class JwtProvider {
                     .subject(subject)
                     .claim("username", email)
                     .claim("name", name)
-                    .claim("authorities", authorities);
+                    .claim("authorities", authorities); // 권한이 없으면 빈 문자열 ""이 들어감
 
             if (gender != null) builder.claim("gender", gender);
             if (age != null) builder.claim("age", age);
@@ -86,7 +82,6 @@ public class JwtProvider {
         }
     }
 
-    // [중요 수정] Authentication 객체 생성 시 CustomUserDetails 재구성
     public Authentication getAuthentication(String token) {
         try {
             PublicKey publicKey = getPublicKey(jwtConfig.getPublicKey());
@@ -97,33 +92,36 @@ public class JwtProvider {
                     .getPayload();
 
             // 1. Claims에서 정보 추출
-            String memberId = claims.getSubject(); // UUID
+            String memberId = claims.getSubject();
             String email = claims.get("username", String.class);
             String name = claims.get("name", String.class);
             String authoritiesStr = claims.get("authorities", String.class);
             String gender = claims.get("gender", String.class);
             Integer age = claims.get("age", Integer.class);
 
-            // 2. 권한 목록 생성
-            List<GrantedAuthority> authorities = Arrays.stream(authoritiesStr.split(","))
-                    .map(String::trim)
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
+            // 2. 권한 목록 생성 [수정된 부분: 빈 문자열 처리 추가]
+            List<GrantedAuthority> authorities = new ArrayList<>();
+            if (authoritiesStr != null && !authoritiesStr.isBlank()) {
+                authorities = Arrays.stream(authoritiesStr.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty()) // 빈 문자열 필터링 (중요)
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
+            }
 
-            // 3. 임시 Member 객체 생성 (비밀번호는 null 처리)
+            // 3. 임시 Member 객체 생성
             Member member = Member.builder()
                     .id(UUID.fromString(memberId))
                     .email(new MemberEmail(email))
                     .name(new MemberName(name))
                     .gender(gender)
                     .age(age)
-                    .password(null) // 인증된 상태이므로 비밀번호 불필요
+                    .password(null)
                     .build();
 
             // 4. CustomUserDetails 생성
             CustomUserDetails principal = new CustomUserDetails(member);
 
-            // 5. Authentication 리턴 (이제 Principal은 CustomUserDetails임)
             return new UsernamePasswordAuthenticationToken(principal, token, authorities);
 
         } catch (Exception e) {
