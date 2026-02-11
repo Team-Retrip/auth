@@ -86,7 +86,9 @@ jobs:
               docker rm $CONTAINER
             fi
 
-             docker run -d --name "$CONTAINER" \
+            DB_URL="jdbc:mysql://${DB_HOST}:${DB_PORT}/${AUTH_DB_NAME}"
+            
+            docker run -d --name "$CONTAINER" \
               -p 8081:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e SERVER_PORT=8080 \
