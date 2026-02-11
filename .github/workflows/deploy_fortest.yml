@@ -92,7 +92,7 @@ jobs:
               -p 8081:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e SERVER_PORT=8080 \
-              -e DB_URL="${{ secrets.DB_HOST }}" \
+              -e DB_URL="$DB_URL" \
               -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
               -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
               -e JWT_PRIVATE_KEY="${{ secrets.JWT_PRIVATE_KEY }}" \
