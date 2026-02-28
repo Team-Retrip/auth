@@ -130,7 +130,8 @@ public class SecurityConfig {
         // 개발 환경: 모든 localhost 포트 허용
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:*",
-                "http://127.0.0.1:*"
+                "http://127.0.0.1:*",
+                "https://retrip-web-*.vercel.app"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
