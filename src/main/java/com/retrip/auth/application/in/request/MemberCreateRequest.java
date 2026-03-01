@@ -3,6 +3,8 @@ package com.retrip.auth.application.in.request;
 import com.retrip.auth.domain.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.List;
+
 @Schema(description = "Member 회원가입 Request")
 public record MemberCreateRequest(
         @Schema(description = "이메일")
@@ -13,20 +15,23 @@ public record MemberCreateRequest(
         String name,
         @Schema(description = "성별 (M/F)")
         String gender,
-        @Schema(description = "나이")
-        Integer age
+        @Schema(description = "생년월일 (YYYY-MM-DD)")
+        String birthDate,
+        @Schema(description = "필수 약관 동의")
+        boolean termsAgreed,
+        @Schema(description = "마케팅 수신 동의")
+        boolean marketingAgreed
 ) {
     public Member to(String encodePassword) {
-        return Member.builder()
-                .email(new com.retrip.auth.domain.vo.MemberEmail(email))
-                .password(new com.retrip.auth.domain.vo.MemberPassword(encodePassword))
-                .name(new com.retrip.auth.domain.vo.MemberName(name))
-                .gender(gender)
-                .age(age)
-                .isDeleted(false)
-                .provider("local")
-                .isVerified(false)
-                .id(java.util.UUID.randomUUID())
-                .build();
+        return Member.create(
+                name,
+                email,
+                encodePassword,
+                List.of("user"),
+                gender,
+                birthDate,
+                termsAgreed,
+                marketingAgreed
+        );
     }
 }

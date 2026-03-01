@@ -12,7 +12,7 @@ public record MemberUpdateRequest(
         String name,
         @Schema(description = "성별 (M/F)")
         String gender,
-        @Schema(description = "나이")
-        Integer age
+        @Schema(description = "생년월일 (YYYY-MM-DD)")
+        String birthDate
 ) {
 }

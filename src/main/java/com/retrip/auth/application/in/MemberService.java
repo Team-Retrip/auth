@@ -85,7 +85,7 @@ public class MemberService implements ManageMemberUseCase {
                 request.name(),
                 encodedNewPassword,
                 request.gender(),
-                request.age()
+                request.birthDate()
         );
 
         // Access Token 재발급

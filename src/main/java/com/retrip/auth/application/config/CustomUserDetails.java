@@ -63,8 +63,8 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
         return member.getGender();
     }
 
-    public Integer getAge() {
-        return member.getAge();
+    public String getBirthDate() {
+        return member.getBirthDate();
     }
     // =============================================================
 

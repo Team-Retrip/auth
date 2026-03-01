@@ -9,14 +9,14 @@ import lombok.Getter;
 public class VerifyIdentityResponse {
     private String name;
     private String gender;
-    private Integer age;
+    private String birthDate;
     private Boolean isVerified;
 
     public static VerifyIdentityResponse from(Member member) {
         return VerifyIdentityResponse.builder()
                 .name(member.getNameValue())
                 .gender(member.getGender())
-                .age(member.getAge())
+                .birthDate(member.getBirthDate())
                 .isVerified(member.isVerified())
                 .build();
     }
