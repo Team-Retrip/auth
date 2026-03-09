@@ -38,7 +38,7 @@ public class JwtProvider {
         String email = "";
         String name = "";
         String gender = null;
-        Integer age = null;
+        String birthDate = null;
 
         Object principal = authentication.getPrincipal();
         if (principal instanceof CustomUserDetails userDetails) {
@@ -46,18 +46,18 @@ public class JwtProvider {
             email = userDetails.getEmail();
             name = userDetails.getRealName();
             gender = userDetails.getGender();
-            age = userDetails.getAge();
+            birthDate = userDetails.getBirthDate();
         } else {
             memberId = authentication.getName();
         }
 
-        String accessToken = createToken(memberId, email, name, gender, age, authorities, now, jwtConfig.getAccess().getExpireMin());
-        String refreshToken = createToken(memberId, email, name, gender, age, authorities, now, jwtConfig.getRefresh().getExpireMin());
+        String accessToken = createToken(memberId, email, name, gender, birthDate, authorities, now, jwtConfig.getAccess().getExpireMin());
+        String refreshToken = createToken(memberId, email, name, gender, birthDate, authorities, now, jwtConfig.getRefresh().getExpireMin());
 
         return new LoginResponse.TokenResponse(accessToken, refreshToken);
     }
 
-    private String createToken(String subject, String email, String name, String gender, Integer age,
+    private String createToken(String subject, String email, String name, String gender, String birthDate,
                                String authorities, Instant issuedAt, long expirationMinutes) {
         try {
             PrivateKey privateKey = getPrivateKey(jwtConfig.getPrivateKey());
@@ -70,7 +70,7 @@ public class JwtProvider {
                     .claim("authorities", authorities); // 권한이 없으면 빈 문자열 ""이 들어감
 
             if (gender != null) builder.claim("gender", gender);
-            if (age != null) builder.claim("age", age);
+            if (birthDate != null) builder.claim("birthDate", birthDate);
 
             return builder
                     .issuedAt(Date.from(issuedAt))
@@ -97,7 +97,7 @@ public class JwtProvider {
             String name = claims.get("name", String.class);
             String authoritiesStr = claims.get("authorities", String.class);
             String gender = claims.get("gender", String.class);
-            Integer age = claims.get("age", Integer.class);
+            String birthDate = claims.get("birthDate", String.class);
 
             // 2. 권한 목록 생성 [수정된 부분: 빈 문자열 처리 추가]
             List<GrantedAuthority> authorities = new ArrayList<>();
@@ -115,7 +115,7 @@ public class JwtProvider {
                     .email(new MemberEmail(email))
                     .name(new MemberName(name))
                     .gender(gender)
-                    .age(age)
+                    .birthDate(birthDate)
                     .password(null)
                     .build();
 

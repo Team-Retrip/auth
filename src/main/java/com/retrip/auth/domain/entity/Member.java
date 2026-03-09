@@ -60,8 +60,17 @@ public class Member extends BaseEntity {
     @Column(name = "gender", length = 1)
     private String gender;
 
-    @Column(name = "age")
-    private Integer age;
+    @Column(length = 10)
+    private String birthDate;
+
+    // 약관 동의
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean termsAgreed = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean marketingAgreed = false;
 
     // 프로필 관련
     @Column(length = 500)
@@ -90,7 +99,7 @@ public class Member extends BaseEntity {
         return this.name != null ? this.name.getValue() : null;
     }
 
-    public static Member create(String name, String email, String password, List<String> authorities, String gender, Integer age) {
+    public static Member create(String name, String email, String password, List<String> authorities, String gender, String birthDate, boolean termsAgreed, boolean marketingAgreed) {
         Member member = Member.builder()
                 .id(UUID.randomUUID())
                 .name(new MemberName(name))
@@ -100,7 +109,9 @@ public class Member extends BaseEntity {
                 .provider("local")
                 .isVerified(false)
                 .gender(gender)
-                .age(age)
+                .birthDate(birthDate)
+                .termsAgreed(termsAgreed)
+                .marketingAgreed(marketingAgreed)
                 .build();
         member.authorities = new Authorities(authorities, member);
         return member;
@@ -121,11 +132,11 @@ public class Member extends BaseEntity {
         return member;
     }
 
-    public void update(String name, String password, String gender, Integer age) {
+    public void update(String name, String password, String gender, String birthDate) {
         if (name != null) this.name = new MemberName(name);
         if (password != null) this.password = new MemberPassword(password);
         if (gender != null) this.gender = gender;
-        if (age != null) this.age = age;
+        if (birthDate != null) this.birthDate = birthDate;
     }
 
     public void updateProfile(String bio, String mbti, String profileImageUrl) {
@@ -138,32 +149,14 @@ public class Member extends BaseEntity {
         this.notificationEnabled = enabled;
     }
 
-    public void updateIdentityVerification(String name, String gender, String birthday, String ci, String di) {
+    public void updateIdentityVerification(String name, String gender, String birthDate, String ci, String di) {
         this.name = new MemberName(name);
         this.gender = gender;
-        this.age = calculateAge(birthday);
+        this.birthDate = birthDate;
         this.ci = ci;
         this.di = di;
         this.isVerified = true;
         this.verifiedAt = LocalDateTime.now();
-    }
-
-    public int calculateAge(String birthday) {
-        // V2: "1990-01-01" 형식
-        // V1: "19900101" 형식
-
-        String yearStr;
-        if (birthday.contains("-")) {
-            // V2 형식: YYYY-MM-DD
-            yearStr = birthday.substring(0, 4);
-        } else {
-            // V1 형식: YYYYMMDD
-            yearStr = birthday.substring(0, 4);
-        }
-
-        int birthYear = Integer.parseInt(yearStr);
-        int currentYear = LocalDateTime.now().getYear();
-        return currentYear - birthYear;
     }
 
     public void updateSocialInfo(String name) {

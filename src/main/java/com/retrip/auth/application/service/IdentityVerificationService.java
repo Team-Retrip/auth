@@ -51,8 +51,8 @@ public class IdentityVerificationService {
         // 성별 변환 (MALE -> M, FEMALE -> F)
         String gender = "MALE".equals(certInfo.getGender()) ? "M" : "F";
 
-        log.info("✅ 회원 본인인증 정보 업데이트 - Name: {}, Gender: {}, Age: {}",
-                certInfo.getName(), gender, member.calculateAge(certInfo.getBirthday()));
+        log.info("✅ 회원 본인인증 정보 업데이트 - Name: {}, Gender: {}, BirthDate: {}",
+                certInfo.getName(), gender, certInfo.getBirthday());
 
         member.updateIdentityVerification(
                 certInfo.getName(),

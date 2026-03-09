@@ -12,7 +12,7 @@ public class ProfileResponse {
     private String email;
     private String name;
     private String gender;
-    private Integer age;
+    private String birthDate;
     private Boolean isVerified;
     private String profileImageUrl;
     private String bio;
@@ -25,7 +25,7 @@ public class ProfileResponse {
                 .email(member.getEmailValue())
                 .name(member.getNameValue())
                 .gender(member.getGender())
-                .age(member.getAge())
+                .birthDate(member.getBirthDate())
                 .isVerified(member.isVerified())
                 .profileImageUrl(member.getProfileImageUrl())
                 .bio(member.getBio())
