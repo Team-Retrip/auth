@@ -90,7 +90,7 @@ jobs:
           
             docker run -d \
               --name "$CONTAINER" \
-              --network retrip-net
+              --network retrip-net \
               -p 8081:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e SERVER_PORT=8080 \
