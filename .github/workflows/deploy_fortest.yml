@@ -85,8 +85,12 @@ jobs:
               docker stop $CONTAINER
               docker rm $CONTAINER
             fi
+
+            docker network create retrip-net || true
           
-            docker run -d --name "$CONTAINER" \
+            docker run -d 
+              --name "$CONTAINER" \
+              --network retrip-net
               -p 8081:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e SERVER_PORT=8080 \
