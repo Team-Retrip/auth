@@ -34,7 +34,7 @@ class JwtAuthenticationFilterTest extends BaseLoginAuthenticationTest {
         //when
         // headers 생성
         HttpHeaders loginHeader = new HttpHeaders();
-        loginHeader.add("id", request.email());
+        loginHeader.add("id", request.id());
         loginHeader.add("password", request.password());
         MvcResult mvcResult =  mockMvc.perform(get("/login")
                         .contentType(MediaType.APPLICATION_JSON)

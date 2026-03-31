@@ -2,6 +2,7 @@ package com.retrip.auth.infra.adapter.in.rest.in;
 
 import com.retrip.auth.application.in.request.*;
 import com.retrip.auth.application.in.response.*;
+import com.retrip.auth.application.in.response.MemberSearchResponse;
 import com.retrip.auth.application.in.usercase.ManageMemberUseCase;
 import com.retrip.auth.domain.exception.MemberNotFoundException;
 import com.retrip.auth.infra.adapter.in.rest.common.ApiResponse;
@@ -13,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import java.util.UUID;
 
@@ -84,6 +87,18 @@ public class MemberController {
             @RequestBody VerifyPasswordRequest request) {
         UUID memberId = extractMemberId(authentication);
         return ApiResponse.ok(manageMemberUseCase.verifyPassword(memberId, request));
+    }
+
+    @GetMapping("/search")
+    @Schema(description = "이름으로 회원 검색")
+    public ApiResponse<List<MemberSearchResponse>> searchMembers(@RequestParam String name) {
+        return ApiResponse.ok(manageMemberUseCase.searchMembers(name));
+    }
+
+    @GetMapping("/members")
+    @Schema(description = "ID 목록으로 회원 정보 일괄 조회")
+    public ApiResponse<List<MemberSearchResponse>> getMembersByIds(@RequestParam List<UUID> ids) {
+        return ApiResponse.ok(manageMemberUseCase.getMembersByIds(ids));
     }
 
     // JWT에서 memberId 추출

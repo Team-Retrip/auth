@@ -9,3 +9,9 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
+
+cloud:
+  aws:
+    region: ap-northeast-2
+  s3:
+    bucket: retrip-media

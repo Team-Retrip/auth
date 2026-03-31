@@ -11,16 +11,19 @@ import com.retrip.auth.application.in.response.MemberCreateResponse;
 import com.retrip.auth.application.in.response.MemberUpdateResponse;
 import com.retrip.auth.domain.entity.Member;
 import com.retrip.auth.domain.exception.MemberNotFoundException;
-import com.sun.jdi.request.DuplicateRequestException;
+import com.retrip.auth.domain.exception.common.BusinessException;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.BadCredentialsException;
+
+import java.util.List;
+import java.util.UUID;
 
 class MemberServiceTest extends BaseMemberServiceTest {
 
     @Test
     void 회원가입_성공() throws Exception {
         // given
-        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1234", "test");
+        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1234", "test", null, null, true, false);
 
         //when
         MemberCreateResponse response = memberService.createUser(request);
@@ -34,43 +37,41 @@ class MemberServiceTest extends BaseMemberServiceTest {
     @Test
     void 회원가입_중복_회원가입() throws Exception {
         // given
-        memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234")));
-        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1111", "중복 테스트");
+        memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234"), List.of("user"), null, null, true, false));
+        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1111", "중복 테스트", null, null, true, false);
 
         //when
 
         //then
         assertThatThrownBy(() -> memberService.createUser(request))
-                .isInstanceOf(DuplicateRequestException.class)
-                .hasMessageContaining("Email already exists");
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("이미 존재하는 이메일입니다.");
     }
 
 
     @Test
     void 회원정보_수정_패스워드_달라_실패() throws Exception {
         // given
-        memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234")));
-        MemberUpdateRequest request = new MemberUpdateRequest("test@naver.com", "1235", "1111",
-                "수정 테스트");
+        Member saved = memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234"), List.of("user"), null, null, true, false));
+        MemberUpdateRequest request = new MemberUpdateRequest("1235", "1111", "수정 테스트", null, null);
 
         //when
 
         //then
-        assertThatThrownBy(() -> memberService.updateUser(request))
+        assertThatThrownBy(() -> memberService.updateUser(saved.getId(), request))
                 .isInstanceOf(BadCredentialsException.class)
-                .hasMessageContaining("Bad credentials");
+                .hasMessageContaining("현재 비밀번호가 일치하지 않습니다.");
     }
 
     @Test
     void 저장된_회원_정보가_없어서_실패() throws Exception {
         // given
-        MemberUpdateRequest request = new MemberUpdateRequest("test@naver.com", "1234", "1111",
-                "수정 테스트");
+        MemberUpdateRequest request = new MemberUpdateRequest("1234", "1111", "수정 테스트", null, null);
 
         //when
 
         //then
-        assertThatThrownBy(() -> memberService.updateUser(request))
+        assertThatThrownBy(() -> memberService.updateUser(UUID.randomUUID(), request))
                 .isInstanceOf(MemberNotFoundException.class)
                 .hasMessageContaining("멤버 엔티티를 찾을 수 없습니다.");
     }
@@ -78,12 +79,11 @@ class MemberServiceTest extends BaseMemberServiceTest {
     @Test
     void 회원정보_수정_성공() throws Exception {
         // given
-        memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234")));
-        MemberUpdateRequest request = new MemberUpdateRequest("test@naver.com", "1234", "1111",
-                "수정 테스트");
+        Member saved = memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234"), List.of("user"), null, null, true, false));
+        MemberUpdateRequest request = new MemberUpdateRequest("1234", "1111", "수정 테스트", null, null);
 
         //when
-        MemberUpdateResponse response = memberService.updateUser(request);
+        MemberUpdateResponse response = memberService.updateUser(saved.getId(), request);
 
         //then
         assertThat(response.id()).isNotNull();

@@ -3,6 +3,7 @@ package com.retrip.auth.application.in;
 import com.retrip.auth.application.config.JwtProvider;
 import com.retrip.auth.application.in.request.*;
 import com.retrip.auth.application.in.response.*;
+import com.retrip.auth.application.in.response.MemberSearchResponse;
 import com.retrip.auth.application.in.usercase.ManageMemberUseCase;
 import com.retrip.auth.application.out.repository.MemberRepository;
 import com.retrip.auth.application.out.repository.RefreshTokenRepository;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -162,6 +164,27 @@ public class MemberService implements ManageMemberUseCase {
         );
 
         return new VerifyPasswordResponse(isValid);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MemberSearchResponse> searchMembers(String name) {
+        return memberRepository.searchByNameContainingIgnoreCase(name)
+                .stream()
+                .map(MemberSearchResponse::of)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MemberSearchResponse> getMembersByIds(List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return memberRepository.findAllByIdInAndIsDeletedFalse(ids)
+                .stream()
+                .map(MemberSearchResponse::of)
+                .collect(Collectors.toList());
     }
 
     @Override

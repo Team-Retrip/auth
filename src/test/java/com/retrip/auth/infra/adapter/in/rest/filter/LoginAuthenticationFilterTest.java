@@ -29,7 +29,7 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
     private MockMvc mockMvc;
 
     @Test
-    void 로그인_성공() throws Exception {
+     void 로그인_성공() throws Exception {
         memberRepository.save(member);
 
         // given
@@ -38,7 +38,7 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
         //when
         // headers 생성
         HttpHeaders headers = new HttpHeaders();
-        headers.add("id", request.email());
+        headers.add("id", request.id());
         headers.add("password", request.password());
 
         // when & then
@@ -55,7 +55,7 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
     @Test
     void 유저_생성_성공() throws Exception {
         // given
-        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1234", "test");
+        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1234", "test", null, null, true, false);
 
         //when
         String json = new ObjectMapper().writeValueAsString(request);
@@ -76,8 +76,7 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
         memberRepository.save(member);
 
         // given
-        MemberUpdateRequest request = new MemberUpdateRequest("test@naver.com", "1234", "1111",
-                "수정 테스트");
+        MemberUpdateRequest request = new MemberUpdateRequest("1234", "1111", "수정 테스트", null, null);
         //when
         String json = new ObjectMapper().writeValueAsString(request);
 
@@ -98,7 +97,7 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
         memberRepository.save(member);
 
         // given
-        MemberDeleteRequest request = new MemberDeleteRequest("test@naver.com", "1234");
+        MemberDeleteRequest request = new MemberDeleteRequest("1234");
         //when
         String json = new ObjectMapper().writeValueAsString(request);
 

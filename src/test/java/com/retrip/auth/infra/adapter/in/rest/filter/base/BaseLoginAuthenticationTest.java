@@ -35,7 +35,11 @@ public abstract class BaseLoginAuthenticationTest {
                 "테스트",
                 "test@naver.com",
                 passwordEncoder.encode("1234"),
-                List.of("admin")
+                List.of("admin"),
+                null,
+                null,
+                true,
+                false
         );
     }
 }

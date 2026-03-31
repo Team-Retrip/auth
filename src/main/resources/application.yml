@@ -93,6 +93,15 @@ springdoc:
   swagger-ui:
     use-root-path: true
 
+cloud:
+  aws:
+    region: ap-northeast-2
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID}
+      secret-key: ${AWS_SECRET_ACCESS_KEY}
+  s3:
+    bucket: retrip-media
+
 # PortOne V2 설정 (환경 변수로 관리)
 portone:
   public:

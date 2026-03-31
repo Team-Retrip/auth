@@ -3,6 +3,7 @@ package com.retrip.auth.application.in.usercase;
 import com.retrip.auth.application.in.request.*;
 import com.retrip.auth.application.in.response.*;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ManageMemberUseCase {
@@ -16,4 +17,8 @@ public interface ManageMemberUseCase {
     VerifyPasswordResponse verifyPassword(UUID memberId, VerifyPasswordRequest request);
 
     UUID findIdByEmail(String email);
+
+    List<MemberSearchResponse> searchMembers(String name);
+
+    List<MemberSearchResponse> getMembersByIds(List<UUID> ids);
 }
