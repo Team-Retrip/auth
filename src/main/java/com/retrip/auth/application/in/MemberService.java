@@ -1,5 +1,6 @@
 package com.retrip.auth.application.in;
 
+import com.retrip.auth.application.config.CustomUserDetails;
 import com.retrip.auth.application.config.JwtProvider;
 import com.retrip.auth.application.in.request.*;
 import com.retrip.auth.application.in.response.*;
@@ -17,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,29 +40,19 @@ public class MemberService implements ManageMemberUseCase {
     public MemberCreateResponse createUser(MemberCreateRequest request) {
         String encode = passwordEncoder.encode(request.password());
 
-        // 이메일 중복 체크 (탈퇴 회원 포함)
         List<Member> existingMembers = memberRepository.findByEmail(new MemberEmail(request.email()));
-
         if (!existingMembers.isEmpty()) {
             Member existing = existingMembers.get(0);
-            if (existing.getIsDeleted()) {
-                throw new BusinessException(ErrorCode.DELETED_MEMBER_CANNOT_REJOIN);
-            }
+            if (existing.getIsDeleted()) throw new BusinessException(ErrorCode.DELETED_MEMBER_CANNOT_REJOIN);
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         Member member = memberRepository.save(request.to(encode));
 
-        // 토큰 생성
         Authentication authentication = createAuthentication(member);
         LoginResponse.TokenResponse tokens = jwtProvider.generateTokens(authentication);
 
-        // Refresh Token 저장
-        RefreshToken refreshToken = new RefreshToken(
-                tokens.refreshToken(),
-                member.getId().toString(),
-                "ROLE_USER"
-        );
+        RefreshToken refreshToken = new RefreshToken(tokens.refreshToken(), member.getId().toString(), "ROLE_USER");
         refreshTokenRepository.save(refreshToken);
 
         return MemberCreateResponse.of(member, tokens.accessToken(), tokens.refreshToken());
@@ -70,27 +60,27 @@ public class MemberService implements ManageMemberUseCase {
 
     @Override
     public MemberUpdateResponse updateUser(UUID memberId, MemberUpdateRequest request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(MemberNotFoundException::new);
+        Member member = memberRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
 
-        // 현재 비밀번호 확인
-        if (!passwordEncoder.matches(request.password(), member.getPassword().getValue())) {
-            throw new BadCredentialsException("현재 비밀번호가 일치하지 않습니다.");
+        // 본인인증 완료 후 이름/생년월일 변경 불가
+        if (member.isVerified()) {
+            boolean tryName = request.name() != null && !request.name().equals(member.getNameValue());
+            boolean tryBirth = request.birthDate() != null && !request.birthDate().equals(member.getBirthDate());
+            if (tryName || tryBirth) throw new BusinessException(ErrorCode.VERIFIED_MEMBER_CANNOT_CHANGE);
         }
 
-        // 정보 수정
+        // 비밀번호 있는 계정만 현재 비밀번호 검증
+        if (member.hasPassword()) {
+            if (!passwordEncoder.matches(request.password(), member.getPasswordValue()))
+                throw new BadCredentialsException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
         String encodedNewPassword = request.newPassword() != null
                 ? passwordEncoder.encode(request.newPassword())
-                : member.getPassword().getValue();
+                : member.getPasswordValue();
 
-        member.update(
-                request.name(),
-                encodedNewPassword,
-                request.gender(),
-                request.birthDate()
-        );
+        member.update(request.name(), encodedNewPassword, request.gender(), request.birthDate());
 
-        // Access Token 재발급
         Authentication authentication = createAuthentication(member);
         LoginResponse.TokenResponse tokens = jwtProvider.generateTokens(authentication);
 
@@ -99,70 +89,61 @@ public class MemberService implements ManageMemberUseCase {
 
     @Override
     public void deleteUser(UUID memberId, MemberDeleteRequest request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(MemberNotFoundException::new);
+        Member member = memberRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
 
-        // 현재 비밀번호 확인
-        if (!passwordEncoder.matches(request.password(), member.getPassword().getValue())) {
-            throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
+        // 비밀번호 있는 계정만 비밀번호 검증
+        if (member.hasPassword()) {
+            if (!passwordEncoder.matches(request.password(), member.getPasswordValue()))
+                throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
         }
 
-        // Refresh Token 삭제
         refreshTokenRepository.deleteByMemberId(memberId.toString());
         member.delete();
     }
 
     @Override
     public ChangePasswordResponse changePassword(UUID memberId, ChangePasswordRequest request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(MemberNotFoundException::new);
+        Member member = memberRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
 
-        // 현재 비밀번호 확인
-        if (!passwordEncoder.matches(request.currentPassword(), member.getPassword().getValue())) {
+        // 소셜 전용 계정(비밀번호 없음) 차단
+        if (!member.hasPassword()) throw new BusinessException(ErrorCode.SOCIAL_MEMBER_CANNOT_CHANGE_PASSWORD);
+
+        if (!passwordEncoder.matches(request.currentPassword(), member.getPasswordValue()))
             throw new BadCredentialsException("현재 비밀번호가 일치하지 않습니다.");
-        }
 
-        // 새 비밀번호로 변경
         String encodedNewPassword = passwordEncoder.encode(request.newPassword());
         member.updatePassword(encodedNewPassword);
 
-        // 기존 Refresh Token 모두 삭제
         refreshTokenRepository.deleteByMemberId(memberId.toString());
 
-        // 새 토큰 발급
         Authentication authentication = createAuthentication(member);
         LoginResponse.TokenResponse tokens = jwtProvider.generateTokens(authentication);
 
-        // 새 Refresh Token 저장
-        RefreshToken refreshToken = new RefreshToken(
-                tokens.refreshToken(),
-                memberId.toString(),
-                "ROLE_USER"
-        );
+        RefreshToken refreshToken = new RefreshToken(tokens.refreshToken(), memberId.toString(), "ROLE_USER");
         refreshTokenRepository.save(refreshToken);
 
         return new ChangePasswordResponse(tokens.accessToken(), tokens.refreshToken());
     }
 
     @Override
+    public void setInitialPassword(UUID memberId, String rawPassword) {
+        Member member = memberRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
+        member.setPassword(passwordEncoder.encode(rawPassword));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public MemberInfoResponse getMyInfo(UUID memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(MemberNotFoundException::new);
+        Member member = memberRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
         return MemberInfoResponse.of(member);
     }
 
     @Override
     @Transactional(readOnly = true)
     public VerifyPasswordResponse verifyPassword(UUID memberId, VerifyPasswordRequest request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(MemberNotFoundException::new);
-
-        boolean isValid = passwordEncoder.matches(
-                request.password(),
-                member.getPassword().getValue()
-        );
-
+        Member member = memberRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
+        boolean isValid = member.hasPassword() &&
+                passwordEncoder.matches(request.password(), member.getPasswordValue());
         return new VerifyPasswordResponse(isValid);
     }
 
@@ -178,9 +159,7 @@ public class MemberService implements ManageMemberUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<MemberSearchResponse> getMembersByIds(List<UUID> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return List.of();
-        }
+        if (ids == null || ids.isEmpty()) return List.of();
         return memberRepository.findAllByIdInAndIsDeletedFalse(ids)
                 .stream()
                 .map(MemberSearchResponse::of)
@@ -191,33 +170,13 @@ public class MemberService implements ManageMemberUseCase {
     @Transactional(readOnly = true)
     public UUID findIdByEmail(String email) {
         return memberRepository.findByEmailAndIsDeletedFalse(new MemberEmail(email))
-                .stream()
-                .findFirst()
+                .stream().findFirst()
                 .map(Member::getId)
                 .orElseThrow(MemberNotFoundException::new);
     }
 
-    // ========================================
-    // Private Helper Methods
-    // ========================================
-
-    private Member findByEmail(String email) {
-        return memberRepository.findByEmailAndIsDeletedFalse(new MemberEmail(email))
-                .stream().findAny().orElseThrow(MemberNotFoundException::new);
-    }
-
-    private boolean isSamePassword(String password, String inputPassword) {
-        if (!passwordEncoder.matches(inputPassword, password)) {
-            throw new BadCredentialsException("Bad credentials");
-        }
-        return true;
-    }
-
     private Authentication createAuthentication(Member member) {
-        return new UsernamePasswordAuthenticationToken(
-                member.getId().toString(),  // ✅ email → memberId로 변경
-                null,
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
-        );
+        CustomUserDetails userDetails = new CustomUserDetails(member);
+        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 }

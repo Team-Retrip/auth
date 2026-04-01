@@ -1,5 +1,7 @@
 package com.retrip.auth.domain.entity;
 
+import com.retrip.auth.domain.exception.common.BusinessException;
+import com.retrip.auth.domain.exception.common.ErrorCode;
 import com.retrip.auth.domain.vo.MemberEmail;
 import com.retrip.auth.domain.vo.MemberName;
 import com.retrip.auth.domain.vo.MemberPassword;
@@ -40,9 +42,6 @@ public class Member extends BaseEntity {
     @Column(length = 20)
     private String provider;
 
-    @Column(unique = true)
-    private String providerId;
-
     // 본인인증 관련
     @Column(length = 88, unique = true)
     private String ci;
@@ -82,6 +81,9 @@ public class Member extends BaseEntity {
     @Column(length = 4)
     private String mbti;
 
+    @Column(length = 15)
+    private String nickname;
+
     // 설정
     @Column(nullable = false)
     @Builder.Default
@@ -99,7 +101,9 @@ public class Member extends BaseEntity {
         return this.name != null ? this.name.getValue() : null;
     }
 
-    public static Member create(String name, String email, String password, List<String> authorities, String gender, String birthDate, boolean termsAgreed, boolean marketingAgreed) {
+    public static Member create(String name, String email, String password, List<String> authorities,
+                                String gender, String birthDate, boolean termsAgreed, boolean marketingAgreed,
+                                String nickname) {
         Member member = Member.builder()
                 .id(UUID.randomUUID())
                 .name(new MemberName(name))
@@ -112,12 +116,13 @@ public class Member extends BaseEntity {
                 .birthDate(birthDate)
                 .termsAgreed(termsAgreed)
                 .marketingAgreed(marketingAgreed)
+                .nickname((nickname != null && !nickname.isBlank()) ? nickname : name)
                 .build();
         member.authorities = new Authorities(authorities, member);
         return member;
     }
 
-    public static Member createSocialMember(String name, String email, String provider, String providerId) {
+    public static Member createSocialMember(String name, String email, String provider) {
         Member member = Member.builder()
                 .id(UUID.randomUUID())
                 .name(new MemberName(name))
@@ -125,7 +130,7 @@ public class Member extends BaseEntity {
                 .isDeleted(false)
                 .password(new MemberPassword(null))
                 .provider(provider)
-                .providerId(providerId)
+                .nickname(name)
                 .isVerified(false)
                 .build();
         member.authorities = new Authorities(List.of("user"), member);
@@ -159,8 +164,26 @@ public class Member extends BaseEntity {
         this.verifiedAt = LocalDateTime.now();
     }
 
-    public void updateSocialInfo(String name) {
+    public void updateSocialInfo(String name, String provider) {
         this.name = new MemberName(name);
+        this.provider = provider;
+    }
+
+    public void updateLastLoginProvider(String provider) {
+        this.provider = provider;
+    }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public boolean hasPassword() {
+        return this.getPasswordValue() != null;
+    }
+
+    public void setPassword(String encodedPassword) {
+        if (this.hasPassword()) throw new BusinessException(ErrorCode.PASSWORD_ALREADY_EXISTS);
+        this.password = new MemberPassword(encodedPassword);
     }
 
     public void updatePassword(String encodedPassword) {

@@ -1,10 +1,12 @@
 package com.retrip.auth.infra.adapter.in.rest.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.retrip.auth.application.config.CustomUserDetails;
 import com.retrip.auth.application.config.JwtConfig;
 import com.retrip.auth.application.config.JwtProvider;
 import com.retrip.auth.application.in.request.LoginRequest;
 import com.retrip.auth.application.in.response.LoginResponse;
+import com.retrip.auth.application.out.repository.MemberRepository;
 import com.retrip.auth.application.out.repository.RefreshTokenRepository;
 import com.retrip.auth.domain.entity.RefreshToken;
 import com.retrip.auth.infra.adapter.in.rest.common.ApiResponse;
@@ -23,17 +25,19 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
 
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final MemberRepository memberRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public LoginAuthenticationFilter(JwtConfig jwtConfig,
                                      AuthenticationManager authenticationManager,
                                      JwtProvider jwtProvider,
-                                     RefreshTokenRepository refreshTokenRepository) {
+                                     RefreshTokenRepository refreshTokenRepository,
+                                     MemberRepository memberRepository) {
         super.setAuthenticationManager(authenticationManager);
-
         this.jwtProvider = jwtProvider;
         this.refreshTokenRepository = refreshTokenRepository;
-        setFilterProcessesUrl("/login"); // POST /login 요청을 가로채도록 설정
+        this.memberRepository = memberRepository;
+        setFilterProcessesUrl("/login");
     }
 
     // 1. 로그인 시도
@@ -41,13 +45,10 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
             LoginRequest loginRequest = objectMapper.readValue(request.getInputStream(), LoginRequest.class);
-
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     loginRequest.id(),
                     loginRequest.password()
             );
-
-            // ★ [수정] 부모 클래스의 메서드를 통해 매니저를 호출
             return this.getAuthenticationManager().authenticate(authToken);
         } catch (IOException e) {
             throw new RuntimeException("로그인 요청 파싱 실패", e);
@@ -58,9 +59,15 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException {
 
-        LoginResponse.TokenResponse tokenResponse = jwtProvider.generateTokens(authResult);
+        // 마지막 로그인 방식 업데이트
+        if (authResult.getPrincipal() instanceof CustomUserDetails userDetails) {
+            memberRepository.findById(userDetails.getMember().getId()).ifPresent(member -> {
+                member.updateLastLoginProvider("local");
+                memberRepository.save(member);
+            });
+        }
 
-        // CustomUserDetails.getName()은 UUID String을 반환하도록 설정했으므로 바로 사용 가능
+        LoginResponse.TokenResponse tokenResponse = jwtProvider.generateTokens(authResult);
         String memberId = authResult.getName();
 
         RefreshToken refreshToken = new RefreshToken(

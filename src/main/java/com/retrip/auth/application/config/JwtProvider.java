@@ -37,6 +37,7 @@ public class JwtProvider {
         String memberId = authentication.getName();
         String email = "";
         String name = "";
+        String nickname = null;
         String gender = null;
         String birthDate = null;
 
@@ -45,19 +46,20 @@ public class JwtProvider {
             memberId = userDetails.getName();
             email = userDetails.getEmail();
             name = userDetails.getRealName();
+            nickname = userDetails.getNickname();
             gender = userDetails.getGender();
             birthDate = userDetails.getBirthDate();
         } else {
             memberId = authentication.getName();
         }
 
-        String accessToken = createToken(memberId, email, name, gender, birthDate, authorities, now, jwtConfig.getAccess().getExpireMin());
-        String refreshToken = createToken(memberId, email, name, gender, birthDate, authorities, now, jwtConfig.getRefresh().getExpireMin());
+        String accessToken = createToken(memberId, email, name, nickname, gender, birthDate, authorities, now, jwtConfig.getAccess().getExpireMin());
+        String refreshToken = createToken(memberId, email, name, nickname, gender, birthDate, authorities, now, jwtConfig.getRefresh().getExpireMin());
 
         return new LoginResponse.TokenResponse(accessToken, refreshToken);
     }
 
-    private String createToken(String subject, String email, String name, String gender, String birthDate,
+    private String createToken(String subject, String email, String name, String nickname, String gender, String birthDate,
                                String authorities, Instant issuedAt, long expirationMinutes) {
         try {
             PrivateKey privateKey = getPrivateKey(jwtConfig.getPrivateKey());
@@ -69,6 +71,7 @@ public class JwtProvider {
                     .claim("name", name)
                     .claim("authorities", authorities); // 권한이 없으면 빈 문자열 ""이 들어감
 
+            if (nickname != null) builder.claim("nickname", nickname);
             if (gender != null) builder.claim("gender", gender);
             if (birthDate != null) builder.claim("birthDate", birthDate);
 
@@ -95,6 +98,7 @@ public class JwtProvider {
             String memberId = claims.getSubject();
             String email = claims.get("username", String.class);
             String name = claims.get("name", String.class);
+            String nickname = claims.get("nickname", String.class);
             String authoritiesStr = claims.get("authorities", String.class);
             String gender = claims.get("gender", String.class);
             String birthDate = claims.get("birthDate", String.class);
@@ -114,6 +118,7 @@ public class JwtProvider {
                     .id(UUID.fromString(memberId))
                     .email(new MemberEmail(email))
                     .name(new MemberName(name))
+                    .nickname(nickname)
                     .gender(gender)
                     .birthDate(birthDate)
                     .password(null)

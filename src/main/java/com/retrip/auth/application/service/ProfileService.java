@@ -4,9 +4,11 @@ import com.retrip.auth.application.dto.request.UpdateNotificationRequest;
 import com.retrip.auth.application.dto.request.UpdateProfileRequest;
 import com.retrip.auth.application.dto.response.ProfileResponse;
 import com.retrip.auth.application.out.repository.MemberRepository;
+import com.retrip.auth.application.out.repository.MemberSocialProviderRepository;
 import com.retrip.auth.application.out.repository.MemberTravelStyleRepository;
 import com.retrip.auth.application.out.repository.TravelStyleRepository;
 import com.retrip.auth.domain.entity.Member;
+import com.retrip.auth.domain.entity.MemberSocialProvider;
 import com.retrip.auth.domain.entity.MemberTravelStyle;
 import com.retrip.auth.domain.entity.TravelStyle;
 import com.retrip.auth.domain.exception.MemberNotFoundException;
@@ -29,8 +31,8 @@ public class ProfileService {
     private final MemberRepository memberRepository;
     private final TravelStyleRepository travelStyleRepository;
     private final MemberTravelStyleRepository memberTravelStyleRepository;
+    private final MemberSocialProviderRepository socialProviderRepository;
 
-    // [수정] String email -> String memberId (UUID)
     public ProfileResponse getProfile(String memberId) {
         Member member = memberRepository.findById(UUID.fromString(memberId))
                 .orElseThrow(MemberNotFoundException::new);
@@ -40,15 +42,17 @@ public class ProfileService {
                 .map(mts -> mts.getTravelStyle().getName())
                 .collect(Collectors.toList());
 
-        return ProfileResponse.from(member, travelStyles);
+        List<MemberSocialProvider> socialProviders = socialProviderRepository.findByMemberId(member.getId());
+
+        return ProfileResponse.from(member, travelStyles, socialProviders);
     }
 
-    // [수정] String email -> String memberId (UUID)
     @Transactional
     public ProfileResponse updateProfile(String memberId, UpdateProfileRequest request) {
         Member member = memberRepository.findById(UUID.fromString(memberId))
                 .orElseThrow(MemberNotFoundException::new);
 
+        if (request.getNickname() != null) member.updateNickname(request.getNickname());
         member.updateProfile(request.getBio(), request.getMbti(), request.getProfileImageUrl());
 
         if (request.getTravelStyles() != null) {
@@ -60,15 +64,15 @@ public class ProfileService {
                 .map(mts -> mts.getTravelStyle().getName())
                 .collect(Collectors.toList());
 
-        return ProfileResponse.from(member, travelStyles);
+        List<MemberSocialProvider> socialProviders = socialProviderRepository.findByMemberId(member.getId());
+
+        return ProfileResponse.from(member, travelStyles, socialProviders);
     }
 
-    // [수정] String email -> String memberId (UUID)
     @Transactional
     public void updateNotificationSettings(String memberId, UpdateNotificationRequest request) {
         Member member = memberRepository.findById(UUID.fromString(memberId))
                 .orElseThrow(MemberNotFoundException::new);
-
         member.updateNotificationSettings(request.getEnabled());
     }
 

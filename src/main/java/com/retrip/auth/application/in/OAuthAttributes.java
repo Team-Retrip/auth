@@ -3,6 +3,7 @@ package com.retrip.auth.application.in;
 import com.retrip.auth.domain.entity.Member;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 
 import java.util.Map;
 
@@ -37,9 +38,12 @@ public class OAuthAttributes {
                 .build();
     }
 
+    @SuppressWarnings("unchecked")
     private static OAuthAttributes ofKakao(String userNameAttributeName, Map<String, Object> attributes) {
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+        if (kakaoAccount == null) throw new OAuth2AuthenticationException("카카오 계정 정보를 가져올 수 없습니다.");
         Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+        if (profile == null) throw new OAuth2AuthenticationException("카카오 프로필 정보를 가져올 수 없습니다.");
 
         return OAuthAttributes.builder()
                 .name((String) profile.get("nickname"))
@@ -67,6 +71,6 @@ public class OAuthAttributes {
 
 
     public Member toEntity() {
-        return Member.createSocialMember(name, email, provider, providerId);
+        return Member.createSocialMember(name, email, provider);
     }
 }

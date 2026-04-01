@@ -2,7 +2,9 @@ package com.retrip.auth.application.in;
 
 import com.retrip.auth.application.config.CustomUserDetails;
 import com.retrip.auth.application.out.repository.MemberRepository;
+import com.retrip.auth.application.out.repository.MemberSocialProviderRepository;
 import com.retrip.auth.domain.entity.Member;
+import com.retrip.auth.domain.entity.MemberSocialProvider;
 import com.retrip.auth.domain.vo.MemberEmail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ import java.util.Optional;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final MemberRepository memberRepository;
+    private final MemberSocialProviderRepository socialProviderRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -39,22 +42,44 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private Member saveOrUpdate(OAuthAttributes attributes) {
-        Optional<Member> memberOptional = memberRepository.findByEmailAndIsDeletedFalse(new MemberEmail(attributes.getEmail()))
+
+        // Step 1: providerId로 기존 연동 확인 (재로그인)
+        Optional<MemberSocialProvider> existingSocial =
+                socialProviderRepository.findByProviderAndProviderId(
+                        attributes.getProvider(), attributes.getProviderId());
+
+        if (existingSocial.isPresent()) {
+            Member member = memberRepository.findById(existingSocial.get().getMemberId())
+                    .orElseThrow(() -> new OAuth2AuthenticationException("연동된 멤버를 찾을 수 없습니다."));
+            member.updateLastLoginProvider(attributes.getProvider());
+            log.info("소셜 재로그인: {} ({})", attributes.getEmail(), attributes.getProvider());
+            return member;
+        }
+
+        // Step 2: 이메일로 기존 계정 확인 (다른 소셜 or 이메일 계정 → 자동 연동)
+        Optional<Member> existingMember = memberRepository
+                .findByEmailAndIsDeletedFalse(new MemberEmail(attributes.getEmail()))
                 .stream().findFirst();
 
-        Member member;
-        if (memberOptional.isPresent()) {
-            member = memberOptional.get();
-            if (member.getProvider() == null || member.getProvider().equals("local")) {
-                log.warn("기존 로컬 계정({})으로 소셜 로그인을 시도했습니다.", attributes.getEmail());
-                // TODO: 추후 계정 연동 정책에 따라 로직 수정 필요 (현재는 정보 업데이트만 수행)
+        if (existingMember.isPresent()) {
+            Member member = existingMember.get();
+            if (!socialProviderRepository.existsByMemberIdAndProvider(member.getId(), attributes.getProvider())) {
+                socialProviderRepository.save(
+                        MemberSocialProvider.create(member.getId(), attributes.getProvider(),
+                                attributes.getProviderId(), attributes.getEmail()));
             }
-            member.updateSocialInfo(attributes.getName());
-        } else {
-            member = attributes.toEntity();
-            memberRepository.save(member);
-            log.info("신규 소셜 회원 가입: {} ({})", attributes.getEmail(), attributes.getProvider());
+            member.updateLastLoginProvider(attributes.getProvider());
+            log.info("소셜 계정 연동: {} → {}", attributes.getEmail(), attributes.getProvider());
+            return member;
         }
-        return member;
+
+        // Step 3: 신규 가입
+        Member newMember = attributes.toEntity();
+        memberRepository.save(newMember);
+        socialProviderRepository.save(
+                MemberSocialProvider.create(newMember.getId(), attributes.getProvider(),
+                        attributes.getProviderId(), attributes.getEmail()));
+        log.info("신규 소셜 회원 가입: {} ({})", attributes.getEmail(), attributes.getProvider());
+        return newMember;
     }
 }

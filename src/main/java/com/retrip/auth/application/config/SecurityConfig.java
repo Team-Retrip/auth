@@ -2,6 +2,7 @@ package com.retrip.auth.application.config;
 
 import com.retrip.auth.application.in.CustomOAuth2UserService;
 import com.retrip.auth.application.in.MemberQueryService;
+import com.retrip.auth.application.out.repository.MemberRepository;
 import com.retrip.auth.application.out.repository.RefreshTokenRepository;
 import com.retrip.auth.infra.adapter.in.rest.filter.JwtAuthenticationFilter;
 import com.retrip.auth.infra.adapter.in.rest.filter.LoginAuthenticationFilter;
@@ -39,6 +40,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final MemberRepository memberRepository;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
@@ -67,8 +69,7 @@ public class SecurityConfig {
             JwtConfig jwtConfig,
             AuthenticationManager authenticationManager,
             JwtProvider jwtProvider) {
-        LoginAuthenticationFilter filter = new LoginAuthenticationFilter(jwtConfig, authenticationManager, jwtProvider, refreshTokenRepository);
-        return filter;
+        return new LoginAuthenticationFilter(jwtConfig, authenticationManager, jwtProvider, refreshTokenRepository, memberRepository);
     }
 
     @Bean

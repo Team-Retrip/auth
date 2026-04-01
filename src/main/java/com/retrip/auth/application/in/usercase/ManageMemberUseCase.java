@@ -21,4 +21,6 @@ public interface ManageMemberUseCase {
     List<MemberSearchResponse> searchMembers(String name);
 
     List<MemberSearchResponse> getMembersByIds(List<UUID> ids);
+
+    void setInitialPassword(UUID memberId, String rawPassword);
 }

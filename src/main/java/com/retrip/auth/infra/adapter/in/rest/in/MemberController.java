@@ -1,6 +1,7 @@
 package com.retrip.auth.infra.adapter.in.rest.in;
 
 import com.retrip.auth.application.in.request.*;
+import com.retrip.auth.application.in.request.SetInitialPasswordRequest;
 import com.retrip.auth.application.in.response.*;
 import com.retrip.auth.application.in.response.MemberSearchResponse;
 import com.retrip.auth.application.in.usercase.ManageMemberUseCase;
@@ -55,6 +56,16 @@ public class MemberController {
         manageMemberUseCase.deleteUser(memberId, request);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(ApiResponse.noContent());
+    }
+
+    @PostMapping("/password")
+    @Schema(description = "소셜 유저 최초 비밀번호 설정")
+    public ResponseEntity<ApiResponse<?>> setInitialPassword(
+            Authentication authentication,
+            @RequestBody SetInitialPasswordRequest request) {
+        UUID memberId = extractMemberId(authentication);
+        manageMemberUseCase.setInitialPassword(memberId, request.password());
+        return ResponseEntity.ok(ApiResponse.noContent());
     }
 
     @PatchMapping("/password")

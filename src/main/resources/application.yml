@@ -85,13 +85,16 @@ token:
     header: Authorization
     prefix: Bearer
     access:
-      expire-min: 120
+      expire-min: 30
     refresh:
-      expire-min: 1051200 #2년
+      expire-min: 20160 #14일
 
 springdoc:
   swagger-ui:
     use-root-path: true
+
+app:
+  frontend-callback-url: ${FRONTEND_CALLBACK_URL:http://localhost:3000/auth/callback}
 
 cloud:
   aws:

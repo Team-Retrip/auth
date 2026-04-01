@@ -66,6 +66,10 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
     public String getBirthDate() {
         return member.getBirthDate();
     }
+
+    public String getNickname() {
+        return member.getNickname();
+    }
     // =============================================================
 
     // OAuth2User 메서드
