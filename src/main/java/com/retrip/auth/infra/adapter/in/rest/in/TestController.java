@@ -65,7 +65,8 @@ public class TestController {
                             "M",
                             "1995-01-01",
                             true,  // termsAgreed
-                            true   // marketingAgreed
+                            true,  // marketingAgreed
+                            null   // nickname (이름으로 자동 설정)
                     );
                     
                     // 3. DB 저장

@@ -37,8 +37,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override
     public String getPassword() {
-        // VO에서 값 꺼내기
-        return member.getPassword().getValue();
+        return member.getPassword() != null ? member.getPassword().getValue() : null;
     }
 
     @Override

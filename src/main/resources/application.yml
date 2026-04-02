@@ -28,7 +28,7 @@ spring:
             scope:
               - profile
               - email
-            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+            redirect-uri: "${APP_BASE_URL:http://localhost:8080}/login/oauth2/code/google"
           kakao:
             client-id: ${KAKAO_CLIENT_ID:your-kakao-rest-api-key}
             client-secret: ${KAKAO_CLIENT_SECRET:your-kakao-client-secret}
@@ -37,7 +37,7 @@ spring:
             scope:
               - profile_nickname
               - account_email
-            redirect-uri: "http://localhost:8080/login/oauth2/code/kakao"
+            redirect-uri: "${APP_BASE_URL:http://localhost:8080}/login/oauth2/code/kakao"
             client-name: Kakao
 
           naver:
@@ -48,7 +48,7 @@ spring:
             scope:
               - name
               - email
-            redirect-uri: "http://localhost:8080/login/oauth2/code/naver"
+            redirect-uri: "${APP_BASE_URL:http://localhost:8080}/login/oauth2/code/naver"
             client-name: Naver
 
         provider:

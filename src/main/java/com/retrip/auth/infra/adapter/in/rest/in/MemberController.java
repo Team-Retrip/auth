@@ -80,14 +80,7 @@ public class MemberController {
     @GetMapping("/me")
     @Schema(description = "내 정보 조회")
     public ApiResponse<MemberInfoResponse> getMyInfo(Authentication authentication) {
-        log.info("=== Controller /users/me ===");
-        log.info("Authentication: {}", authentication);
-        log.info("Principal: {}", authentication != null ? authentication.getPrincipal() : "null");
-        log.info("Authorities: {}", authentication != null ? authentication.getAuthorities() : "null");
-
         UUID memberId = extractMemberId(authentication);
-        log.info("Extracted Member ID: {}", memberId);
-
         return ApiResponse.ok(manageMemberUseCase.getMyInfo(memberId));
     }
 
