@@ -14,15 +14,14 @@ Content-Type: application/json
   "name": "테스터"
 }
 
-### 2. DB에 저장된 토큰 조회 (디버깅)
-GET http://localhost:8080/debug/tokens
-
 ### 2. [Auth] 로그인 및 토큰 발급
-# 주의: LoginAuthenticationFilter 구현에 따라 id, password를 헤더로 전송합니다.
 POST {{auth_host}}/login
 Content-Type: application/json
-id: {{email}}
-password: {{password}}
+
+{
+  "id": "{{email}}",
+  "password": "{{password}}"
+}
 
 > {%
     // 응답에서 accessToken을 추출하여 전역 변수 'auth_token'에 저장

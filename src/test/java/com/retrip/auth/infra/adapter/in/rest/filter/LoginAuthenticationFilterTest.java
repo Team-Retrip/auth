@@ -1,6 +1,7 @@
 package com.retrip.auth.infra.adapter.in.rest.filter;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.retrip.auth.application.in.request.LoginRequest;
 import com.retrip.auth.application.in.request.MemberCreateRequest;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -28,66 +30,49 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Test
-     void 로그인_성공() throws Exception {
+    void 로그인_성공() throws Exception {
         memberRepository.save(member);
 
-        // given
         LoginRequest request = new LoginRequest("test@naver.com", "1234");
 
-        //when
-        // headers 생성
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("id", request.id());
-        headers.add("password", request.password());
-
-        // when & then
-        mockMvc.perform(get("/login")
+        mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .headers(headers))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").isBoolean())
-                .andExpect(jsonPath("$.status").isNotEmpty())
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
     }
 
     @Test
     void 유저_생성_성공() throws Exception {
-        // given
-        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1234", "test", null, null, true, false);
+        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "Test1234!", "test", null, null, null, true, false);
 
-        //when
-        String json = new ObjectMapper().writeValueAsString(request);
-
-        // when & then
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json)
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").isBoolean())
-                .andExpect(jsonPath("$.status").isNotEmpty())
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.id").isNotEmpty())
                 .andExpect(jsonPath("$.data.email").isNotEmpty());
     }
+
     @Test
     void 유저_수정_성공() throws Exception {
         memberRepository.save(member);
 
-        // given
-        MemberUpdateRequest request = new MemberUpdateRequest("1234", "1111", "수정 테스트", null, null);
-        //when
-        String json = new ObjectMapper().writeValueAsString(request);
+        // 로그인해서 토큰 획득
+        String accessToken = login("test@naver.com", "1234");
 
-        // when & then
+        MemberUpdateRequest request = new MemberUpdateRequest("1234", "Test1234!", "수정 테스트", null, null);
+
         mockMvc.perform(put("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json)
-                )
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").isBoolean())
-                .andExpect(jsonPath("$.status").isNotEmpty())
                 .andExpect(jsonPath("$.data.id").isNotEmpty())
                 .andExpect(jsonPath("$.data.email").isNotEmpty());
     }
@@ -96,19 +81,27 @@ class LoginAuthenticationFilterTest extends BaseLoginAuthenticationTest {
     void 유저_삭제_성공() throws Exception {
         memberRepository.save(member);
 
-        // given
-        MemberDeleteRequest request = new MemberDeleteRequest("1234");
-        //when
-        String json = new ObjectMapper().writeValueAsString(request);
+        // 로그인해서 토큰 획득
+        String accessToken = login("test@naver.com", "1234");
 
-        // when & then
+        MemberDeleteRequest request = new MemberDeleteRequest("1234");
+
         mockMvc.perform(delete("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json)
-                )
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNoContent());
+    }
+
+    private String login(String email, String password) throws Exception {
+        LoginRequest loginRequest = new LoginRequest(email, password);
+        MvcResult result = mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").isBoolean())
-                .andExpect(jsonPath("$.status").isNotEmpty())
-                .andExpect(jsonPath("$.message").isNotEmpty());
+                .andReturn();
+
+        JsonNode data = objectMapper.readTree(result.getResponse().getContentAsString()).get("data");
+        return data.get("accessToken").asText();
     }
 }

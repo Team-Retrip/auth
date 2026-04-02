@@ -3,6 +3,7 @@ package com.retrip.auth.infra.adapter.in.rest.in;
 import com.retrip.auth.application.config.JwtProvider;
 import com.retrip.auth.application.in.AuthService;
 import com.retrip.auth.application.in.response.LoginResponse;
+import com.retrip.auth.application.out.repository.MemberRepository;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class AuthControllerTest {
 
     @MockBean
     private JwtProvider jwtProvider;
+
+    @MockBean
+    private MemberRepository memberRepository;
 
     @Test
     @DisplayName("토큰 재발급 API 성공 - 쿠키 설정 확인")

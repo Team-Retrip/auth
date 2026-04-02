@@ -3,189 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReTrip 통합 테스트 (V3)</title>
-
-    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
+    <title>ReTrip Auth API 통합 테스트</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 30px auto; padding: 20px; background: #f0f2f5; }
-        .container { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .section { background: #fff; padding: 20px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; border-left: 5px solid #667eea; }
-        h1 { text-align: center; color: #333; }
-        h3 { margin-top: 0; color: #444; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { background: #667eea; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        button:hover:not(:disabled) { background: #5a6fd6; }
-        .result { background: #2d2d2d; color: #50ff50; padding: 15px; margin-top: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; font-size: 13px; display: none; }
-        .error { color: #ff5050; }
-        .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
-        .checkbox-group label { display: flex; align-items: center; background: #eee; padding: 5px 10px; border-radius: 20px; cursor: pointer; font-size: 13px; }
-        .checkbox-group input { width: auto; margin-right: 5px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        .page-title { text-align: center; color: #2c3e50; margin: 20px 0 30px; font-size: 24px; font-weight: 700; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-top: 4px solid #667eea; }
+        .card h3 { color: #2c3e50; font-size: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .card h3 .badge { background: #667eea; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+        label { display: block; font-size: 12px; color: #666; margin-bottom: 3px; margin-top: 10px; }
+        input, select { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; }
+        input:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.2); }
+        .btn { margin-top: 14px; width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .result-box { margin-top: 12px; background: #1e1e2e; border-radius: 6px; overflow: hidden; display: none; }
+        .result-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #2d2d44; font-size: 12px; }
+        .result-header .status { font-weight: 700; }
+        .status-ok { color: #50fa7b; }
+        .status-err { color: #ff5555; }
+        .result-body { padding: 10px 12px; color: #cdd6f4; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow-y: auto; }
+        .token-display { background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 6px; padding: 10px 12px; font-family: monospace; font-size: 11px; word-break: break-all; color: #4338ca; margin-top: 8px; display: none; }
+        .config-bar { background: white; border-radius: 8px; padding: 16px 20px; max-width: 1400px; margin: 0 auto 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .config-bar label { margin: 0; font-size: 12px; color: #666; white-space: nowrap; }
+        .config-bar input { width: 240px; }
+        .config-bar .btn { width: auto; padding: 8px 18px; margin: 0; }
+        .token-bar { background: #eef2ff; border-radius: 8px; padding: 12px 20px; max-width: 1400px; margin: 0 auto 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 12px; color: #4338ca; font-family: monospace; display: none; }
+        .token-bar strong { color: #312e81; }
+        .divider { max-width: 1400px; margin: 0 auto 16px; display: flex; align-items: center; gap: 10px; color: #999; font-size: 13px; font-weight: 600; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #ddd; }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>ReTrip 기능 테스트</h1>
+<h1 class="page-title">ReTrip Auth API 통합 테스트</h1>
 
-    <div class="section">
-        <h3>⚙️ Step 0: PortOne 설정</h3>
-        <input type="text" id="storeId" placeholder="Store ID 입력">
-        <input type="text" id="channelKey" placeholder="Channel Key 입력">
-        <button onclick="saveConfig()">설정 저장</button>
-    </div>
+<!-- 설정 바 -->
+<div class="config-bar">
+    <label>Auth Server</label>
+    <input type="text" id="apiBase" value="http://localhost:8080" style="width:220px;">
+    <label style="margin-left:10px;">Trip Server</label>
+    <input type="text" id="tripBase" value="http://localhost:8081" style="width:220px;">
+    <button class="btn btn-primary" onclick="saveConfig()" style="width:auto;padding:8px 18px;margin:0;">설정 저장</button>
+    <span id="configStatus" style="font-size:12px;color:#27ae60;display:none;">✓ 저장됨</span>
+</div>
 
-    <div class="section">
-        <h3>👤 Step 1: 회원가입</h3>
-        <input type="email" id="signupEmail" value="user@test.com" placeholder="이메일">
-        <input type="password" id="signupPassword" value="1234" placeholder="비밀번호">
-        <input type="text" id="signupName" value="테스트유저" placeholder="이름">
-        <div style="display: flex; gap: 10px;">
-            <select id="signupGender"><option value="M">남성</option><option value="F">여성</option></select>
-            <input type="number" id="signupAge" value="25" placeholder="나이">
+<!-- 현재 토큰 표시 바 -->
+<div class="token-bar" id="tokenBar">
+    <strong>현재 Access Token:</strong> <span id="tokenPreview"></span>
+</div>
+
+<div class="grid">
+
+    <!-- 1. 회원가입 -->
+    <div class="card">
+        <h3><span class="badge">POST /users</span> 회원가입</h3>
+        <label>이메일</label>
+        <input type="email" id="signupEmail" value="user@test.com">
+        <label>비밀번호 (영문+숫자+특수문자 8~20자)</label>
+        <input type="password" id="signupPassword" value="Test1234!">
+        <label>이름</label>
+        <input type="text" id="signupName" value="테스트유저">
+        <label>닉네임 (선택, 최대 15자)</label>
+        <input type="text" id="signupNickname" placeholder="미입력 시 이름으로 설정">
+        <label>성별</label>
+        <select id="signupGender"><option value="M">남성</option><option value="F">여성</option></select>
+        <label>생년월일 (YYYY-MM-DD, 선택)</label>
+        <input type="text" id="signupBirthDate" placeholder="예: 1995-01-01">
+        <label><input type="checkbox" id="signupTerms" checked style="width:auto;margin-right:5px;">필수 약관 동의</label>
+        <label><input type="checkbox" id="signupMarketing" style="width:auto;margin-right:5px;">마케팅 수신 동의</label>
+        <button class="btn btn-primary" onclick="signup()">회원가입</button>
+        <div class="result-box" id="signupResult">
+            <div class="result-header"><span class="status" id="signupStatus"></span><span>Response</span></div>
+            <div class="result-body" id="signupBody"></div>
         </div>
-        <button onclick="signup()">회원가입</button>
-        <div id="signupResult" class="result"></div>
     </div>
 
-    <div class="section">
-        <h3>🔐 Step 2: 로그인</h3>
-        <button onclick="login()">로그인 (Step 1 정보로)</button>
-        <div id="loginResult" class="result"></div>
-    </div>
-
-    <div class="section">
-        <h3>✨ Step 3: 본인인증 (PortOne V2)</h3>
-        <button id="certBtn" onclick="startCertificationV2()" disabled>본인인증 시작</button>
-        <div id="certResult" class="result"></div>
-    </div>
-
-    <div class="section">
-        <h3>📋 Step 4: 내 프로필 조회</h3>
-        <button id="profileBtn" onclick="getProfile()" disabled>프로필 조회</button>
-        <div id="profileResult" class="result"></div>
-    </div>
-
-    <div class="section">
-        <h3>✏️ Step 5: 프로필 수정 (추가 정보)</h3>
-        <textarea id="updateBio" placeholder="한 줄 소개 (최대 30자)" rows="2">여행을 좋아하는 개발자입니다.</textarea>
-        <select id="updateMbti">
-            <option value="">MBTI 선택</option>
-            <option value="ISTJ">ISTJ</option> <option value="ISFJ">ISFJ</option>
-            <option value="INFJ">INFJ</option> <option value="INTJ">INTJ</option>
-            <option value="ISTP">ISTP</option> <option value="ISFP">ISFP</option>
-            <option value="INFP">INFP</option> <option value="INTP">INTP</option>
-            <option value="ESTP">ESTP</option> <option value="ESFP">ESFP</option>
-            <option value="ENFP">ENFP</option> <option value="ENTP">ENTP</option>
-            <option value="ESTJ">ESTJ</option> <option value="ESFJ">ESFJ</option>
-            <option value="ENFJ">ENFJ</option> <option value="ENTJ">ENTJ</option>
-        </select>
-        <div class="checkbox-group">
-            <label><input type="checkbox" name="styles" value="계획철저"> 계획철저</label>
-            <label><input type="checkbox" name="styles" value="즉흥적"> 즉흥적</label>
-            <label><input type="checkbox" name="styles" value="맛집탐방"> 맛집탐방</label>
-            <label><input type="checkbox" name="styles" value="휴양지"> 휴양지</label>
-            <label><input type="checkbox" name="styles" value="가성비"> 가성비</label>
-            <label><input type="checkbox" name="styles" value="플렉스"> 플렉스</label>
+    <!-- 2. 로그인 -->
+    <div class="card">
+        <h3><span class="badge">POST /login</span> 로그인</h3>
+        <label>이메일 (id 필드)</label>
+        <input type="email" id="loginEmail" value="user@test.com">
+        <label>비밀번호</label>
+        <input type="password" id="loginPassword" value="Test1234!">
+        <button class="btn btn-primary" onclick="login()">로그인</button>
+        <div id="loginTokenDisplay" class="token-display"></div>
+        <div class="result-box" id="loginResult">
+            <div class="result-header"><span class="status" id="loginStatus"></span><span>Response</span></div>
+            <div class="result-body" id="loginBody"></div>
         </div>
-        <button id="updateBtn" onclick="updateProfile()" disabled>정보 수정 저장</button>
-        <div id="updateResult" class="result"></div>
     </div>
+
+    <!-- 3. 내 정보 조회 -->
+    <div class="card">
+        <h3><span class="badge">GET /users/me</span> 내 정보 조회</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:8px;">로그인 후 자동으로 토큰 사용</p>
+        <button class="btn btn-success" onclick="getMe()">내 정보 조회</button>
+        <div class="result-box" id="meResult">
+            <div class="result-header"><span class="status" id="meStatus"></span><span>Response</span></div>
+            <div class="result-body" id="meBody"></div>
+        </div>
+    </div>
+
+    <!-- 4. 비밀번호 확인 -->
+    <div class="card">
+        <h3><span class="badge">POST /users/verify-password</span> 비밀번호 확인</h3>
+        <label>비밀번호 입력</label>
+        <input type="password" id="verifyPw" value="Test1234!">
+        <button class="btn btn-warning" onclick="verifyPassword()">비밀번호 확인</button>
+        <div class="result-box" id="verifyResult">
+            <div class="result-header"><span class="status" id="verifyStatus"></span><span>Response</span></div>
+            <div class="result-body" id="verifyBody"></div>
+        </div>
+    </div>
+
+    <!-- 5. 회원정보 수정 -->
+    <div class="card">
+        <h3><span class="badge">PUT /users</span> 회원정보 수정</h3>
+        <label>현재 비밀번호</label>
+        <input type="password" id="updateCurrentPw" value="Test1234!">
+        <label>새 비밀번호 (변경 시, 빈칸이면 유지)</label>
+        <input type="password" id="updateNewPw" placeholder="빈칸이면 변경 안 함">
+        <label>이름</label>
+        <input type="text" id="updateName" value="수정된이름">
+        <label>성별</label>
+        <select id="updateGender"><option value="M">남성</option><option value="F">여성</option></select>
+        <label>생년월일</label>
+        <input type="text" id="updateBirthDate" placeholder="예: 1995-06-15">
+        <button class="btn btn-warning" onclick="updateUser()">정보 수정</button>
+        <div class="result-box" id="updateResult">
+            <div class="result-header"><span class="status" id="updateStatus"></span><span>Response</span></div>
+            <div class="result-body" id="updateBody"></div>
+        </div>
+    </div>
+
+    <!-- 6. 비밀번호 변경 -->
+    <div class="card">
+        <h3><span class="badge">PATCH /users/password</span> 비밀번호 변경</h3>
+        <label>현재 비밀번호</label>
+        <input type="password" id="changeCurrent" value="Test1234!">
+        <label>새 비밀번호</label>
+        <input type="password" id="changeNew" value="NewPass1234!">
+        <button class="btn btn-warning" onclick="changePassword()">비밀번호 변경</button>
+        <div class="result-box" id="changeResult">
+            <div class="result-header"><span class="status" id="changeStatus"></span><span>Response</span></div>
+            <div class="result-body" id="changeBody"></div>
+        </div>
+    </div>
+
+    <!-- 7. 토큰 재발급 -->
+    <div class="card">
+        <h3><span class="badge">POST /auth/reissue</span> 토큰 재발급</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:8px;">저장된 refreshToken 쿠키로 재발급합니다.</p>
+        <label>현재 Refresh Token</label>
+        <input type="text" id="reissueToken" placeholder="로그인 후 자동 설정됨">
+        <button class="btn btn-success" onclick="reissue()">재발급</button>
+        <div class="result-box" id="reissueResult">
+            <div class="result-header"><span class="status" id="reissueStatus"></span><span>Response</span></div>
+            <div class="result-body" id="reissueBody"></div>
+        </div>
+    </div>
+
+    <!-- 8. 로그아웃 -->
+    <div class="card">
+        <h3><span class="badge">POST /auth/logout</span> 로그아웃</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:8px;">refreshToken 쿠키를 만료 처리합니다.</p>
+        <button class="btn btn-danger" onclick="logout()">로그아웃</button>
+        <div class="result-box" id="logoutResult">
+            <div class="result-header"><span class="status" id="logoutStatus"></span><span>Response</span></div>
+            <div class="result-body" id="logoutBody"></div>
+        </div>
+    </div>
+
+    <!-- 9. 회원탈퇴 -->
+    <div class="card">
+        <h3><span class="badge">DELETE /users</span> 회원탈퇴</h3>
+        <label>비밀번호 확인</label>
+        <input type="password" id="deletePw" value="Test1234!">
+        <button class="btn btn-danger" onclick="deleteUser()">회원탈퇴</button>
+        <div class="result-box" id="deleteResult">
+            <div class="result-header"><span class="status" id="deleteStatus"></span><span>Response</span></div>
+            <div class="result-body" id="deleteBody"></div>
+        </div>
+    </div>
+
+    <!-- 10. 이름 검색 -->
+    <div class="card">
+        <h3><span class="badge">GET /users/search</span> 이름으로 회원 검색</h3>
+        <label>이름 (부분 일치)</label>
+        <input type="text" id="searchName" value="테스트">
+        <button class="btn btn-success" onclick="searchUsers()">검색</button>
+        <div class="result-box" id="searchResult">
+            <div class="result-header"><span class="status" id="searchStatus"></span><span>Response</span></div>
+            <div class="result-body" id="searchBody"></div>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    const API_BASE = 'http://localhost:8080';
-    let CONFIG = { storeId: '', channelKey: '', accessToken: '' };
+    let STATE = {
+        apiBase: 'http://localhost:8080',
+        tripBase: 'http://localhost:8081',
+        accessToken: '',
+        refreshToken: ''
+    };
 
     function saveConfig() {
-        CONFIG.storeId = document.getElementById('storeId').value;
-        CONFIG.channelKey = document.getElementById('channelKey').value;
-        alert('설정 저장됨');
+        STATE.apiBase = document.getElementById('apiBase').value.replace(/\/$/, '');
+        STATE.tripBase = document.getElementById('tripBase').value.replace(/\/$/, '');
+        const s = document.getElementById('configStatus');
+        s.style.display = 'inline';
+        setTimeout(() => s.style.display = 'none', 2000);
+    }
+
+    function setTokens(access, refresh) {
+        STATE.accessToken = access || STATE.accessToken;
+        STATE.refreshToken = refresh || STATE.refreshToken;
+        if (STATE.accessToken) {
+            const bar = document.getElementById('tokenBar');
+            bar.style.display = 'block';
+            document.getElementById('tokenPreview').textContent = STATE.accessToken.substring(0, 40) + '...';
+            document.getElementById('loginTokenDisplay').style.display = 'block';
+            document.getElementById('loginTokenDisplay').textContent =
+                'Access:  ' + STATE.accessToken.substring(0, 50) + '...\nRefresh: ' + (STATE.refreshToken || '(쿠키에 저장됨)').substring(0, 50);
+            if (STATE.refreshToken) {
+                document.getElementById('reissueToken').value = STATE.refreshToken;
+            }
+        }
+    }
+
+    function show(id, status, body, isError) {
+        const box = document.getElementById(id + 'Result');
+        box.style.display = 'block';
+        const st = document.getElementById(id + 'Status');
+        st.textContent = status;
+        st.className = 'status ' + (isError ? 'status-err' : 'status-ok');
+        document.getElementById(id + 'Body').textContent =
+            typeof body === 'object' ? JSON.stringify(body, null, 2) : body;
+    }
+
+    async function call(method, path, body, resultId, useToken) {
+        const url = STATE.apiBase + path;
+        const headers = { 'Content-Type': 'application/json' };
+        if (useToken && STATE.accessToken) {
+            headers['Authorization'] = 'Bearer ' + STATE.accessToken;
+        }
+        try {
+            const opts = { method, headers, credentials: 'include' };
+            if (body !== null) opts.body = JSON.stringify(body);
+            const res = await fetch(url, opts);
+            const text = await res.text();
+            let parsed;
+            try { parsed = JSON.parse(text); } catch { parsed = text; }
+            const isError = !res.ok;
+            show(resultId, res.status + ' ' + (isError ? '❌' : '✅'), parsed, isError);
+            return { ok: !isError, status: res.status, data: parsed };
+        } catch (e) {
+            show(resultId, '네트워크 오류 ❌', e.message, true);
+            return { ok: false };
+        }
     }
 
     async function signup() {
-        try {
-            const res = await axios.post(`${API_BASE}/users`, {
-                email: document.getElementById('signupEmail').value,
-                password: document.getElementById('signupPassword').value,
-                name: document.getElementById('signupName').value,
-                gender: document.getElementById('signupGender').value,
-                age: parseInt(document.getElementById('signupAge').value)
-            });
-            showResult('signupResult', '✅ 가입 성공! accessToken 자동 발급됨.');
-            CONFIG.accessToken = res.data.data.accessToken;
-            enableButtons();
-        } catch (e) { showResult('signupResult', e.response?.data?.message || e.message, true); }
+        const body = {
+            email: document.getElementById('signupEmail').value,
+            password: document.getElementById('signupPassword').value,
+            name: document.getElementById('signupName').value,
+            nickname: document.getElementById('signupNickname').value || null,
+            gender: document.getElementById('signupGender').value,
+            birthDate: document.getElementById('signupBirthDate').value || null,
+            termsAgreed: document.getElementById('signupTerms').checked,
+            marketingAgreed: document.getElementById('signupMarketing').checked
+        };
+        const r = await call('POST', '/users', body, 'signup', false);
+        if (r.ok && r.data?.data) {
+            setTokens(r.data.data.accessToken, r.data.data.refreshToken);
+            document.getElementById('loginEmail').value = body.email;
+            document.getElementById('loginPassword').value = body.password;
+        }
     }
 
     async function login() {
-        try {
-            const res = await axios.post(`${API_BASE}/login`, {
-                id: document.getElementById('signupEmail').value,
-                password: document.getElementById('signupPassword').value
-            });
-            CONFIG.accessToken = res.data.data.accessToken;
-            showResult('loginResult', `✅ 로그인 성공\nToken: ${CONFIG.accessToken.substring(0,20)}...`);
-            enableButtons();
-        } catch (e) { showResult('loginResult', e.response?.data?.message || e.message, true); }
+        const body = {
+            id: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value
+        };
+        const r = await call('POST', '/login', body, 'login', false);
+        if (r.ok && r.data?.data) {
+            setTokens(r.data.data.accessToken, r.data.data.refreshToken);
+        }
     }
 
-    async function startCertificationV2() {
-        if (!CONFIG.storeId) return alert('Step 0 설정을 먼저 해주세요.');
-        try {
-            const response = await PortOne.requestIdentityVerification({
-                storeId: CONFIG.storeId,
-                identityVerificationId: `identity_${Date.now()}`,
-                channelKey: CONFIG.channelKey,
-            });
-            if (response.code) throw new Error(response.message);
-
-            const verifyRes = await axios.post(`${API_BASE}/api/auth/verify-identity`,
-                { impUid: response.identityVerificationId },
-                { headers: { 'Authorization': `Bearer ${CONFIG.accessToken}` } }
-            );
-
-            const d = verifyRes.data.data;
-            showResult('certResult', `✅ 인증 완료\n이름: ${d.name}, 성별: ${d.gender}, 나이: ${d.age}, 인증여부: ${d.isVerified}`);
-        } catch (e) { showResult('certResult', e.message, true); }
+    async function getMe() {
+        await call('GET', '/users/me', null, 'me', true);
     }
 
-    async function getProfile() {
-        try {
-            const res = await axios.get(`${API_BASE}/api/users/profile`, {
-                headers: { 'Authorization': `Bearer ${CONFIG.accessToken}` }
-            });
-            const d = res.data.data;
-            showResult('profileResult', `📋 프로필\n이메일: ${d.email}\n이름: ${d.name} (${d.age}세/${d.gender})\n본인인증: ${d.isVerified}\n소개: ${d.bio}\nMBTI: ${d.mbti}\n스타일: ${d.travelStyles?.join(', ')}`);
-        } catch (e) { showResult('profileResult', e.message, true); }
+    async function verifyPassword() {
+        await call('POST', '/users/verify-password', {
+            password: document.getElementById('verifyPw').value
+        }, 'verify', true);
     }
 
-    async function updateProfile() {
-        const styles = Array.from(document.querySelectorAll('input[name="styles"]:checked')).map(cb => cb.value);
-        try {
-            const res = await axios.put(`${API_BASE}/api/users/profile`, {
-                bio: document.getElementById('updateBio').value,
-                mbti: document.getElementById('updateMbti').value,
-                travelStyles: styles
-            }, { headers: { 'Authorization': `Bearer ${CONFIG.accessToken}` } });
-
-            const d = res.data.data;
-            showResult('updateResult', `✅ 수정 완료\n소개: ${d.bio}\nMBTI: ${d.mbti}\n스타일: ${d.travelStyles?.join(', ')}`);
-            // 프로필 다시 조회하여 갱신 확인
-            getProfile();
-        } catch (e) { showResult('updateResult', e.response?.data?.message || e.message, true); }
+    async function updateUser() {
+        const newPw = document.getElementById('updateNewPw').value;
+        const body = {
+            password: document.getElementById('updateCurrentPw').value,
+            newPassword: newPw || null,
+            name: document.getElementById('updateName').value || null,
+            gender: document.getElementById('updateGender').value || null,
+            birthDate: document.getElementById('updateBirthDate').value || null
+        };
+        const r = await call('PUT', '/users', body, 'update', true);
+        if (r.ok && r.data?.data?.accessToken) {
+            setTokens(r.data.data.accessToken, null);
+        }
     }
 
-    function showResult(id, msg, isError = false) {
-        const el = document.getElementById(id);
-        el.style.display = 'block';
-        el.className = isError ? 'result error' : 'result';
-        el.innerText = msg;
+    async function changePassword() {
+        const body = {
+            currentPassword: document.getElementById('changeCurrent').value,
+            newPassword: document.getElementById('changeNew').value
+        };
+        const r = await call('PATCH', '/users/password', body, 'change', true);
+        if (r.ok && r.data?.data) {
+            setTokens(r.data.data.accessToken, r.data.data.refreshToken);
+        }
     }
 
-    function enableButtons() {
-        ['certBtn', 'profileBtn', 'updateBtn'].forEach(id => document.getElementById(id).disabled = false);
+    async function reissue() {
+        // refreshToken은 HttpOnly 쿠키로 자동 전송 (credentials: include)
+        const r = await call('POST', '/auth/reissue', {}, 'reissue', false);
+        if (r.ok && r.data?.data) {
+            setTokens(r.data.data.accessToken, r.data.data.refreshToken);
+        }
+    }
+
+    async function logout() {
+        await call('POST', '/auth/logout', {}, 'logout', true);
+        STATE.accessToken = '';
+        STATE.refreshToken = '';
+        document.getElementById('tokenBar').style.display = 'none';
+    }
+
+    async function deleteUser() {
+        const r = await call('DELETE', '/users', {
+            password: document.getElementById('deletePw').value
+        }, 'delete', true);
+        if (r.status === 204) {
+            STATE.accessToken = '';
+            STATE.refreshToken = '';
+            document.getElementById('tokenBar').style.display = 'none';
+        }
+    }
+
+    async function searchUsers() {
+        const name = document.getElementById('searchName').value;
+        await call('GET', '/users/search?name=' + encodeURIComponent(name), null, 'search', true);
     }
 </script>
 </body>

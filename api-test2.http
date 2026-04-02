@@ -6,8 +6,8 @@
 ### 전역 변수 설정 (랜덤 값 사용)
 @random_id = {{$randomInt}}
 @email = test2{{random_id}}@naver.com
-@password = password1234
-@new_password = newpassword5678
+@password = Password1234!
+@new_password = Newpassword5678!
 @auth_host = http://15.164.112.64:8081
 @trip_host = http://15.164.112.64:8080
 
@@ -45,16 +45,6 @@ Content-Type: application/json
     client.log("Access Token: " + response.body.data.accessToken.substring(0, 20) + "...");
 %}
 
-
-### 1-2. [Auth] DB에 Refresh Token 저장 확인 (디버깅용)
-GET {{auth_host}}/debug/tokens
-
-> {%
-    client.test("Refresh Token이 DB에 저장됨", function() {
-        client.assert(response.body.length > 0, "Refresh Token이 DB에 존재해야 함");
-    });
-    client.log("✅ DB에 Refresh Token 저장 확인");
-%}
 
 ### ========================================
 ### 📌 Phase 2: 내 정보 조회 (신규 API)
@@ -357,21 +347,7 @@ Authorization: Bearer {{auth_token}}
     client.log("✅ 회원탈퇴 완료");
 %}
 
-### 9-3. [Auth] DB에서 Refresh Token 삭제 확인
-GET {{auth_host}}/debug/tokens
-
-> {%
-    client.test("Refresh Token 삭제 확인", function() {
-        // 탈퇴한 회원의 토큰이 없어야 함
-        let memberTokenExists = response.body.some(token =>
-            token.memberId === client.global.get("member_id")
-        );
-        client.assert(memberTokenExists === false, "탈퇴한 회원의 Refresh Token이 삭제되어야 함");
-    });
-    client.log("✅ Refresh Token 삭제 확인");
-%}
-
-### 9-4. [Trip] 탈퇴 후 여행 조회 시도 (실패해야 함)
+### 9-3. [Trip] 탈퇴 후 여행 조회 시도 (실패해야 함)
 GET {{trip_host}}/trips/my?tripStatus=RECRUITING
 Authorization: Bearer {{auth_token}}
 

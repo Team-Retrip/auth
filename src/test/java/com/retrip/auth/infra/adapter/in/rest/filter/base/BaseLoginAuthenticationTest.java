@@ -39,7 +39,8 @@ public abstract class BaseLoginAuthenticationTest {
                 null,
                 null,
                 true,
-                false
+                false,
+                null
         );
     }
 }
