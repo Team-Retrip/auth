@@ -6,6 +6,7 @@ import com.retrip.auth.domain.exception.common.InvalidValueException;
 import com.retrip.auth.infra.adapter.in.rest.common.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+
+    @Value("${app.cookie.secure:true}")
+    private boolean cookieSecure;
 
     @PostMapping("/reissue")
     public ApiResponse<LoginResponse.TokenResponse> reissue(
@@ -29,10 +33,10 @@ public class AuthController {
 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)
                 .path("/")
                 .maxAge(14 * 24 * 60 * 60) // 14일
-                .sameSite("None")
+                .sameSite(cookieSecure ? "None" : "Lax")
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
 
@@ -51,10 +55,10 @@ public class AuthController {
         // 쿠키 삭제 (만료시간 0)
         ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)
                 .path("/")
                 .maxAge(0)
-                .sameSite("None")
+                .sameSite(cookieSecure ? "None" : "Lax")
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
 

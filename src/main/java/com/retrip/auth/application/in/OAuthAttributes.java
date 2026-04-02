@@ -45,9 +45,16 @@ public class OAuthAttributes {
         Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
         if (profile == null) throw new OAuth2AuthenticationException("카카오 프로필 정보를 가져올 수 없습니다.");
 
+        String email = (String) kakaoAccount.get("email");
+        if (email == null) {
+            // 비즈앱 미인증 시 이메일 제공 불가 → providerId 기반 placeholder 사용
+            // 계정 연동 테스트 시: 이 이메일로 일반 회원가입 후 카카오 로그인하면 연동됨
+            email = "kakao_" + attributes.get(userNameAttributeName) + "@kakao.social";
+        }
+
         return OAuthAttributes.builder()
                 .name((String) profile.get("nickname"))
-                .email((String) kakaoAccount.get("email"))
+                .email(email)
                 .provider("kakao")
                 .providerId(String.valueOf(attributes.get(userNameAttributeName)))
                 .attributes(attributes)

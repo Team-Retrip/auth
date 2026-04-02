@@ -19,6 +19,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import org.springframework.http.ResponseCookie;
+
 import java.io.IOException;
 
 public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -27,16 +29,19 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
     private final RefreshTokenRepository refreshTokenRepository;
     private final MemberRepository memberRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final boolean cookieSecure;
 
     public LoginAuthenticationFilter(JwtConfig jwtConfig,
                                      AuthenticationManager authenticationManager,
                                      JwtProvider jwtProvider,
                                      RefreshTokenRepository refreshTokenRepository,
-                                     MemberRepository memberRepository) {
+                                     MemberRepository memberRepository,
+                                     boolean cookieSecure) {
         super.setAuthenticationManager(authenticationManager);
         this.jwtProvider = jwtProvider;
         this.refreshTokenRepository = refreshTokenRepository;
         this.memberRepository = memberRepository;
+        this.cookieSecure = cookieSecure;
         setFilterProcessesUrl("/login");
     }
 
@@ -76,6 +81,16 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
                 "ROLE_USER"
         );
         refreshTokenRepository.save(refreshToken);
+
+        // refreshToken을 HttpOnly 쿠키로 설정
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .maxAge(14 * 24 * 60 * 60)
+                .sameSite(cookieSecure ? "None" : "Lax")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");

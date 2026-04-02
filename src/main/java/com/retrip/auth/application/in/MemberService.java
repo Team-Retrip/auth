@@ -176,6 +176,8 @@ public class MemberService implements ManageMemberUseCase {
     }
 
     private Authentication createAuthentication(Member member) {
+        // Hibernate 세션 내에서 authorities 강제 초기화 (LazyInitializationException 방지)
+        member.getAuthorities().getValues().size();
         CustomUserDetails userDetails = new CustomUserDetails(member);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }

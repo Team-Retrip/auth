@@ -30,13 +30,12 @@ spring:
               - email
             redirect-uri: "${APP_BASE_URL:http://localhost:8080}/login/oauth2/code/google"
           kakao:
-            client-id: ${KAKAO_CLIENT_ID:your-kakao-rest-api-key}
-            client-secret: ${KAKAO_CLIENT_SECRET:your-kakao-client-secret}
+            client-id: 04628272071e84065d64a7dd3e83b83a
+            client-secret: BpejrRWuBjd4qx9nNsBiqWYFveFtO4hz
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
             scope:
               - profile_nickname
-              - account_email
             redirect-uri: "${APP_BASE_URL:http://localhost:8080}/login/oauth2/code/kakao"
             client-name: Kakao
 

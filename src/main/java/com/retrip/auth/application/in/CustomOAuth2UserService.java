@@ -38,6 +38,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         Member member = saveOrUpdate(attributes);
 
+        // Hibernate 세션이 닫히기 전에 authorities 강제 초기화 (LazyInitializationException 방지)
+        member.getAuthorities().getValues().size();
+
         return new CustomUserDetails(member, oAuth2User.getAttributes());
     }
 
@@ -57,9 +60,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         // Step 2: 이메일로 기존 계정 확인 (다른 소셜 or 이메일 계정 → 자동 연동)
-        Optional<Member> existingMember = memberRepository
-                .findByEmailAndIsDeletedFalse(new MemberEmail(attributes.getEmail()))
-                .stream().findFirst();
+        // placeholder 이메일(kakao_xxx@kakao.social)은 실제 이메일이 아니므로 연동 스킵
+        boolean isPlaceholderEmail = attributes.getEmail() != null
+                && attributes.getEmail().endsWith("@kakao.social");
+
+        Optional<Member> existingMember = isPlaceholderEmail
+                ? Optional.empty()
+                : memberRepository.findByEmailAndIsDeletedFalse(new MemberEmail(attributes.getEmail()))
+                        .stream().findFirst();
 
         if (existingMember.isPresent()) {
             Member member = existingMember.get();

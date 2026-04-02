@@ -8,6 +8,7 @@ import com.retrip.auth.infra.adapter.in.rest.filter.JwtAuthenticationFilter;
 import com.retrip.auth.infra.adapter.in.rest.filter.LoginAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -64,12 +65,15 @@ public class SecurityConfig {
         return authenticationManagerBuilder.build();
     }
 
+    @Value("${app.cookie.secure:true}")
+    private boolean cookieSecure;
+
     @Bean
     public LoginAuthenticationFilter loginAuthenticationFilter(
             JwtConfig jwtConfig,
             AuthenticationManager authenticationManager,
             JwtProvider jwtProvider) {
-        return new LoginAuthenticationFilter(jwtConfig, authenticationManager, jwtProvider, refreshTokenRepository, memberRepository);
+        return new LoginAuthenticationFilter(jwtConfig, authenticationManager, jwtProvider, refreshTokenRepository, memberRepository, cookieSecure);
     }
 
     @Bean
