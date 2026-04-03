@@ -1,5 +1,6 @@
 package com.retrip.auth.application.in;
 
+import com.retrip.auth.application.config.CustomUserDetails;
 import com.retrip.auth.application.config.JwtProvider;
 import com.retrip.auth.application.in.response.LoginResponse;
 import com.retrip.auth.application.out.repository.MemberRepository;
@@ -52,10 +53,12 @@ public class AuthService {
             throw new BadCredentialsException("탈퇴한 회원입니다.");
         }
 
+        // CustomUserDetails로 Authentication 생성 → email/name/nickname 등 클레임 정상 포함
+        CustomUserDetails userDetails = new CustomUserDetails(member);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                memberId,
+                userDetails,
                 null,
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                userDetails.getAuthorities()
         );
 
         LoginResponse.TokenResponse newTokens = jwtProvider.generateTokens(authentication);
