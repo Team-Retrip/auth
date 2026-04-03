@@ -94,14 +94,24 @@ jobs:
               -p 8081:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e SERVER_PORT=8080 \
+              -e APP_BASE_URL="${{ secrets.APP_BASE_URL }}" \
+              -e FRONTEND_CALLBACK_URL="${{ secrets.FRONTEND_CALLBACK_URL }}" \
               -e DB_URL="jdbc:mysql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.AUTH_DB_NAME }}" \
               -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
               -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
               -e JWT_PRIVATE_KEY="${{ secrets.JWT_PRIVATE_KEY }}" \
               -e JWT_PUBLIC_KEY="${{ secrets.JWT_PUBLIC_KEY }}" \
+              -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+              -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+              -e KAKAO_CLIENT_ID="${{ secrets.KAKAO_CLIENT_ID }}" \
+              -e KAKAO_CLIENT_SECRET="${{ secrets.KAKAO_CLIENT_SECRET }}" \
+              -e NAVER_CLIENT_ID="${{ secrets.NAVER_CLIENT_ID }}" \
+              -e NAVER_CLIENT_SECRET="${{ secrets.NAVER_CLIENT_SECRET }}" \
               -e PORTONE_STORE_ID="${{ secrets.PORTONE_STORE_ID }}" \
               -e PORTONE_CHANNEL_KEY="${{ secrets.PORTONE_CHANNEL_KEY }}" \
               -e PORTONE_API_SECRET="${{ secrets.PORTONE_API_SECRET }}" \
+              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
               --restart always \
               "$IMAGE"
 
