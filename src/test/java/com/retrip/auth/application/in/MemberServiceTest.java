@@ -23,7 +23,7 @@ class MemberServiceTest extends BaseMemberServiceTest {
     @Test
     void 회원가입_성공() throws Exception {
         // given
-        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1234", "test", null, null, true, false);
+        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1234", "test", null, null, null, true, false);
 
         //when
         MemberCreateResponse response = memberService.createUser(request);
@@ -37,8 +37,8 @@ class MemberServiceTest extends BaseMemberServiceTest {
     @Test
     void 회원가입_중복_회원가입() throws Exception {
         // given
-        memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234"), List.of("user"), null, null, true, false));
-        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1111", "중복 테스트", null, null, true, false);
+        memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234"), List.of("user"), null, null, true, false, null));
+        MemberCreateRequest request = new MemberCreateRequest("test@naver.com", "1111", "중복 테스트", null, null, null, true, false);
 
         //when
 
@@ -52,7 +52,7 @@ class MemberServiceTest extends BaseMemberServiceTest {
     @Test
     void 회원정보_수정_패스워드_달라_실패() throws Exception {
         // given
-        Member saved = memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234"), List.of("user"), null, null, true, false));
+        Member saved = memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234"), List.of("user"), null, null, true, false, null));
         MemberUpdateRequest request = new MemberUpdateRequest("1235", "1111", "수정 테스트", null, null);
 
         //when
@@ -79,7 +79,7 @@ class MemberServiceTest extends BaseMemberServiceTest {
     @Test
     void 회원정보_수정_성공() throws Exception {
         // given
-        Member saved = memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234"), List.of("user"), null, null, true, false));
+        Member saved = memberRepository.save(Member.create("test", "test@naver.com", passwordEncoder.encode("1234"), List.of("user"), null, null, true, false, null));
         MemberUpdateRequest request = new MemberUpdateRequest("1234", "1111", "수정 테스트", null, null);
 
         //when

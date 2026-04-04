@@ -28,7 +28,7 @@ spring:
             scope:
               - profile
               - email
-            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+            redirect-uri: "${APP_BASE_URL:http://localhost:8080}/login/oauth2/code/google"
           kakao:
             client-id: ${KAKAO_CLIENT_ID:your-kakao-rest-api-key}
             client-secret: ${KAKAO_CLIENT_SECRET:your-kakao-client-secret}
@@ -36,8 +36,7 @@ spring:
             authorization-grant-type: authorization_code
             scope:
               - profile_nickname
-              - account_email
-            redirect-uri: "http://localhost:8080/login/oauth2/code/kakao"
+            redirect-uri: "${APP_BASE_URL:http://localhost:8080}/login/oauth2/code/kakao"
             client-name: Kakao
 
           naver:
@@ -48,7 +47,7 @@ spring:
             scope:
               - name
               - email
-            redirect-uri: "http://localhost:8080/login/oauth2/code/naver"
+            redirect-uri: "${APP_BASE_URL:http://localhost:8080}/login/oauth2/code/naver"
             client-name: Naver
 
         provider:
@@ -85,13 +84,16 @@ token:
     header: Authorization
     prefix: Bearer
     access:
-      expire-min: 120
+      expire-min: 30
     refresh:
-      expire-min: 1051200 #2년
+      expire-min: 20160 #14일
 
 springdoc:
   swagger-ui:
     use-root-path: true
+
+app:
+  frontend-callback-url: ${FRONTEND_CALLBACK_URL:http://localhost:3000/auth/callback}
 
 cloud:
   aws:

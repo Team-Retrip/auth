@@ -1,0 +1,72 @@
+token:
+  jwt:
+    private-key: MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCsW6GZ18buvwRzeDdzFr+AGNsoqGHPYBoEoF0+YvQl3lm26U7V8BNO3VP7WSbLHVt47UBSTtaEaENY3FOTa6pkSzGl8gEHVptrEqK6dI9HS4g7Nva5ZmeJ+9CjGDEd5x9xYouIrT7cy6bxvxR6Pw8+haXRmP5R4TzEjlyg5RKT5D7RsaWnyVeGV2KVqb/omUk5y+LAY5Nn50/sFKN0KHESrsm4cCrejZjQHoIjXrF4Zga2p8dkM00NGMvKBEz5gmOgrntLc84YJyZ5O+9xU3A7WSU4J7mY8NDARRzzKRMEXR4fwJH4AKPMs63BPHgrYYjGrk/HK4vGTupl119Ebm2HAgMBAAECggEAB0Zbf6D+FQqmofG43sM0NFsYOP2ZGfB+TflaJi11Yk8hw0N9X9tLvVWV213hHMvxlfI8TPJl7Ihyu0KaxnX8vFH416kWG7IEn6mAM9WCof7mp5/YxxeIQZM0NFtri027joTFy0WLXzS7Uv3T2/BjG3+hnENUYgQF6sKa10cD7eOvzRai569cKjCO9w3v2cB4wJJJug/D3vFKZCoux64rEUvK78hyq1cUfGQfO8J3Ga9jYaWswrYnjx4bzM0szGHc0FylpCY/0wYQg/B1q+UlVTlKSRYD7fZZ+xpVwDMZNfqB7wCLvtKBv6Y+YBku66fyAi++eDJ4K1lgJmuIqS4MDQKBgQDaHNQt9ARLgVDtpitjxrvmMkbkUOY7/o61sLKw/VwU1LA2QOTjUAekWGm5+K2KoC/edSlIKY+EiPyGfIkXv8etDeM4ujAlhaXaZ1j1+h+QymUYGrLiDE8VWKDzeulGOE+1Rv6dce9C3RSm08nEegzUWWeU/l7+6cRLWaNTa1uopQKBgQDKTCd1mwkBcwMMkCYIYBaQorOQSa9alczHkZFWEpMoqoDMe/dVFpMspW4EsBxZcDiGxhPkPTFS9NUYKd5U7tQhRkrOAhLXqzW+lLA/oSySROuk31xI5+c5fR0ebC+Q+U2RbXeGTBRRc2ibcvEC3bBLptEqTws7c9YEJKZFvz+5uwKBgQDIXt+Vb6xaaOwdxh/qQ3HuoZV6vc8kolAcHb2q1rY29MUEsk0TfjvnAMnv7MIQreQL63oHLxcHXIkQS2vuA2K+Whm5zWHZtpOMtpCFOEizTRveLvjSrRghtg/2XZ3bwnOHRzc1EKwKsur772hWNQGAOrnrqFtAtyR7TFe8lM3ZeQKBgFORbAeQOQMpQMwyzBNPpmKvY6AqYE76bPLQNoqo97On47cVStISlk+uMymqmrtzuVYrg1IY2URcsZ7exOKvGmB4ijRZ9PC04GnPQJO4gBIYeIPOZXAUpJdCEQJdTLUF175Iy0RmL0qKc18r91XowIgv7F4e8xPnQTTK8wkC/U87AoGBAIdbeUmFhl8gJpngh26bDF/lnMPQzIQr66R2vpGW+ttCiSRolMNkBY1zHGBS2ycDRjWeay1lLTvGaYR9GoL57/zyg9bfArPuHMA7LJzFZETE8DtCi4tA05/ObWukawJSZDIQRNyvVA6Ms8uEiPNyo7jrfMPgY1uKZoqkpMNS+mUR
+    public-key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArFuhmdfG7r8Ec3g3cxa/gBjbKKhhz2AaBKBdPmL0Jd5ZtulO1fATTt1T+1kmyx1beO1AUk7WhGhDWNxTk2uqZEsxpfIBB1abaxKiunSPR0uIOzb2uWZnifvQoxgxHecfcWKLiK0+3Mum8b8Uej8PPoWl0Zj+UeE8xI5coOUSk+Q+0bGlp8lXhldilam/6JlJOcviwGOTZ+dP7BSjdChxEq7JuHAq3o2Y0B6CI16xeGYGtqfHZDNNDRjLygRM+YJjoK57S3POGCcmeTvvcVNwO1klOCe5mPDQwEUc8ykTBF0eH8CR+ACjzLOtwTx4K2GIxq5PxyuLxk7qZddfRG5thwIDAQAB
+    header: Authorization
+    prefix: Bearer
+    access:
+      expire-min: 30
+    refresh:
+      expire-min: 20160
+
+portone:
+  public:
+    store-id: test-store-id
+    channel-key: test-channel-key
+  api_secret: test-api-secret
+
+cloud:
+  aws:
+    region: ap-northeast-2
+    credentials:
+      access-key: test-access-key
+      secret-key: test-secret-key
+  s3:
+    bucket: retrip-media
+
+app:
+  frontend-callback-url: http://localhost:3000/auth/callback
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client-id
+            client-secret: test-google-client-secret
+            scope:
+              - profile
+              - email
+            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+          kakao:
+            client-id: test-kakao-client-id
+            client-secret: test-kakao-client-secret
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            scope:
+              - profile_nickname
+              - account_email
+            redirect-uri: "http://localhost:8080/login/oauth2/code/kakao"
+            client-name: Kakao
+          naver:
+            client-id: test-naver-client-id
+            client-secret: test-naver-client-secret
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            scope:
+              - name
+              - email
+            redirect-uri: "http://localhost:8080/login/oauth2/code/naver"
+            client-name: Naver
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+          naver:
+            authorization-uri: https://nid.naver.com/oauth2.0/authorize
+            token-uri: https://nid.naver.com/oauth2.0/token
+            user-info-uri: https://openapi.naver.com/v1/nid/me
+            user-name-attribute: response

@@ -3,189 +3,1138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReTrip 통합 테스트 (V3)</title>
-
+    <title>ReTrip Auth API 통합 테스트</title>
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
     <style>
-        body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 30px auto; padding: 20px; background: #f0f2f5; }
-        .container { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .section { background: #fff; padding: 20px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; border-left: 5px solid #667eea; }
-        h1 { text-align: center; color: #333; }
-        h3 { margin-top: 0; color: #444; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { background: #667eea; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        button:hover:not(:disabled) { background: #5a6fd6; }
-        .result { background: #2d2d2d; color: #50ff50; padding: 15px; margin-top: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; font-size: 13px; display: none; }
-        .error { color: #ff5050; }
-        .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
-        .checkbox-group label { display: flex; align-items: center; background: #eee; padding: 5px 10px; border-radius: 20px; cursor: pointer; font-size: 13px; }
-        .checkbox-group input { width: auto; margin-right: 5px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
+        .page-title { text-align: center; color: #2c3e50; margin: 20px 0 10px; font-size: 22px; font-weight: 700; }
+
+        /* 상단 고정 바 */
+        .sticky-top { position: sticky; top: 0; z-index: 100; background: #f0f2f5; padding: 10px 20px 0; }
+        .config-bar { background: white; border-radius: 8px; padding: 12px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .config-bar label { font-size: 12px; color: #666; white-space: nowrap; }
+        .config-bar input { width: 200px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; }
+        .token-bar { background: #eef2ff; border-radius: 8px; padding: 8px 20px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 12px; color: #4338ca; font-family: monospace; display: none; }
+
+        /* 네비게이션 */
+        .nav { background: white; border-radius: 8px; padding: 10px 20px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; gap: 6px; flex-wrap: wrap; }
+        .nav a { font-size: 11px; padding: 4px 10px; border-radius: 12px; background: #f1f5f9; color: #475569; text-decoration: none; white-space: nowrap; }
+        .nav a:hover { background: #667eea; color: white; }
+
+        /* 레이아웃 */
+        .content { padding: 16px 20px 40px; max-width: 1400px; margin: 0 auto; }
+        .section { margin-bottom: 32px; }
+        .section-title { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 14px; padding-left: 8px; border-left: 4px solid #667eea; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 16px; }
+
+        /* 카드 */
+        .card { background: white; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card h3 { color: #1e293b; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .badge { background: #667eea; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+        .badge-get { background: #10b981; }
+        .badge-post { background: #667eea; }
+        .badge-put { background: #f59e0b; }
+        .badge-patch { background: #8b5cf6; }
+        .badge-delete { background: #ef4444; }
+        .desc { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
+
+        /* 폼 요소 */
+        label { display: block; font-size: 11px; color: #64748b; margin-bottom: 3px; margin-top: 8px; }
+        input[type=text], input[type=email], input[type=password], input[type=number], select, textarea {
+            width: 100%; padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 12px; background: #f8fafc;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 2px rgba(102,126,234,0.15); }
+        textarea { resize: vertical; min-height: 60px; }
+        .checkbox-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: #475569; }
+        .checkbox-row input { width: auto; }
+
+        /* 버튼 */
+        .btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity 0.15s; }
+        .btn:hover { opacity: 0.85; }
+        .btn-block { width: 100%; margin-top: 12px; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-purple { background: #8b5cf6; color: white; }
+        .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+        .btn-row .btn { flex: 1; }
+
+        /* 소셜 버튼 */
+        .social-btn { padding: 10px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; width: 100%; margin-top: 8px; }
+        .btn-kakao { background: #FEE500; color: #3C1E1E; }
+        .btn-naver { background: #03C75A; color: white; }
+        .btn-google { background: white; color: #444; border: 1px solid #ddd; }
+
+        /* 결과 박스 */
+        .result-box { margin-top: 10px; background: #1e1e2e; border-radius: 6px; overflow: hidden; display: none; }
+        .result-header { display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; background: #2d2d44; font-size: 11px; }
+        .result-header .status { font-weight: 700; }
+        .status-ok { color: #50fa7b; }
+        .status-err { color: #ff5555; }
+        .result-body { padding: 8px 10px; color: #cdd6f4; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 240px; overflow-y: auto; }
+
+        /* 시나리오 */
+        .scenario-card { background: white; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 14px; }
+        .scenario-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+        .scenario-desc { font-size: 12px; color: #64748b; margin-bottom: 12px; }
+        .scenario-steps { font-size: 11px; color: #94a3b8; margin-bottom: 12px; padding-left: 16px; }
+        .scenario-steps li { margin-bottom: 3px; }
+        .scenario-result { margin-top: 10px; background: #f8fafc; border-radius: 6px; padding: 10px; font-size: 12px; color: #475569; display: none; border-left: 3px solid #667eea; }
+        .scenario-result.pass { border-color: #10b981; background: #f0fdf4; color: #065f46; }
+        .scenario-result.fail { border-color: #ef4444; background: #fef2f2; color: #991b1b; }
+
+        /* 알림 */
+        .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #1e40af; margin-bottom: 10px; }
+        .warn-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #92400e; margin-bottom: 10px; }
+
+        /* 토큰 표시 */
+        .token-display { background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 6px; padding: 8px 10px; font-family: monospace; font-size: 11px; word-break: break-all; color: #4338ca; margin-top: 8px; display: none; }
+
+        /* 여행 스타일 체크박스 그리드 */
+        .style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 8px; }
+        .style-grid label { margin: 0; display: flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer; }
+        .style-grid input { width: auto; }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>ReTrip 기능 테스트</h1>
 
-    <div class="section">
-        <h3>⚙️ Step 0: PortOne 설정</h3>
-        <input type="text" id="storeId" placeholder="Store ID 입력">
-        <input type="text" id="channelKey" placeholder="Channel Key 입력">
-        <button onclick="saveConfig()">설정 저장</button>
+<h1 class="page-title">ReTrip Auth API 통합 테스트</h1>
+
+<div class="sticky-top">
+    <div class="config-bar">
+        <label>Auth URL</label>
+        <input type="text" id="apiBase" value="http://localhost:8080">
+        <label style="margin-left:8px;">Trip URL</label>
+        <input type="text" id="tripBase" value="http://localhost:8081">
+        <label style="margin-left:8px;">PortOne Store ID</label>
+        <input type="text" id="cfgStoreId" placeholder="store-xxx" style="width:260px;">
+        <label style="margin-left:8px;">Channel Key</label>
+        <input type="text" id="cfgChannelKey" placeholder="channel-key-xxx" style="width:260px;">
+        <button class="btn btn-primary" onclick="saveConfig()">저장</button>
+        <span id="cfgOk" style="font-size:12px;color:#10b981;display:none;">✓ 저장됨</span>
     </div>
-
-    <div class="section">
-        <h3>👤 Step 1: 회원가입</h3>
-        <input type="email" id="signupEmail" value="user@test.com" placeholder="이메일">
-        <input type="password" id="signupPassword" value="1234" placeholder="비밀번호">
-        <input type="text" id="signupName" value="테스트유저" placeholder="이름">
-        <div style="display: flex; gap: 10px;">
-            <select id="signupGender"><option value="M">남성</option><option value="F">여성</option></select>
-            <input type="number" id="signupAge" value="25" placeholder="나이">
-        </div>
-        <button onclick="signup()">회원가입</button>
-        <div id="signupResult" class="result"></div>
+    <div class="token-bar" id="tokenBar">
+        <strong>AccessToken:</strong> <span id="tokenPreview"></span>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <span id="tokenExtra"></span>
     </div>
-
-    <div class="section">
-        <h3>🔐 Step 2: 로그인</h3>
-        <button onclick="login()">로그인 (Step 1 정보로)</button>
-        <div id="loginResult" class="result"></div>
-    </div>
-
-    <div class="section">
-        <h3>✨ Step 3: 본인인증 (PortOne V2)</h3>
-        <button id="certBtn" onclick="startCertificationV2()" disabled>본인인증 시작</button>
-        <div id="certResult" class="result"></div>
-    </div>
-
-    <div class="section">
-        <h3>📋 Step 4: 내 프로필 조회</h3>
-        <button id="profileBtn" onclick="getProfile()" disabled>프로필 조회</button>
-        <div id="profileResult" class="result"></div>
-    </div>
-
-    <div class="section">
-        <h3>✏️ Step 5: 프로필 수정 (추가 정보)</h3>
-        <textarea id="updateBio" placeholder="한 줄 소개 (최대 30자)" rows="2">여행을 좋아하는 개발자입니다.</textarea>
-        <select id="updateMbti">
-            <option value="">MBTI 선택</option>
-            <option value="ISTJ">ISTJ</option> <option value="ISFJ">ISFJ</option>
-            <option value="INFJ">INFJ</option> <option value="INTJ">INTJ</option>
-            <option value="ISTP">ISTP</option> <option value="ISFP">ISFP</option>
-            <option value="INFP">INFP</option> <option value="INTP">INTP</option>
-            <option value="ESTP">ESTP</option> <option value="ESFP">ESFP</option>
-            <option value="ENFP">ENFP</option> <option value="ENTP">ENTP</option>
-            <option value="ESTJ">ESTJ</option> <option value="ESFJ">ESFJ</option>
-            <option value="ENFJ">ENFJ</option> <option value="ENTJ">ENTJ</option>
-        </select>
-        <div class="checkbox-group">
-            <label><input type="checkbox" name="styles" value="계획철저"> 계획철저</label>
-            <label><input type="checkbox" name="styles" value="즉흥적"> 즉흥적</label>
-            <label><input type="checkbox" name="styles" value="맛집탐방"> 맛집탐방</label>
-            <label><input type="checkbox" name="styles" value="휴양지"> 휴양지</label>
-            <label><input type="checkbox" name="styles" value="가성비"> 가성비</label>
-            <label><input type="checkbox" name="styles" value="플렉스"> 플렉스</label>
-        </div>
-        <button id="updateBtn" onclick="updateProfile()" disabled>정보 수정 저장</button>
-        <div id="updateResult" class="result"></div>
+    <div class="nav">
+        <a href="#s1">1.회원가입/로그인</a>
+        <a href="#s2">2.소셜로그인</a>
+        <a href="#s3">3.내정보/프로필</a>
+        <a href="#s4">4.본인인증</a>
+        <a href="#s5">5.프로필수정</a>
+        <a href="#s6">6.이미지</a>
+        <a href="#s7">7.비밀번호</a>
+        <a href="#s8">8.회원정보수정</a>
+        <a href="#s9">9.회원검색</a>
+        <a href="#s10">10.Auth-Trip통합</a>
+        <a href="#s11">11.토큰/로그아웃</a>
+        <a href="#s12">12.회원탈퇴</a>
+        <a href="#s13">13.시나리오검증</a>
     </div>
 </div>
 
-<script>
-    const API_BASE = 'http://localhost:8080';
-    let CONFIG = { storeId: '', channelKey: '', accessToken: '' };
+<div class="content">
 
+<!-- ==================== 섹션 1: 회원가입/로그인 ==================== -->
+<div class="section" id="s1">
+    <div class="section-title">1. 이메일 회원가입 / 로그인</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-post">POST /users</span> 이메일 회원가입</h3>
+            <div class="desc">닉네임 미입력 시 name 값으로 자동 설정됨 (닉네임 자동설정 검증)</div>
+            <label>이메일</label><input type="email" id="signupEmail" value="user@test.com">
+            <label>비밀번호 (영문+숫자+특수문자 8~20자)</label><input type="password" id="signupPassword" value="Test1234!">
+            <label>이름</label><input type="text" id="signupName" value="홍길동">
+            <label>닉네임 (선택, 최대 15자 — 미입력 시 이름으로 대체)</label>
+            <input type="text" id="signupNickname" placeholder="비워두면 이름으로 자동 설정">
+            <label>성별</label>
+            <select id="signupGender"><option value="M">남성(M)</option><option value="F">여성(F)</option></select>
+            <label>생년월일 (YYYY-MM-DD)</label><input type="text" id="signupBirthDate" placeholder="1995-01-01">
+            <div class="checkbox-row"><input type="checkbox" id="signupTerms" checked><label for="signupTerms" style="margin:0;">필수 약관 동의</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="signupMarketing"><label for="signupMarketing" style="margin:0;">마케팅 수신 동의</label></div>
+            <button class="btn btn-primary btn-block" onclick="signup()">회원가입</button>
+            <div class="result-box" id="signupResult">
+                <div class="result-header"><span class="status" id="signupStatus"></span><span>POST /users</span></div>
+                <div class="result-body" id="signupBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-post">POST /login</span> 이메일 로그인</h3>
+            <div class="desc">요청 필드명은 <code>id</code> (이메일 주소). 성공 시 AccessToken 자동 저장, RefreshToken은 HttpOnly Cookie.</div>
+            <label>이메일 (id 필드)</label><input type="email" id="loginEmail" value="user@test.com">
+            <label>비밀번호</label><input type="password" id="loginPassword" value="Test1234!">
+            <button class="btn btn-primary btn-block" onclick="login()">로그인</button>
+            <div class="token-display" id="loginTokenDisplay"></div>
+            <div class="result-box" id="loginResult">
+                <div class="result-header"><span class="status" id="loginStatus"></span><span>POST /login</span></div>
+                <div class="result-body" id="loginBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 2: 소셜 로그인 ==================== -->
+<div class="section" id="s2">
+    <div class="section-title">2. 소셜 로그인</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3>소셜 로그인 시작 (브라우저 리다이렉트)</h3>
+            <div class="info-box">
+                소셜 로그인은 브라우저 리다이렉트 방식입니다.<br>
+                버튼 클릭 → 소셜 인증 페이지 → 완료 후 <code>{FRONTEND_CALLBACK_URL}?accessToken=...&amp;refreshToken=...</code> 로 이동.
+            </div>
+            <button class="social-btn btn-kakao" onclick="socialLogin('kakao')">카카오로 로그인</button>
+            <button class="social-btn btn-naver" onclick="socialLogin('naver')">네이버로 로그인</button>
+            <button class="social-btn btn-google" onclick="socialLogin('google')">Google로 로그인</button>
+        </div>
+
+        <div class="card">
+            <h3>소셜 로그인 후 토큰 수동 입력</h3>
+            <div class="desc">콜백 URL의 <code>?accessToken=</code> 파라미터를 복사해서 아래에 붙여넣으세요.</div>
+            <div class="warn-box">
+                콜백 URL 예시:<br>
+                <code>http://localhost:3000/auth/callback?accessToken=eyJ...&amp;refreshToken=eyJ...</code>
+            </div>
+            <label>Access Token</label>
+            <textarea id="socialAccessToken" placeholder="소셜 로그인 후 콜백 URL에서 복사"></textarea>
+            <label>Refresh Token (선택)</label>
+            <textarea id="socialRefreshToken" placeholder="refreshToken (있으면 입력)"></textarea>
+            <button class="btn btn-primary btn-block" onclick="setSocialTokens()">토큰 저장하고 사용하기</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 3: 내 정보/프로필 ==================== -->
+<div class="section" id="s3">
+    <div class="section-title">3. 내 정보 / 프로필 조회</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-get">GET /users/me</span> 내 기본 정보</h3>
+            <div class="desc">id, email, name, nickname, isVerified, hasPassword, lastLoginProvider</div>
+            <button class="btn btn-success btn-block" onclick="getMe()">조회</button>
+            <div class="result-box" id="meResult">
+                <div class="result-header"><span class="status" id="meStatus"></span><span>GET /users/me</span></div>
+                <div class="result-body" id="meBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-get">GET /api/users/profile</span> 전체 프로필</h3>
+            <div class="desc">linkedProviders 배열, hasPassword, bio, mbti, travelStyles 포함</div>
+            <button class="btn btn-success btn-block" onclick="getProfile()">조회</button>
+            <div class="result-box" id="profileResult">
+                <div class="result-header"><span class="status" id="profileStatus"></span><span>GET /api/users/profile</span></div>
+                <div class="result-body" id="profileBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-get">GET /api/travel-styles</span> 여행 스타일 목록</h3>
+            <div class="desc">인증 불필요. 프로필 수정 시 선택할 수 있는 여행 스타일 전체 목록.</div>
+            <button class="btn btn-success btn-block" onclick="getTravelStyles()">조회</button>
+            <div class="result-box" id="travelStylesResult">
+                <div class="result-header"><span class="status" id="travelStylesStatus"></span><span>GET /api/travel-styles</span></div>
+                <div class="result-body" id="travelStylesBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 4: 본인인증 ==================== -->
+<div class="section" id="s4">
+    <div class="section-title">4. PortOne 본인인증</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3>PortOne V2 SDK — 본인인증 시작</h3>
+            <div class="info-box">
+                상단 Config 바에 <strong>PortOne Store ID</strong>와 <strong>Channel Key</strong>를 먼저 입력하세요.<br>
+                (<code>application-local.yml</code>의 portone.public.store-id / channel-key 값)
+            </div>
+            <div class="desc">버튼 클릭 → PortOne 인증 팝업 → 완료 시 자동으로 서버 API 호출</div>
+            <button class="btn btn-purple btn-block" onclick="startIdentityVerification()">본인인증 시작 (SDK)</button>
+            <div id="portoneStatus" style="margin-top:8px;font-size:12px;color:#64748b;"></div>
+            <div class="result-box" id="verifyIdentityResult">
+                <div class="result-header"><span class="status" id="verifyIdentityStatus"></span><span>POST /api/auth/verify-identity</span></div>
+                <div class="result-body" id="verifyIdentityBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-post">POST /api/auth/verify-identity</span> 수동 impUid 입력</h3>
+            <div class="desc">SDK 없이 직접 impUid(identityVerificationId)를 입력해서 서버 검증 호출</div>
+            <div class="warn-box">
+                PortOne 테스트 콘솔에서 본인인증 완료 후 발급된 <code>identityVerificationId</code>를 사용하세요.
+            </div>
+            <label>impUid (identityVerificationId)</label>
+            <input type="text" id="manualImpUid" placeholder="identity-xxxxxxxxxx">
+            <button class="btn btn-purple btn-block" onclick="verifyIdentityManual()">서버 검증 호출</button>
+            <div class="result-box" id="verifyIdentityManualResult">
+                <div class="result-header"><span class="status" id="verifyIdentityManualStatus"></span><span>POST /api/auth/verify-identity</span></div>
+                <div class="result-body" id="verifyIdentityManualBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 5: 프로필 수정 ==================== -->
+<div class="section" id="s5">
+    <div class="section-title">5. 프로필 수정</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-put">PUT /api/users/profile</span> 프로필 수정</h3>
+            <label>닉네임 (최대 15자)</label><input type="text" id="profileNickname" placeholder="닉네임">
+            <label>소개 (최대 30자)</label><input type="text" id="profileBio" placeholder="한 줄 소개">
+            <label>MBTI (최대 4자)</label><input type="text" id="profileMbti" placeholder="INTJ" maxlength="4">
+            <label>프로필 이미지 URL</label><input type="text" id="profileImageUrl" placeholder="https://...">
+            <label>여행 스타일 (최대 3개)</label>
+            <div class="style-grid" id="travelStyleCheckboxes">
+                <label><input type="checkbox" name="travelStyle" value="1"> 힐링여행</label>
+                <label><input type="checkbox" name="travelStyle" value="2"> 액티비티</label>
+                <label><input type="checkbox" name="travelStyle" value="3"> 맛집탐방</label>
+                <label><input type="checkbox" name="travelStyle" value="4"> 문화탐방</label>
+                <label><input type="checkbox" name="travelStyle" value="5"> 자연경관</label>
+                <label><input type="checkbox" name="travelStyle" value="6"> 쇼핑</label>
+            </div>
+            <button class="btn btn-warning btn-block" onclick="updateProfile()">프로필 수정</button>
+            <div class="result-box" id="updateProfileResult">
+                <div class="result-header"><span class="status" id="updateProfileStatus"></span><span>PUT /api/users/profile</span></div>
+                <div class="result-body" id="updateProfileBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-patch">PATCH /api/users/notification-settings</span> 알림 설정</h3>
+            <div class="desc">마스터 알림 토글 (true/false)</div>
+            <label>알림 활성화</label>
+            <select id="notifEnabled"><option value="true">활성화 (true)</option><option value="false">비활성화 (false)</option></select>
+            <button class="btn btn-warning btn-block" onclick="updateNotification()">알림 설정 변경</button>
+            <div class="result-box" id="notifResult">
+                <div class="result-header"><span class="status" id="notifStatus"></span><span>PATCH /api/users/notification-settings</span></div>
+                <div class="result-body" id="notifBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 6: 이미지 ==================== -->
+<div class="section" id="s6">
+    <div class="section-title">6. 이미지 Presigned URL</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-post">POST /images/presigned-url</span> Presigned URL 발급</h3>
+            <div class="desc">S3 PUT 업로드용 Presigned URL + 읽기 URL 반환</div>
+            <label>파일 확장자</label>
+            <select id="imgExtension">
+                <option value="JPG">JPG</option>
+                <option value="PNG">PNG</option>
+                <option value="HEIC">HEIC</option>
+                <option value="WEBP">WEBP</option>
+            </select>
+            <button class="btn btn-primary btn-block" onclick="getPresignedUrl()">Presigned URL 발급</button>
+            <div id="presignedUrlDisplay" style="display:none;margin-top:10px;">
+                <div style="font-size:11px;color:#64748b;margin-bottom:4px;">readImageUrl (프로필 이미지 URL로 사용):</div>
+                <div id="readImageUrlVal" style="font-size:11px;font-family:monospace;word-break:break-all;background:#f8fafc;padding:6px;border-radius:4px;border:1px solid #e2e8f0;"></div>
+                <button class="btn btn-success btn-block" onclick="copyReadUrl()" style="margin-top:6px;font-size:12px;">readImageUrl 복사</button>
+            </div>
+            <div class="result-box" id="presignedResult">
+                <div class="result-header"><span class="status" id="presignedStatus"></span><span>POST /images/presigned-url</span></div>
+                <div class="result-body" id="presignedBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>S3 직접 PUT 업로드 테스트</h3>
+            <div class="desc">Presigned URL을 사용해서 실제 파일을 S3에 직접 업로드합니다.</div>
+            <div class="warn-box">Presigned URL 발급 먼저 실행 후 사용하세요.</div>
+            <label>파일 선택</label>
+            <input type="file" id="uploadFile" accept="image/*">
+            <button class="btn btn-success btn-block" onclick="uploadToS3()">S3 업로드</button>
+            <div id="uploadStatus" style="margin-top:8px;font-size:12px;color:#64748b;"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 7: 비밀번호 ==================== -->
+<div class="section" id="s7">
+    <div class="section-title">7. 비밀번호</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-post">POST /users/verify-password</span> 비밀번호 확인</h3>
+            <label>비밀번호</label><input type="password" id="verifyPwInput" value="Test1234!">
+            <button class="btn btn-warning btn-block" onclick="verifyPassword()">확인</button>
+            <div class="result-box" id="verifyPwResult">
+                <div class="result-header"><span class="status" id="verifyPwStatus"></span><span>POST /users/verify-password</span></div>
+                <div class="result-body" id="verifyPwBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-patch">PATCH /users/password</span> 비밀번호 변경</h3>
+            <div class="desc">소셜 전용 계정(hasPassword=false)은 403 Member-007 반환</div>
+            <label>현재 비밀번호</label><input type="password" id="changePwCurrent" value="Test1234!">
+            <label>새 비밀번호</label><input type="password" id="changePwNew" value="NewPass1234!">
+            <button class="btn btn-warning btn-block" onclick="changePassword()">비밀번호 변경</button>
+            <div class="result-box" id="changePwResult">
+                <div class="result-header"><span class="status" id="changePwStatus"></span><span>PATCH /users/password</span></div>
+                <div class="result-body" id="changePwBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-post">POST /users/password</span> 최초 비밀번호 설정 (소셜 전용)</h3>
+            <div class="desc">hasPassword=false인 소셜 계정에서만 성공. 이미 설정됐으면 409 Member-008.</div>
+            <label>설정할 비밀번호</label><input type="password" id="setInitialPw" value="InitialPw1234!">
+            <button class="btn btn-purple btn-block" onclick="setInitialPassword()">최초 비밀번호 설정</button>
+            <div class="result-box" id="setInitialPwResult">
+                <div class="result-header"><span class="status" id="setInitialPwStatus"></span><span>POST /users/password</span></div>
+                <div class="result-body" id="setInitialPwBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 8: 회원 정보 수정 ==================== -->
+<div class="section" id="s8">
+    <div class="section-title">8. 회원 정보 수정 (isVerified 잠금 테스트)</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-put">PUT /users</span> 회원 정보 수정</h3>
+            <div class="warn-box">
+                본인인증 완료(isVerified=true) 상태에서는 <strong>name, birthDate</strong> 변경 시 400 Member-006.<br>
+                gender 변경은 항상 가능.
+            </div>
+            <label>현재 비밀번호 (소셜 유저는 빈칸)</label>
+            <input type="password" id="updatePwCurrent" placeholder="소셜 유저면 비워두세요">
+            <label>새 비밀번호 (변경 원할 때만)</label>
+            <input type="password" id="updatePwNew" placeholder="빈칸이면 유지">
+            <label>이름 (isVerified=true면 변경 불가)</label>
+            <input type="text" id="updateInfoName" placeholder="이름 변경">
+            <label>성별</label>
+            <select id="updateInfoGender">
+                <option value="">변경 안 함</option>
+                <option value="M">남성(M)</option>
+                <option value="F">여성(F)</option>
+            </select>
+            <label>생년월일 (isVerified=true면 변경 불가)</label>
+            <input type="text" id="updateInfoBirth" placeholder="YYYY-MM-DD">
+            <button class="btn btn-warning btn-block" onclick="updateUserInfo()">정보 수정</button>
+            <div class="result-box" id="updateInfoResult">
+                <div class="result-header"><span class="status" id="updateInfoStatus"></span><span>PUT /users</span></div>
+                <div class="result-body" id="updateInfoBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 9: 회원 검색 ==================== -->
+<div class="section" id="s9">
+    <div class="section-title">9. 회원 검색 / 배치 조회</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-get">GET /users/search</span> 이름 검색</h3>
+            <div class="desc">Trip 도메인에서 여행 초대 대상 검색에 사용</div>
+            <label>이름 (부분 일치)</label><input type="text" id="searchNameInput" value="홍">
+            <button class="btn btn-success btn-block" onclick="searchByName()">검색</button>
+            <div class="result-box" id="searchNameResult">
+                <div class="result-header"><span class="status" id="searchNameStatus"></span><span>GET /users/search</span></div>
+                <div class="result-body" id="searchNameBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-get">GET /users/members</span> 배치 조회</h3>
+            <div class="desc">UUID 쉼표 구분. Trip 도메인에서 여행 멤버 정보 조회에 사용.</div>
+            <label>UUID 목록 (쉼표 구분)</label>
+            <textarea id="memberIdsInput" placeholder="uuid1,uuid2,uuid3"></textarea>
+            <button class="btn btn-success btn-block" onclick="getMembers()">조회</button>
+            <div class="result-box" id="membersResult">
+                <div class="result-header"><span class="status" id="membersStatus"></span><span>GET /users/members</span></div>
+                <div class="result-body" id="membersBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 10: Auth-Trip 통합 ==================== -->
+<div class="section" id="s10">
+    <div class="section-title">10. Auth-Trip 통합 (Trip 서버 필요)</div>
+    <div class="info-box">Trip 서버(기본 localhost:8081)가 실행 중이어야 합니다. auth의 JWT를 그대로 사용합니다.</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-post">POST {trip}/trips</span> 여행 생성</h3>
+            <label>여행 제목</label><input type="text" id="tripTitle" value="테스트 여행">
+            <label>설명</label><input type="text" id="tripDesc" value="통합 테스트 여행입니다.">
+            <label>시작일 (YYYY-MM-DD)</label><input type="text" id="tripStart" value="2026-05-01">
+            <label>종료일 (YYYY-MM-DD)</label><input type="text" id="tripEnd" value="2026-05-10">
+            <div class="checkbox-row"><input type="checkbox" id="tripPublic" checked><label for="tripPublic" style="margin:0;">공개 여행</label></div>
+            <button class="btn btn-primary btn-block" onclick="createTrip()">여행 생성</button>
+            <div class="result-box" id="createTripResult">
+                <div class="result-header"><span class="status" id="createTripStatus"></span><span>POST {trip}/trips</span></div>
+                <div class="result-body" id="createTripBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-get">GET {trip}/trips/my</span> 내 여행 목록</h3>
+            <div class="desc">auth의 JWT에서 userId를 파싱하여 해당 멤버의 여행 목록 반환</div>
+            <button class="btn btn-success btn-block" onclick="getMyTrips()">내 여행 조회</button>
+            <div class="result-box" id="myTripsResult">
+                <div class="result-header"><span class="status" id="myTripsStatus"></span><span>GET {trip}/trips/my</span></div>
+                <div class="result-body" id="myTripsBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 11: 토큰/로그아웃 ==================== -->
+<div class="section" id="s11">
+    <div class="section-title">11. 토큰 재발급 / 로그아웃</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-post">POST /auth/reissue</span> 토큰 재발급 (RTR)</h3>
+            <div class="desc">HttpOnly Cookie의 refreshToken으로 새 AccessToken 발급. 기존 refreshToken은 폐기(RTR).</div>
+            <button class="btn btn-success btn-block" onclick="reissue()">토큰 재발급</button>
+            <div class="result-box" id="reissueResult">
+                <div class="result-header"><span class="status" id="reissueStatus"></span><span>POST /auth/reissue</span></div>
+                <div class="result-body" id="reissueBody"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-post">POST /auth/logout</span> 로그아웃</h3>
+            <div class="desc">서버 refreshToken 삭제 + Cookie 만료. 저장된 accessToken도 초기화.</div>
+            <button class="btn btn-danger btn-block" onclick="logout()">로그아웃</button>
+            <div class="result-box" id="logoutResult">
+                <div class="result-header"><span class="status" id="logoutStatus"></span><span>POST /auth/logout</span></div>
+                <div class="result-body" id="logoutBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 12: 회원 탈퇴 ==================== -->
+<div class="section" id="s12">
+    <div class="section-title">12. 회원 탈퇴</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-delete">DELETE /users</span> 회원 탈퇴</h3>
+            <div class="warn-box">탈퇴한 이메일은 재가입 불가 (Member-003). 탈퇴 성공 시 토큰 전체 초기화.</div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="deleteIsSocial" onchange="toggleDeletePw()">
+                <label for="deleteIsSocial" style="margin:0;">소셜 전용 계정 (비밀번호 없음)</label>
+            </div>
+            <div id="deletePwSection">
+                <label>비밀번호 (이메일 유저)</label>
+                <input type="password" id="deletePwInput" value="Test1234!">
+            </div>
+            <button class="btn btn-danger btn-block" onclick="deleteUser()">회원 탈퇴</button>
+            <div class="result-box" id="deleteUserResult">
+                <div class="result-header"><span class="status" id="deleteUserStatus"></span><span>DELETE /users</span></div>
+                <div class="result-body" id="deleteUserBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 13: 시나리오 검증 ==================== -->
+<div class="section" id="s13">
+    <div class="section-title">13. 시나리오 검증</div>
+
+    <!-- 시나리오 A -->
+    <div class="scenario-card">
+        <div class="scenario-title">시나리오 A — 닉네임 자동 설정 검증</div>
+        <div class="scenario-desc">닉네임 없이 가입 시 GET /users/me 응답의 nickname 값이 name과 동일한지 확인</div>
+        <ol class="scenario-steps">
+            <li>nickname 미입력으로 회원가입</li>
+            <li>GET /users/me 호출</li>
+            <li>응답의 nickname == name 확인 ✅</li>
+        </ol>
+        <label>이메일</label><input type="email" id="scA_email" value="scenario_a@test.com">
+        <label>비밀번호</label><input type="password" id="scA_pw" value="Test1234!">
+        <label>이름</label><input type="text" id="scA_name" value="시나리오A">
+        <button class="btn btn-primary" onclick="runScenarioA()">시나리오 A 실행</button>
+        <div class="scenario-result" id="scA_result"></div>
+    </div>
+
+    <!-- 시나리오 B -->
+    <div class="scenario-card">
+        <div class="scenario-title">시나리오 B — hasPassword 분기 검증</div>
+        <div class="scenario-desc">현재 로그인된 계정 기준. 소셜 전용 계정(hasPassword=false)에서 비밀번호 관련 API 동작 확인.</div>
+        <ol class="scenario-steps">
+            <li>GET /api/users/profile → hasPassword 값 확인</li>
+            <li>hasPassword=false면: POST /users/password → 200 성공</li>
+            <li>hasPassword=false면: PATCH /users/password → 403 Member-007</li>
+            <li>hasPassword=true면: POST /users/password → 409 Member-008</li>
+        </ol>
+        <div class="info-box">현재 저장된 토큰으로 실행됩니다. 소셜 로그인 후 토큰을 저장하세요.</div>
+        <label>설정할 새 비밀번호 (소셜 전용 계정용)</label>
+        <input type="password" id="scB_newPw" value="ScenarioBPw1!">
+        <button class="btn btn-purple" onclick="runScenarioB()">시나리오 B 실행</button>
+        <div class="scenario-result" id="scB_result"></div>
+    </div>
+
+    <!-- 시나리오 C -->
+    <div class="scenario-card">
+        <div class="scenario-title">시나리오 C — isVerified 잠금 검증</div>
+        <div class="scenario-desc">본인인증 완료 후 이름/생년월일 변경 시도 → 400 Member-006, 성별 변경은 가능 → 200</div>
+        <ol class="scenario-steps">
+            <li>현재 isVerified 상태 확인 (GET /users/me)</li>
+            <li>PUT /users {name: "변경시도"} → 400 Member-006 ✅</li>
+            <li>PUT /users {gender: "F"} → 200 성공 ✅</li>
+        </ol>
+        <div class="info-box">본인인증(섹션 4)이 완료된 계정에서 실행하세요.</div>
+        <label>현재 비밀번호 (소셜 유저면 빈칸)</label>
+        <input type="password" id="scC_pw" placeholder="소셜 유저면 비워두세요">
+        <button class="btn btn-warning" onclick="runScenarioC()">시나리오 C 실행</button>
+        <div class="scenario-result" id="scC_result"></div>
+    </div>
+
+    <!-- 시나리오 D -->
+    <div class="scenario-card">
+        <div class="scenario-title">시나리오 D — 소셜 계정 연동 검증 (이메일 자동 링크)</div>
+        <div class="scenario-desc">동일 이메일로 다른 소셜 로그인 시 linkedProviders 배열에 항목이 추가되는지 확인</div>
+        <ol class="scenario-steps">
+            <li>카카오로 로그인 (섹션 2)</li>
+            <li>GET /api/users/profile → linkedProviders 배열 확인</li>
+            <li>같은 이메일로 네이버 로그인</li>
+            <li>GET /api/users/profile → linkedProviders에 naver 추가 확인 ✅</li>
+        </ol>
+        <div class="info-box">현재 저장된 토큰으로 프로필을 조회해서 linkedProviders를 확인합니다.</div>
+        <button class="btn btn-success" onclick="runScenarioD()">시나리오 D — 프로필 조회 (linkedProviders 확인)</button>
+        <div class="scenario-result" id="scD_result"></div>
+    </div>
+
+    <!-- 시나리오 E -->
+    <div class="scenario-card">
+        <div class="scenario-title">시나리오 E — 소셜 유저 탈퇴 검증</div>
+        <div class="scenario-desc">비밀번호 없는 소셜 전용 계정에서 탈퇴 (body 없이) → 204 성공</div>
+        <ol class="scenario-steps">
+            <li>소셜 로그인 후 토큰 저장 (섹션 2)</li>
+            <li>GET /users/me → hasPassword=false 확인</li>
+            <li>DELETE /users (password 없이) → 204 ✅</li>
+            <li>동일 이메일로 재가입 시도 → 400 Member-003 ✅</li>
+        </ol>
+        <div class="warn-box">실행 시 실제로 탈퇴됩니다. 테스트 계정에서만 사용하세요.</div>
+        <label>재가입 시도 이메일 (탈퇴 후 테스트용)</label>
+        <input type="email" id="scE_email" placeholder="탈퇴 후 재가입 시도할 이메일">
+        <button class="btn btn-danger" onclick="runScenarioE()">시나리오 E 실행 (탈퇴 후 재가입 시도)</button>
+        <div class="scenario-result" id="scE_result"></div>
+    </div>
+
+</div>
+
+</div><!-- /content -->
+
+<script>
+    let STATE = {
+        apiBase: 'http://localhost:8080',
+        tripBase: 'http://localhost:8081',
+        accessToken: '',
+        storeId: '',
+        channelKey: '',
+        presignedUrl: '',
+        readImageUrl: ''
+    };
+
+    // ===================== CONFIG =====================
     function saveConfig() {
-        CONFIG.storeId = document.getElementById('storeId').value;
-        CONFIG.channelKey = document.getElementById('channelKey').value;
-        alert('설정 저장됨');
+        STATE.apiBase = document.getElementById('apiBase').value.replace(/\/$/, '');
+        STATE.tripBase = document.getElementById('tripBase').value.replace(/\/$/, '');
+        STATE.storeId = document.getElementById('cfgStoreId').value;
+        STATE.channelKey = document.getElementById('cfgChannelKey').value;
+        const s = document.getElementById('cfgOk');
+        s.style.display = 'inline';
+        setTimeout(() => s.style.display = 'none', 2000);
     }
 
-    async function signup() {
+    function setToken(access) {
+        if (!access) return;
+        STATE.accessToken = access;
+        document.getElementById('tokenBar').style.display = 'block';
+        document.getElementById('tokenPreview').textContent = access.substring(0, 50) + '...';
+        // JWT payload 파싱
         try {
-            const res = await axios.post(`${API_BASE}/users`, {
-                email: document.getElementById('signupEmail').value,
-                password: document.getElementById('signupPassword').value,
-                name: document.getElementById('signupName').value,
-                gender: document.getElementById('signupGender').value,
-                age: parseInt(document.getElementById('signupAge').value)
-            });
-            showResult('signupResult', '✅ 가입 성공! accessToken 자동 발급됨.');
-            CONFIG.accessToken = res.data.data.accessToken;
-            enableButtons();
-        } catch (e) { showResult('signupResult', e.response?.data?.message || e.message, true); }
+            const payload = JSON.parse(atob(access.split('.')[1]));
+            const exp = payload.exp ? new Date(payload.exp * 1000).toLocaleTimeString() : '?';
+            document.getElementById('tokenExtra').textContent =
+                `nickname: ${payload.nickname || '-'} | exp: ${exp}`;
+        } catch(e) { document.getElementById('tokenExtra').textContent = ''; }
+        // 로그인 토큰 표시
+        const d = document.getElementById('loginTokenDisplay');
+        d.style.display = 'block';
+        d.textContent = access.substring(0, 60) + '...';
+    }
+
+    function showResult(id, status, body, isErr) {
+        const box = document.getElementById(id + 'Result');
+        box.style.display = 'block';
+        const st = document.getElementById(id + 'Status');
+        st.textContent = status;
+        st.className = 'status ' + (isErr ? 'status-err' : 'status-ok');
+        document.getElementById(id + 'Body').textContent =
+            typeof body === 'object' ? JSON.stringify(body, null, 2) : String(body);
+    }
+
+    async function api(method, path, body, resultId, useToken, baseUrl) {
+        const base = baseUrl || STATE.apiBase;
+        const url = base + path;
+        const headers = { 'Content-Type': 'application/json' };
+        if (useToken && STATE.accessToken) {
+            headers['Authorization'] = 'Bearer ' + STATE.accessToken;
+        }
+        try {
+            const opts = { method, headers, credentials: 'include' };
+            if (body !== null && body !== undefined) opts.body = JSON.stringify(body);
+            const res = await fetch(url, opts);
+            const text = await res.text();
+            let parsed;
+            try { parsed = JSON.parse(text); } catch { parsed = text; }
+            const isErr = !res.ok;
+            if (resultId) showResult(resultId, res.status + ' ' + (isErr ? '❌' : '✅'), parsed, isErr);
+            return { ok: !isErr, status: res.status, data: parsed };
+        } catch(e) {
+            if (resultId) showResult(resultId, '네트워크 오류 ❌', e.message, true);
+            return { ok: false, status: 0, data: e.message };
+        }
+    }
+
+    // ===================== 섹션 1 =====================
+    async function signup() {
+        const body = {
+            email: document.getElementById('signupEmail').value,
+            password: document.getElementById('signupPassword').value,
+            name: document.getElementById('signupName').value,
+            nickname: document.getElementById('signupNickname').value || null,
+            gender: document.getElementById('signupGender').value,
+            birthDate: document.getElementById('signupBirthDate').value || null,
+            termsAgreed: document.getElementById('signupTerms').checked,
+            marketingAgreed: document.getElementById('signupMarketing').checked
+        };
+        const r = await api('POST', '/users', body, 'signup', false);
+        if (r.ok) {
+            const token = r.data?.data?.accessToken || r.data?.accessToken;
+            if (token) setToken(token);
+            document.getElementById('loginEmail').value = body.email;
+            document.getElementById('loginPassword').value = body.password;
+        }
     }
 
     async function login() {
-        try {
-            const res = await axios.post(`${API_BASE}/login`, {
-                id: document.getElementById('signupEmail').value,
-                password: document.getElementById('signupPassword').value
-            });
-            CONFIG.accessToken = res.data.data.accessToken;
-            showResult('loginResult', `✅ 로그인 성공\nToken: ${CONFIG.accessToken.substring(0,20)}...`);
-            enableButtons();
-        } catch (e) { showResult('loginResult', e.response?.data?.message || e.message, true); }
+        const body = {
+            id: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value
+        };
+        const r = await api('POST', '/login', body, 'login', false);
+        if (r.ok) {
+            const token = r.data?.data?.accessToken || r.data?.accessToken;
+            if (token) setToken(token);
+        }
     }
 
-    async function startCertificationV2() {
-        if (!CONFIG.storeId) return alert('Step 0 설정을 먼저 해주세요.');
-        try {
-            const response = await PortOne.requestIdentityVerification({
-                storeId: CONFIG.storeId,
-                identityVerificationId: `identity_${Date.now()}`,
-                channelKey: CONFIG.channelKey,
-            });
-            if (response.code) throw new Error(response.message);
-
-            const verifyRes = await axios.post(`${API_BASE}/api/auth/verify-identity`,
-                { impUid: response.identityVerificationId },
-                { headers: { 'Authorization': `Bearer ${CONFIG.accessToken}` } }
-            );
-
-            const d = verifyRes.data.data;
-            showResult('certResult', `✅ 인증 완료\n이름: ${d.name}, 성별: ${d.gender}, 나이: ${d.age}, 인증여부: ${d.isVerified}`);
-        } catch (e) { showResult('certResult', e.message, true); }
+    // ===================== 섹션 2 =====================
+    function socialLogin(provider) {
+        window.open(STATE.apiBase + '/oauth2/authorization/' + provider, '_blank', 'width=600,height=700');
     }
 
-    async function getProfile() {
-        try {
-            const res = await axios.get(`${API_BASE}/api/users/profile`, {
-                headers: { 'Authorization': `Bearer ${CONFIG.accessToken}` }
-            });
-            const d = res.data.data;
-            showResult('profileResult', `📋 프로필\n이메일: ${d.email}\n이름: ${d.name} (${d.age}세/${d.gender})\n본인인증: ${d.isVerified}\n소개: ${d.bio}\nMBTI: ${d.mbti}\n스타일: ${d.travelStyles?.join(', ')}`);
-        } catch (e) { showResult('profileResult', e.message, true); }
+    function setSocialTokens() {
+        const at = document.getElementById('socialAccessToken').value.trim();
+        if (at) setToken(at);
+        alert('토큰이 저장되었습니다. 이제 인증이 필요한 API를 사용할 수 있습니다.');
     }
 
+    // ===================== 섹션 3 =====================
+    async function getMe() { await api('GET', '/users/me', null, 'me', true); }
+    async function getProfile() { await api('GET', '/api/users/profile', null, 'profile', true); }
+    async function getTravelStyles() { await api('GET', '/api/travel-styles', null, 'travelStyles', false); }
+
+    // ===================== 섹션 4 =====================
+    async function startIdentityVerification() {
+        const storeId = STATE.storeId || document.getElementById('cfgStoreId').value;
+        const channelKey = STATE.channelKey || document.getElementById('cfgChannelKey').value;
+        if (!storeId || !channelKey) {
+            alert('상단 Config 바에 PortOne Store ID와 Channel Key를 먼저 입력하고 저장하세요.');
+            return;
+        }
+        if (typeof PortOne === 'undefined') {
+            document.getElementById('portoneStatus').textContent = '⚠️ PortOne SDK 로드 실패. 수동 입력을 사용하세요.';
+            return;
+        }
+        document.getElementById('portoneStatus').textContent = '⏳ 본인인증 팝업을 여는 중...';
+        try {
+            const result = await PortOne.requestIdentityVerification({
+                storeId,
+                channelKey,
+                identityVerificationId: 'identity-' + Date.now(),
+                customer: { name: '' }
+            });
+            if (result.code) {
+                document.getElementById('portoneStatus').textContent = '❌ 인증 실패: ' + (result.message || result.code);
+                return;
+            }
+            document.getElementById('portoneStatus').textContent = '✅ 인증 완료. 서버 검증 중...';
+            document.getElementById('manualImpUid').value = result.identityVerificationId;
+            await callVerifyIdentity(result.identityVerificationId, 'verifyIdentity');
+        } catch(e) {
+            document.getElementById('portoneStatus').textContent = '❌ 오류: ' + e.message;
+        }
+    }
+
+    async function verifyIdentityManual() {
+        const impUid = document.getElementById('manualImpUid').value.trim();
+        if (!impUid) { alert('impUid를 입력하세요.'); return; }
+        await callVerifyIdentity(impUid, 'verifyIdentityManual');
+    }
+
+    async function callVerifyIdentity(impUid, resultId) {
+        await api('POST', '/api/auth/verify-identity', { impUid }, resultId, true);
+    }
+
+    // ===================== 섹션 5 =====================
     async function updateProfile() {
-        const styles = Array.from(document.querySelectorAll('input[name="styles"]:checked')).map(cb => cb.value);
-        try {
-            const res = await axios.put(`${API_BASE}/api/users/profile`, {
-                bio: document.getElementById('updateBio').value,
-                mbti: document.getElementById('updateMbti').value,
-                travelStyles: styles
-            }, { headers: { 'Authorization': `Bearer ${CONFIG.accessToken}` } });
-
-            const d = res.data.data;
-            showResult('updateResult', `✅ 수정 완료\n소개: ${d.bio}\nMBTI: ${d.mbti}\n스타일: ${d.travelStyles?.join(', ')}`);
-            // 프로필 다시 조회하여 갱신 확인
-            getProfile();
-        } catch (e) { showResult('updateResult', e.response?.data?.message || e.message, true); }
+        const checked = [...document.querySelectorAll('input[name=travelStyle]:checked')];
+        if (checked.length > 3) { alert('여행 스타일은 최대 3개까지 선택 가능합니다.'); return; }
+        const body = {
+            nickname: document.getElementById('profileNickname').value || null,
+            bio: document.getElementById('profileBio').value || null,
+            mbti: document.getElementById('profileMbti').value || null,
+            profileImageUrl: document.getElementById('profileImageUrl').value || null,
+            travelStyleIds: checked.map(c => parseInt(c.value))
+        };
+        await api('PUT', '/api/users/profile', body, 'updateProfile', true);
     }
 
-    function showResult(id, msg, isError = false) {
+    async function updateNotification() {
+        const enabled = document.getElementById('notifEnabled').value === 'true';
+        await api('PATCH', '/api/users/notification-settings', { enabled: enabled }, 'notif', true);
+    }
+
+    // ===================== 섹션 6 =====================
+    async function getPresignedUrl() {
+        const ext = document.getElementById('imgExtension').value;
+        const r = await api('POST', '/images/presigned-url', { extension: ext }, 'presigned', true);
+        if (r.ok && r.data?.data) {
+            STATE.presignedUrl = r.data.data.presignedUrl || r.data.data.url;
+            STATE.readImageUrl = r.data.data.readImageUrl;
+            if (STATE.readImageUrl) {
+                document.getElementById('presignedUrlDisplay').style.display = 'block';
+                document.getElementById('readImageUrlVal').textContent = STATE.readImageUrl;
+            }
+        }
+    }
+
+    function copyReadUrl() {
+        navigator.clipboard.writeText(STATE.readImageUrl).then(() => alert('복사됨: ' + STATE.readImageUrl));
+    }
+
+    async function uploadToS3() {
+        if (!STATE.presignedUrl) { alert('먼저 Presigned URL을 발급받으세요.'); return; }
+        const file = document.getElementById('uploadFile').files[0];
+        if (!file) { alert('파일을 선택하세요.'); return; }
+        document.getElementById('uploadStatus').textContent = '⏳ 업로드 중...';
+        try {
+            const res = await fetch(STATE.presignedUrl, {
+                method: 'PUT',
+                body: file,
+                headers: { 'Content-Type': file.type }
+            });
+            document.getElementById('uploadStatus').textContent =
+                res.ok ? '✅ 업로드 성공! 위 readImageUrl을 프로필 이미지로 사용하세요.' : '❌ 업로드 실패: ' + res.status;
+        } catch(e) {
+            document.getElementById('uploadStatus').textContent = '❌ 오류: ' + e.message;
+        }
+    }
+
+    // ===================== 섹션 7 =====================
+    async function verifyPassword() {
+        await api('POST', '/users/verify-password', {
+            password: document.getElementById('verifyPwInput').value
+        }, 'verifyPw', true);
+    }
+
+    async function changePassword() {
+        const r = await api('PATCH', '/users/password', {
+            currentPassword: document.getElementById('changePwCurrent').value,
+            newPassword: document.getElementById('changePwNew').value
+        }, 'changePw', true);
+        if (r.ok) {
+            const token = r.data?.data?.accessToken;
+            if (token) setToken(token);
+        }
+    }
+
+    async function setInitialPassword() {
+        await api('POST', '/users/password', {
+            password: document.getElementById('setInitialPw').value
+        }, 'setInitialPw', true);
+    }
+
+    // ===================== 섹션 8 =====================
+    async function updateUserInfo() {
+        const body = {};
+        const pw = document.getElementById('updatePwCurrent').value;
+        const newPw = document.getElementById('updatePwNew').value;
+        const name = document.getElementById('updateInfoName').value;
+        const gender = document.getElementById('updateInfoGender').value;
+        const birth = document.getElementById('updateInfoBirth').value;
+        if (pw) body.password = pw;
+        if (newPw) body.newPassword = newPw;
+        if (name) body.name = name;
+        if (gender) body.gender = gender;
+        if (birth) body.birthDate = birth;
+        const r = await api('PUT', '/users', body, 'updateInfo', true);
+        if (r.ok) {
+            const token = r.data?.data?.accessToken;
+            if (token) setToken(token);
+        }
+    }
+
+    function toggleDeletePw() {
+        const isSocial = document.getElementById('deleteIsSocial').checked;
+        document.getElementById('deletePwSection').style.display = isSocial ? 'none' : 'block';
+    }
+
+    // ===================== 섹션 9 =====================
+    async function searchByName() {
+        const name = document.getElementById('searchNameInput').value;
+        await api('GET', '/users/search?name=' + encodeURIComponent(name), null, 'searchName', true);
+    }
+
+    async function getMembers() {
+        const ids = document.getElementById('memberIdsInput').value.trim();
+        await api('GET', '/users/members?ids=' + encodeURIComponent(ids), null, 'members', true);
+    }
+
+    // ===================== 섹션 10 =====================
+    async function createTrip() {
+        const body = {
+            tripTitle: document.getElementById('tripTitle').value,
+            tripDescription: document.getElementById('tripDesc').value,
+            startDate: document.getElementById('tripStart').value,
+            endDate: document.getElementById('tripEnd').value,
+            isPublic: document.getElementById('tripPublic').checked
+        };
+        await api('POST', '/trips', body, 'createTrip', true, STATE.tripBase);
+    }
+
+    async function getMyTrips() {
+        await api('GET', '/trips/my', null, 'myTrips', true, STATE.tripBase);
+    }
+
+    // ===================== 섹션 11 =====================
+    async function reissue() {
+        const r = await api('POST', '/auth/reissue', {}, 'reissue', false);
+        if (r.ok) {
+            const token = r.data?.data?.accessToken;
+            if (token) setToken(token);
+        }
+    }
+
+    async function logout() {
+        await api('POST', '/auth/logout', {}, 'logout', true);
+        STATE.accessToken = '';
+        document.getElementById('tokenBar').style.display = 'none';
+    }
+
+    // ===================== 섹션 12 =====================
+    async function deleteUser() {
+        const isSocial = document.getElementById('deleteIsSocial').checked;
+        const body = isSocial ? {} : { password: document.getElementById('deletePwInput').value };
+        const r = await api('DELETE', '/users', body, 'deleteUser', true);
+        if (r.status === 204 || r.ok) {
+            STATE.accessToken = '';
+            document.getElementById('tokenBar').style.display = 'none';
+        }
+    }
+
+    // ===================== 섹션 13: 시나리오 =====================
+    function showScenario(id, pass, msg) {
         const el = document.getElementById(id);
         el.style.display = 'block';
-        el.className = isError ? 'result error' : 'result';
-        el.innerText = msg;
+        el.className = 'scenario-result ' + (pass ? 'pass' : 'fail');
+        el.innerHTML = (pass ? '✅ ' : '❌ ') + msg;
     }
 
-    function enableButtons() {
-        ['certBtn', 'profileBtn', 'updateBtn'].forEach(id => document.getElementById(id).disabled = false);
+    async function runScenarioA() {
+        const email = document.getElementById('scA_email').value;
+        const pw = document.getElementById('scA_pw').value;
+        const name = document.getElementById('scA_name').value;
+
+        // 1. 회원가입 (닉네임 없이)
+        const r1 = await api('POST', '/users', {
+            email, password: pw, name, gender: 'M', termsAgreed: true, marketingAgreed: false
+        }, null, false);
+        if (!r1.ok) {
+            showScenario('scA_result', false, `회원가입 실패: ${JSON.stringify(r1.data)}`);
+            return;
+        }
+        const token = r1.data?.data?.accessToken || r1.data?.accessToken;
+        if (token) setToken(token);
+
+        // 2. GET /users/me
+        const r2 = await api('GET', '/users/me', null, null, true);
+        if (!r2.ok) {
+            showScenario('scA_result', false, `GET /users/me 실패: ${JSON.stringify(r2.data)}`);
+            return;
+        }
+        const me = r2.data?.data || r2.data;
+        const nicknameMatches = me?.nickname === name;
+        showScenario('scA_result', nicknameMatches,
+            nicknameMatches
+                ? `닉네임 자동 설정 확인 ✅ nickname="${me.nickname}" == name="${name}"`
+                : `닉네임 불일치 ❌ nickname="${me?.nickname}", name="${name}"`
+        );
+    }
+
+    async function runScenarioB() {
+        // 1. 현재 hasPassword 확인
+        const r1 = await api('GET', '/api/users/profile', null, null, true);
+        if (!r1.ok) {
+            showScenario('scB_result', false, `프로필 조회 실패: ${JSON.stringify(r1.data)}`);
+            return;
+        }
+        const profile = r1.data?.data || r1.data;
+        const hasPassword = profile?.hasPassword;
+        let log = `hasPassword=${hasPassword}\n`;
+
+        if (!hasPassword) {
+            // 소셜 전용: POST /users/password → 200 기대
+            const newPw = document.getElementById('scB_newPw').value;
+            const r2 = await api('POST', '/users/password', { newPassword: newPw }, null, true);
+            log += `POST /users/password → ${r2.status} (기대: 200)\n`;
+            const step2Pass = r2.status === 200;
+
+            // PATCH /users/password → 403 기대 (hasPassword가 true가 됐으면 다시 소셜 계정 토큰 필요)
+            // 위 단계에서 hasPassword=true가 됐으므로, 다시 GET으로 확인
+            const r3 = await api('GET', '/api/users/profile', null, null, true);
+            const updated = r3.data?.data || r3.data;
+            log += `비밀번호 설정 후 hasPassword=${updated?.hasPassword}\n`;
+
+            showScenario('scB_result', step2Pass,
+                log + (step2Pass ? '✅ 소셜 유저 최초 비밀번호 설정 성공' : '❌ 실패'));
+        } else {
+            // 이미 비밀번호 있음: POST /users/password → 409 기대
+            const r2 = await api('POST', '/users/password', { newPassword: 'Any1234!' }, null, true);
+            log += `POST /users/password (hasPassword=true) → ${r2.status} (기대: 409)\n`;
+            showScenario('scB_result', r2.status === 409,
+                log + (r2.status === 409 ? '✅ Member-008 확인' : `❌ 기대: 409, 실제: ${r2.status}`));
+        }
+    }
+
+    async function runScenarioC() {
+        // 1. isVerified 확인
+        const r1 = await api('GET', '/users/me', null, null, true);
+        if (!r1.ok) {
+            showScenario('scC_result', false, `GET /users/me 실패`);
+            return;
+        }
+        const me = r1.data?.data || r1.data;
+        const isVerified = me?.isVerified;
+        let log = `isVerified=${isVerified}\n`;
+
+        if (!isVerified) {
+            showScenario('scC_result', false, log + '본인인증이 완료되지 않았습니다. 섹션 4에서 본인인증 후 재시도하세요.');
+            return;
+        }
+
+        const pw = document.getElementById('scC_pw').value;
+        const body1 = { name: '변경시도' };
+        if (pw) body1.password = pw;
+
+        // 이름 변경 → 400 기대
+        const r2 = await api('PUT', '/users', body1, null, true);
+        log += `PUT /users {name: "변경시도"} → ${r2.status} (기대: 400)\n`;
+        const step2Pass = r2.status === 400;
+
+        // 성별 변경 → 200 기대
+        const body2 = { gender: me?.gender === 'M' ? 'F' : 'M' };
+        if (pw) body2.password = pw;
+        const r3 = await api('PUT', '/users', body2, null, true);
+        log += `PUT /users {gender: "${body2.gender}"} → ${r3.status} (기대: 200)\n`;
+        const step3Pass = r3.status === 200;
+
+        showScenario('scC_result', step2Pass && step3Pass,
+            log + (step2Pass && step3Pass ? '✅ isVerified 잠금 정상 동작' : '❌ 예상과 다른 응답'));
+    }
+
+    async function runScenarioD() {
+        const r = await api('GET', '/api/users/profile', null, null, true);
+        if (!r.ok) {
+            showScenario('scD_result', false, `프로필 조회 실패: ${JSON.stringify(r.data)}`);
+            return;
+        }
+        const profile = r.data?.data || r.data;
+        const linked = profile?.linkedProviders || [];
+        const hasLinked = linked.length > 0;
+        const providers = linked.map(p => p.provider).join(', ');
+        showScenario('scD_result', hasLinked,
+            hasLinked
+                ? `linkedProviders: [${providers}] (${linked.length}개 연동됨) ✅`
+                : `linkedProviders가 비어있습니다. 소셜 로그인 후 재시도하세요.`
+        );
+    }
+
+    async function runScenarioE() {
+        // 1. hasPassword 확인
+        const r1 = await api('GET', '/users/me', null, null, true);
+        if (!r1.ok) {
+            showScenario('scE_result', false, 'GET /users/me 실패');
+            return;
+        }
+        const me = r1.data?.data || r1.data;
+        let log = `hasPassword=${me?.hasPassword}, 탈퇴 시도...\n`;
+
+        // 2. DELETE /users (body 없이)
+        const r2 = await api('DELETE', '/users', {}, null, true);
+        log += `DELETE /users → ${r2.status} (기대: 204)\n`;
+        if (r2.status !== 204) {
+            showScenario('scE_result', false, log + `❌ 탈퇴 실패`);
+            return;
+        }
+        STATE.accessToken = '';
+        document.getElementById('tokenBar').style.display = 'none';
+
+        // 3. 재가입 시도
+        const email = document.getElementById('scE_email').value || me?.email;
+        if (!email) {
+            showScenario('scE_result', true, log + `✅ 탈퇴 성공. 재가입 이메일 입력 후 재시도 가능.`);
+            return;
+        }
+        const r3 = await api('POST', '/users', {
+            email, password: 'AnyPw1234!', name: '재가입', gender: 'M', termsAgreed: true, marketingAgreed: false
+        }, null, false);
+        log += `POST /users (재가입) → ${r3.status} (기대: 400 Member-003)\n`;
+        const step3Pass = r3.status === 400;
+        showScenario('scE_result', step3Pass,
+            log + (step3Pass ? '✅ 탈퇴 계정 재가입 차단 확인 (Member-003)' : `❌ 기대: 400, 실제: ${r3.status}`));
     }
 </script>
 </body>

@@ -10,6 +10,9 @@ import java.util.List;
 @NoArgsConstructor
 public class UpdateProfileRequest {
 
+    @Size(max = 15, message = "닉네임은 최대 15자까지 입력 가능합니다.")
+    private String nickname;
+
     @Size(max = 30, message = "소개는 최대 30자까지 입력 가능합니다.")
     private String bio;
 

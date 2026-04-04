@@ -2,7 +2,9 @@ package com.retrip.auth.application.in;
 
 import com.retrip.auth.application.config.JwtProvider;
 import com.retrip.auth.application.in.response.LoginResponse;
+import com.retrip.auth.application.out.repository.MemberRepository;
 import com.retrip.auth.application.out.repository.RefreshTokenRepository;
+import com.retrip.auth.domain.entity.Member;
 import com.retrip.auth.domain.entity.RefreshToken;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.DisplayName;
@@ -33,24 +35,30 @@ class AuthServiceTest {
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
 
+    @Mock
+    private MemberRepository memberRepository;
+
     @Test
     @DisplayName("토큰 재발급(reissue) 성공 테스트")
     void reissue_Success() {
         // given
         String oldRefreshToken = "old-refresh-token";
-        String memberId = "test-uuid";
+        String memberId = "00000000-0000-0000-0000-000000000001";
         String authorities = "ROLE_USER";
 
         given(jwtProvider.validateToken(oldRefreshToken)).willReturn(true);
 
         RefreshToken savedToken = new RefreshToken(oldRefreshToken, memberId, authorities);
-        given(refreshTokenRepository.findById(oldRefreshToken)).willReturn(Optional.of(savedToken));
+        given(refreshTokenRepository.findByTokenValue(oldRefreshToken)).willReturn(Optional.of(savedToken));
 
         Claims claims = mock(Claims.class);
         given(claims.getSubject()).willReturn(memberId);
-        given(claims.get("authorities")).willReturn(authorities);
 
         given(jwtProvider.parseClaims(oldRefreshToken)).willReturn(claims);
+
+        Member mockMember = mock(Member.class);
+        given(mockMember.getIsDeleted()).willReturn(false);
+        given(memberRepository.findById(any())).willReturn(Optional.of(mockMember));
 
         LoginResponse.TokenResponse newTokens = new LoginResponse.TokenResponse("new-access", "new-refresh");
         given(jwtProvider.generateTokens(any(Authentication.class))).willReturn(newTokens);

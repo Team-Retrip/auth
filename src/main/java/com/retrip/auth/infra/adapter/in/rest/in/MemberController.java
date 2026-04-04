@@ -1,6 +1,7 @@
 package com.retrip.auth.infra.adapter.in.rest.in;
 
 import com.retrip.auth.application.in.request.*;
+import com.retrip.auth.application.in.request.SetInitialPasswordRequest;
 import com.retrip.auth.application.in.response.*;
 import com.retrip.auth.application.in.response.MemberSearchResponse;
 import com.retrip.auth.application.in.usercase.ManageMemberUseCase;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +33,7 @@ public class MemberController {
     @PostMapping
     @Schema(description = "회원 가입")
     public ResponseEntity<ApiResponse<MemberCreateResponse>> createUser(
-            @RequestBody MemberCreateRequest request) {
+            @Valid @RequestBody MemberCreateRequest request) {
         MemberCreateResponse response = manageMemberUseCase.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(response));
@@ -57,11 +59,21 @@ public class MemberController {
                 .body(ApiResponse.noContent());
     }
 
+    @PostMapping("/password")
+    @Schema(description = "소셜 유저 최초 비밀번호 설정")
+    public ResponseEntity<ApiResponse<?>> setInitialPassword(
+            Authentication authentication,
+            @RequestBody SetInitialPasswordRequest request) {
+        UUID memberId = extractMemberId(authentication);
+        manageMemberUseCase.setInitialPassword(memberId, request.password());
+        return ResponseEntity.ok(ApiResponse.noContent());
+    }
+
     @PatchMapping("/password")
     @Schema(description = "비밀번호 변경")
     public ApiResponse<ChangePasswordResponse> changePassword(
             Authentication authentication,
-            @RequestBody ChangePasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequest request) {
         UUID memberId = extractMemberId(authentication);
         return ApiResponse.ok(manageMemberUseCase.changePassword(memberId, request));
     }
@@ -69,14 +81,7 @@ public class MemberController {
     @GetMapping("/me")
     @Schema(description = "내 정보 조회")
     public ApiResponse<MemberInfoResponse> getMyInfo(Authentication authentication) {
-        log.info("=== Controller /users/me ===");
-        log.info("Authentication: {}", authentication);
-        log.info("Principal: {}", authentication != null ? authentication.getPrincipal() : "null");
-        log.info("Authorities: {}", authentication != null ? authentication.getAuthorities() : "null");
-
         UUID memberId = extractMemberId(authentication);
-        log.info("Extracted Member ID: {}", memberId);
-
         return ApiResponse.ok(manageMemberUseCase.getMyInfo(memberId));
     }
 

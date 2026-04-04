@@ -1,0 +1,1438 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Retrip Wireframe — Auth & MY</title>
+<style>
+  :root {
+    --primary: #5B67F8;
+    --primary-light: #EEF0FF;
+    --gray100: #F5F5F5;
+    --gray200: #EBEBEB;
+    --gray300: #D0D0D0;
+    --gray400: #ABABAB;
+    --gray600: #6E6E6E;
+    --gray800: #2E2E2E;
+    --black: #111111;
+    --white: #FFFFFF;
+    --red: #F24E4E;
+    --green: #2DCA73;
+    --badge: #F5A623;
+    --radius: 12px;
+    --phone-w: 375px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #E8E8E8;
+    font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    color: var(--black);
+  }
+
+  /* ── Layout ── */
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* Top Navigation */
+  .top-nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray200);
+    padding: 12px 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    align-items: center;
+  }
+  .top-nav .logo {
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--primary);
+    margin-right: 12px;
+    letter-spacing: -0.5px;
+  }
+  .group-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray400);
+    text-transform: uppercase;
+    margin-right: 4px;
+    letter-spacing: 0.5px;
+  }
+  .nav-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--gray300);
+    background: var(--white);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray600);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .nav-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .divider-v { width: 1px; height: 24px; background: var(--gray200); margin: 0 4px; }
+
+  /* Main */
+  main {
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 60px;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  /* Phone Frame */
+  .phone {
+    width: var(--phone-w);
+    background: var(--white);
+    border-radius: 36px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+    border: 8px solid #1A1A1A;
+  }
+  .phone-notch {
+    background: #1A1A1A;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .phone-notch span {
+    width: 80px; height: 18px;
+    background: #000;
+    border-radius: 12px;
+    display: block;
+  }
+  .phone-screen {
+    height: 700px;
+    overflow-y: auto;
+    background: var(--white);
+    position: relative;
+  }
+  .phone-screen::-webkit-scrollbar { width: 4px; }
+  .phone-screen::-webkit-scrollbar-thumb { background: var(--gray300); border-radius: 2px; }
+  .phone-label {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray600);
+    letter-spacing: -0.3px;
+  }
+  .phone-sublabel {
+    text-align: center;
+    font-size: 11px;
+    color: var(--gray400);
+    margin-top: 2px;
+  }
+
+  /* ── Annotation ── */
+  .annotation {
+    background: #FFFBEA;
+    border-left: 3px solid #F5A623;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #7A5C00;
+    margin: 8px 16px;
+    border-radius: 0 6px 6px 0;
+  }
+
+  /* ── Section Header ── */
+  .section-header {
+    background: var(--primary);
+    padding: 32px 24px 20px;
+    width: 100%;
+    text-align: center;
+  }
+  .section-header .logo-text {
+    font-size: 28px; font-weight: 900; color: white; letter-spacing: -1px;
+  }
+  .section-header p { font-size: 13px; color: rgba(255,255,255,0.8); margin-top: 4px; }
+
+  /* ── Component Library ── */
+  /* Status Bar */
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 20px 4px;
+    font-size: 11px; font-weight: 700;
+  }
+  .status-bar .time { color: var(--black); }
+  .status-bar .icons { display: flex; gap: 4px; align-items: center; }
+  .status-bar .icons span { font-size: 12px; }
+
+  /* App Bar */
+  .app-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray200);
+  }
+  .app-bar .title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .app-bar .back-btn {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--gray800);
+  }
+  .app-bar .action { font-size: 14px; color: var(--primary); font-weight: 600; }
+
+  /* Button */
+  .btn-primary {
+    width: 100%; padding: 15px;
+    background: var(--primary);
+    color: white; font-size: 16px; font-weight: 700;
+    border: none; border-radius: var(--radius); cursor: pointer;
+    letter-spacing: -0.3px;
+  }
+  .btn-outline {
+    width: 100%; padding: 14px;
+    background: transparent;
+    color: var(--primary); font-size: 15px; font-weight: 600;
+    border: 1.5px solid var(--primary); border-radius: var(--radius);
+  }
+  .btn-gray {
+    width: 100%; padding: 14px;
+    background: var(--gray100);
+    color: var(--gray600); font-size: 15px; font-weight: 600;
+    border: none; border-radius: var(--radius);
+  }
+  .btn-danger {
+    width: 100%; padding: 14px;
+    background: transparent; color: var(--red);
+    font-size: 14px; font-weight: 600;
+    border: 1.5px solid var(--red); border-radius: var(--radius);
+  }
+
+  /* Input */
+  .input-group { margin-bottom: 16px; }
+  .input-label {
+    font-size: 13px; font-weight: 600; color: var(--gray800);
+    margin-bottom: 6px; display: block;
+  }
+  .input-label .req { color: var(--primary); margin-left: 2px; }
+  .input-box {
+    width: 100%; padding: 13px 14px;
+    border: 1.5px solid var(--gray300); border-radius: 10px;
+    font-size: 15px; background: var(--white);
+    color: var(--gray800);
+  }
+  .input-box.filled { border-color: var(--primary); background: var(--primary-light); }
+  .input-box.error { border-color: var(--red); }
+  .input-box.locked {
+    background: var(--gray100); border-color: var(--gray200);
+    color: var(--gray600);
+  }
+  .input-hint {
+    font-size: 11px; color: var(--gray400); margin-top: 4px;
+  }
+  .input-hint.error { color: var(--red); }
+  .input-hint.success { color: var(--green); }
+
+  /* Social Btn */
+  .social-btn {
+    width: 100%; padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    border-radius: var(--radius); border: 1.5px solid var(--gray200);
+    background: var(--white); font-size: 15px; font-weight: 600;
+    margin-bottom: 10px; cursor: pointer;
+  }
+  .social-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; }
+  .kakao { background: #FEE500; color: #3A1D1D; }
+  .naver { background: #03C75A; color: white; }
+  .google { background: white; border: 1px solid var(--gray200); color: #4285F4; }
+
+  /* Divider */
+  .divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 16px 0; color: var(--gray400); font-size: 12px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--gray200);
+  }
+
+  /* Bottom Tabs */
+  .bottom-tabs {
+    display: flex; border-top: 1px solid var(--gray200);
+    background: white; position: sticky; bottom: 0;
+  }
+  .tab-item {
+    flex: 1; padding: 10px 4px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600; color: var(--gray400);
+  }
+  .tab-item.active { color: var(--primary); }
+  .tab-icon { font-size: 20px; line-height: 1; }
+
+  /* MY Page Components */
+  .profile-header {
+    padding: 24px 20px 20px;
+    background: linear-gradient(160deg, var(--primary) 0%, #7B86FA 100%);
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .avatar-wrap { position: relative; }
+  .avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; border: 3px solid rgba(255,255,255,0.5);
+  }
+  .avatar-edit {
+    position: absolute; bottom: 0; right: 0;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: white; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .profile-name {
+    font-size: 20px; font-weight: 800; color: white; letter-spacing: -0.5px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .verified-badge {
+    background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 20px; padding: 2px 8px;
+    font-size: 11px; font-weight: 700; color: white;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .unverified-badge {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px; padding: 2px 8px;
+    font-size: 11px; color: rgba(255,255,255,0.7);
+  }
+  .profile-bio { font-size: 13px; color: rgba(255,255,255,0.8); text-align: center; }
+  .style-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .style-tag {
+    background: rgba(255,255,255,0.2); border-radius: 20px;
+    padding: 4px 10px; font-size: 11px; font-weight: 700; color: white;
+  }
+
+  /* Section List */
+  .list-section { padding: 16px 0 0; }
+  .list-section-title {
+    font-size: 12px; font-weight: 700; color: var(--gray400);
+    padding: 0 16px 8px; letter-spacing: 0.3px; text-transform: uppercase;
+  }
+  .list-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--gray100);
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item-left { display: flex; align-items: center; gap: 12px; }
+  .list-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .icon-purple { background: #EEF0FF; }
+  .icon-blue { background: #E8F4FD; }
+  .icon-green { background: #E8FAF0; }
+  .icon-orange { background: #FFF3E0; }
+  .icon-red { background: #FEECEC; }
+  .icon-gray { background: var(--gray100); }
+  .list-item-title { font-size: 15px; font-weight: 600; color: var(--black); }
+  .list-item-sub { font-size: 12px; color: var(--gray400); margin-top: 1px; }
+  .list-chevron { font-size: 14px; color: var(--gray300); }
+  .list-badge {
+    background: var(--red); color: white;
+    font-size: 11px; font-weight: 700;
+    width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Toggle */
+  .toggle {
+    width: 48px; height: 28px; border-radius: 14px;
+    position: relative; cursor: pointer; flex-shrink: 0;
+  }
+  .toggle.on { background: var(--primary); }
+  .toggle.off { background: var(--gray300); }
+  .toggle-thumb {
+    width: 22px; height: 22px; border-radius: 50%; background: white;
+    position: absolute; top: 3px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    transition: left 0.2s;
+  }
+  .toggle.on .toggle-thumb { left: 23px; }
+  .toggle.off .toggle-thumb { left: 3px; }
+
+  /* Chip / Tag */
+  .chip {
+    padding: 6px 12px; border-radius: 20px;
+    font-size: 13px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .chip.selected { background: var(--primary-light); color: var(--primary); border: 1.5px solid var(--primary); }
+  .chip.unselected { background: var(--gray100); color: var(--gray600); border: 1.5px solid var(--gray200); }
+
+  /* Step Indicator */
+  .step-indicator {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 12px 0 0;
+  }
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--gray200);
+  }
+  .step-dot.active { background: var(--primary); width: 24px; border-radius: 4px; }
+  .step-dot.done { background: var(--primary); }
+
+  /* Check List (Terms) */
+  .check-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 0; border-bottom: 1px solid var(--gray100);
+  }
+  .check-circle {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-size: 14px;
+  }
+  .check-circle.checked { background: var(--primary); color: white; }
+  .check-circle.unchecked { border: 2px solid var(--gray300); }
+  .check-text { font-size: 14px; color: var(--gray800); flex: 1; }
+  .check-arrow { font-size: 14px; color: var(--gray300); }
+
+  /* History Card */
+  .history-card {
+    border: 1.5px solid var(--gray200); border-radius: var(--radius);
+    padding: 14px; margin-bottom: 10px;
+  }
+  .history-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .history-trip-name { font-size: 15px; font-weight: 700; }
+  .status-pill {
+    font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 20px;
+  }
+  .status-pending { background: #FFF3E0; color: #E65100; }
+  .status-accepted { background: #E8FAF0; color: #1B8A4B; }
+  .status-rejected { background: #FEECEC; color: var(--red); }
+  .status-expired { background: var(--gray100); color: var(--gray400); }
+  .history-meta { font-size: 12px; color: var(--gray400); margin-top: 6px; }
+  .history-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .mini-btn {
+    flex: 1; padding: 9px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; text-align: center;
+  }
+  .mini-btn.accept { background: var(--primary); color: white; }
+  .mini-btn.reject { background: var(--gray100); color: var(--gray600); }
+
+  /* Account Provider Tag */
+  .provider-row {
+    display: flex; align-items: center; gap: 10px; padding: 12px 0;
+    border-bottom: 1px solid var(--gray100);
+  }
+  .provider-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    font-weight: 900; flex-shrink: 0;
+  }
+  .p-email { background: var(--gray100); color: var(--gray600); }
+  .p-kakao { background: #FEE500; color: #3A1D1D; }
+  .p-naver { background: #03C75A; color: white; }
+  .p-google { background: white; border: 1px solid var(--gray200); }
+  .provider-info { flex: 1; }
+  .provider-name { font-size: 14px; font-weight: 600; }
+  .provider-email { font-size: 12px; color: var(--gray400); margin-top: 1px; }
+  .provider-current {
+    font-size: 11px; font-weight: 700; color: var(--primary);
+    background: var(--primary-light); padding: 3px 8px; border-radius: 10px;
+  }
+
+  /* ─── Screen-specific ─── */
+  .p16 { padding: 16px; }
+  .p20 { padding: 20px; }
+  .mt8 { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+  .mt16 { margin-top: 16px; }
+  .mt20 { margin-top: 20px; }
+  .mt24 { margin-top: 24px; }
+  .text-center { text-align: center; }
+  .text-gray { color: var(--gray400); font-size: 13px; }
+  .text-small { font-size: 12px; }
+  .bold { font-weight: 700; }
+  .link-text { color: var(--primary); font-size: 13px; font-weight: 600; text-decoration: underline; }
+
+  /* PRD Notes */
+  .prd-note {
+    background: #F0F4FF; border-radius: 8px; padding: 10px 12px;
+    font-size: 11px; color: #3D5A99; margin: 8px 16px;
+    border-left: 3px solid var(--primary);
+    line-height: 1.6;
+  }
+
+  /* Page sections */
+  .page-section {
+    background: var(--white);
+    padding: 24px 20px 12px;
+    border-bottom: 8px solid var(--gray100);
+    text-align: center;
+  }
+  .page-section h2 {
+    font-size: 22px; font-weight: 900; color: var(--gray800);
+    letter-spacing: -0.5px;
+  }
+  .page-section p { font-size: 13px; color: var(--gray400); margin-top: 6px; }
+
+  /* Screen hidden/visible */
+  .screen { display: none; }
+  .screen.visible { display: block; }
+
+  /* Password policy */
+  .pw-rule { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray400); margin-top: 4px; }
+  .pw-rule .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gray300); flex-shrink: 0; }
+  .pw-rule.pass { color: var(--green); }
+  .pw-rule.pass .dot { background: var(--green); }
+
+  /* Verify CTA */
+  .verify-cta {
+    background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+    border-radius: 14px; padding: 20px;
+    display: flex; flex-direction: column; gap: 10px; margin: 0 16px;
+  }
+  .verify-cta h3 { font-size: 16px; font-weight: 800; color: white; }
+  .verify-cta p { font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+
+  /* Separator section */
+  .list-separator { height: 8px; background: var(--gray100); }
+
+  /* Scroll area notice */
+  .scroll-notice {
+    text-align: center; color: var(--gray300); font-size: 11px;
+    padding: 8px; letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+<!-- Top Navigation -->
+<nav class="top-nav">
+  <span class="logo">retrip</span>
+  <span class="divider-v"></span>
+  <span class="group-label">인증</span>
+  <button class="nav-btn active" onclick="showGroup('auth')">로그인 홈</button>
+  <button class="nav-btn" onclick="showScreen('signup1')">회원가입</button>
+  <button class="nav-btn" onclick="showScreen('verify-id')">본인인증 유도</button>
+  <span class="divider-v"></span>
+  <span class="group-label">MY 탭</span>
+  <button class="nav-btn" onclick="showScreen('my-unverified')">MY (미인증)</button>
+  <button class="nav-btn" onclick="showScreen('my-verified')">MY (인증완료)</button>
+  <button class="nav-btn" onclick="showScreen('my-profile-edit')">프로필 편집</button>
+  <button class="nav-btn" onclick="showScreen('my-notification')">알림 설정</button>
+  <button class="nav-btn" onclick="showScreen('my-history')">여행 히스토리</button>
+  <button class="nav-btn" onclick="showScreen('my-account')">계정 관리</button>
+  <span class="divider-v"></span>
+  <span class="group-label">흐름</span>
+  <button class="nav-btn" onclick="showGroup('all')">전체 보기</button>
+</nav>
+
+<main id="main-area">
+
+<!-- ═══════════════════════════════════════════
+     AUTH SCREENS
+════════════════════════════════════════════ -->
+
+<!-- S1: 로그인 홈 -->
+<div class="phone screen visible" id="s-login-home">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+
+    <!-- 로고 영역 -->
+    <div style="padding: 48px 20px 20px; text-align:center;">
+      <div style="font-size:36px; font-weight:900; color:var(--primary); letter-spacing:-1.5px; line-height:1;">retrip</div>
+      <div style="font-size:13px; color:var(--gray400); margin-top:8px;">나만의 여행, 함께하는 리트립</div>
+    </div>
+
+    <!-- 일러스트 자리 -->
+    <div style="background:var(--primary-light); margin:0 20px; border-radius:16px; height:160px; display:flex;align-items:center;justify-content:center; flex-direction:column; gap:8px;">
+      <div style="font-size:48px;">✈️🚲🌍</div>
+      <div style="font-size:12px; color:var(--primary); font-weight:600;">Hero Illustration</div>
+    </div>
+
+    <div class="p20 mt12">
+      <!-- 소셜 로그인 -->
+      <div class="social-btn"><div class="social-icon kakao">K</div><span>카카오로 시작하기</span></div>
+      <div class="social-btn"><div class="social-icon naver">N</div><span>네이버로 시작하기</span></div>
+      <div class="social-btn"><div class="social-icon google">G</div><span>Google로 시작하기</span></div>
+
+      <div class="divider">또는</div>
+
+      <button class="btn-outline" style="margin-bottom:12px;">이메일로 로그인</button>
+      <button class="btn-gray">이메일로 회원가입</button>
+
+      <div class="text-center mt16">
+        <span class="text-gray">비밀번호를 잊으셨나요? </span>
+        <span class="link-text">찾기</span>
+      </div>
+    </div>
+
+    <div style="height:20px;"></div>
+  </div>
+  <div class="phone-label">로그인 홈</div>
+  <div class="phone-sublabel">소셜 3종 + 이메일</div>
+</div>
+
+<!-- S2: 이메일 로그인 -->
+<div class="phone screen" id="s-login-email">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="app-bar">
+      <div class="back-btn">←</div>
+      <div class="title">이메일 로그인</div>
+      <div style="width:32px;"></div>
+    </div>
+
+    <div class="p20 mt12">
+      <div class="input-group">
+        <label class="input-label">이메일<span class="req">*</span></label>
+        <div class="input-box filled">user@example.com</div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">비밀번호<span class="req">*</span></label>
+        <div class="input-box filled">••••••••••</div>
+        <div class="input-hint">
+          <span class="link-text" style="font-size:12px;">비밀번호 찾기</span>
+        </div>
+      </div>
+
+      <div class="mt24">
+        <button class="btn-primary">로그인</button>
+      </div>
+
+      <!-- 에러 케이스 예시 -->
+      <div style="background:#FEECEC; border-radius:8px; padding:10px 14px; margin-top:16px; font-size:13px; color:var(--red); display:flex; gap:8px; align-items:center;">
+        <span>⚠️</span><span>이메일 또는 비밀번호가 일치하지 않습니다</span>
+      </div>
+
+      <div class="text-center mt20">
+        <span class="text-gray">계정이 없으신가요? </span>
+        <span class="link-text">회원가입</span>
+      </div>
+    </div>
+  </div>
+  <div class="phone-label">이메일 로그인</div>
+  <div class="phone-sublabel">에러 케이스 포함</div>
+</div>
+
+<!-- S3: 회원가입 Step 1 -->
+<div class="phone screen" id="signup1">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>●●●</span></div></div>
+    <div class="app-bar">
+      <div class="back-btn">←</div>
+      <div class="title">회원가입</div>
+      <div style="width:32px;"></div>
+    </div>
+
+    <div class="step-indicator">
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+    <div style="text-align:center; font-size:12px; color:var(--gray400); margin-top:6px;">1 / 3 — 계정 정보</div>
+
+    <div class="p20 mt8">
+      <div class="input-group">
+        <label class="input-label">이메일<span class="req">*</span></label>
+        <div class="input-box filled">user@example.com</div>
+        <div class="input-hint success">✓ 사용 가능한 이메일입니다</div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">비밀번호<span class="req">*</span></label>
+        <div class="input-box filled">••••••••••</div>
+        <div class="pw-rule pass"><div class="dot"></div>8자 이상</div>
+        <div class="pw-rule pass"><div class="dot"></div>영문 대소문자 포함</div>
+        <div class="pw-rule pass"><div class="dot"></div>숫자 포함</div>
+        <div class="pw-rule pass"><div class="dot"></div>특수문자 포함 (!@#$%^&*)</div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">비밀번호 확인<span class="req">*</span></label>
+        <div class="input-box filled">••••••••••</div>
+        <div class="input-hint success">✓ 비밀번호가 일치합니다</div>
+      </div>
+      <div class="mt12">
+        <button class="btn-primary">다음</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone-label">회원가입 1/3</div>
+  <div class="phone-sublabel">이메일 & 비밀번호</div>
+</div>
+
+<!-- S4: 회원가입 Step 2 -->
+<div class="phone screen" id="signup2">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>●●●</span></div></div>
+    <div class="app-bar">
+      <div class="back-btn">←</div>
+      <div class="title">회원가입</div>
+      <div style="width:32px;"></div>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+    <div style="text-align:center; font-size:12px; color:var(--gray400); margin-top:6px;">2 / 3 — 기본 정보</div>
+
+    <div class="p20 mt8">
+      <div class="input-group">
+        <label class="input-label">이름<span class="req">*</span></label>
+        <div class="input-box filled">홍길동</div>
+        <div class="input-hint">최대 10자 · 본인인증 완료 시 수정 불가</div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">성별<span class="req">*</span></label>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1; padding:13px; border:1.5px solid var(--primary); border-radius:10px; text-align:center; font-weight:700; color:var(--primary); background:var(--primary-light);">남성</div>
+          <div style="flex:1; padding:13px; border:1.5px solid var(--gray200); border-radius:10px; text-align:center; font-weight:600; color:var(--gray400);">여성</div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">생년월일<span class="req">*</span></label>
+        <div class="input-box filled">1998-03-15</div>
+        <div class="input-hint">YYYY-MM-DD 형식 · 본인인증 완료 시 수정 불가</div>
+      </div>
+      <div class="mt12">
+        <button class="btn-primary">다음</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone-label">회원가입 2/3</div>
+  <div class="phone-sublabel">이름·성별·생년월일</div>
+</div>
+
+<!-- S5: 약관 동의 -->
+<div class="phone screen" id="signup3">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>●●●</span></div></div>
+    <div class="app-bar">
+      <div class="back-btn">←</div>
+      <div class="title">약관 동의</div>
+      <div style="width:32px;"></div>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+    </div>
+    <div style="text-align:center; font-size:12px; color:var(--gray400); margin-top:6px;">3 / 3 — 약관</div>
+
+    <div class="p20 mt8">
+      <!-- 전체 동의 -->
+      <div style="background:var(--primary-light); border-radius:12px; padding:14px; display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <div class="check-circle checked">✓</div>
+        <div style="font-size:15px; font-weight:700; color:var(--primary);">전체 동의</div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-circle checked">✓</div>
+        <div class="check-text">[필수] 서비스 이용약관</div>
+        <div class="check-arrow">›</div>
+      </div>
+      <div class="check-item">
+        <div class="check-circle checked">✓</div>
+        <div class="check-text">[필수] 개인정보 처리방침</div>
+        <div class="check-arrow">›</div>
+      </div>
+      <div class="check-item">
+        <div class="check-circle checked">✓</div>
+        <div class="check-text">[필수] 위치 기반 서비스 이용약관</div>
+        <div class="check-arrow">›</div>
+      </div>
+      <div class="check-item">
+        <div class="check-circle unchecked"></div>
+        <div class="check-text">[선택] 마케팅 수신 동의</div>
+        <div class="check-arrow">›</div>
+      </div>
+
+      <div class="mt20">
+        <button class="btn-primary">가입 완료</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone-label">약관 동의</div>
+  <div class="phone-sublabel">3/3 — 필수/선택 구분</div>
+</div>
+
+<!-- S6: 본인인증 유도 (✅ 회의 확정 — 가입 직후 자동 진입, 건너뛰기 가능) -->
+<div class="phone screen" id="verify-id">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>●●●</span></div></div>
+
+    <!-- 뒤로가기 없음 (가입 완료 후 진입이므로) -->
+    <div style="padding:10px 16px 0;">
+
+      <!-- 가입 완료 진행 흐름 -->
+      <div style="display:flex; align-items:center; gap:4px; padding:6px 0;">
+        <div style="display:flex; align-items:center; gap:3px; font-size:10px; color:var(--gray400);">
+          <div style="width:16px; height:16px; border-radius:50%; background:var(--done); display:flex; align-items:center; justify-content:center; font-size:9px; color:white; font-weight:800;">✓</div>
+          <span>계정</span>
+        </div>
+        <div style="flex:1; height:1.5px; background:var(--done);"></div>
+        <div style="display:flex; align-items:center; gap:3px; font-size:10px; color:var(--gray400);">
+          <div style="width:16px; height:16px; border-radius:50%; background:var(--done); display:flex; align-items:center; justify-content:center; font-size:9px; color:white; font-weight:800;">✓</div>
+          <span>정보</span>
+        </div>
+        <div style="flex:1; height:1.5px; background:var(--done);"></div>
+        <div style="display:flex; align-items:center; gap:3px; font-size:10px; color:var(--gray400);">
+          <div style="width:16px; height:16px; border-radius:50%; background:var(--done); display:flex; align-items:center; justify-content:center; font-size:9px; color:white; font-weight:800;">✓</div>
+          <span>약관</span>
+        </div>
+        <div style="flex:1; height:1.5px; background:var(--primary);"></div>
+        <div style="display:flex; align-items:center; gap:3px; font-size:10px; color:var(--primary); font-weight:700;">
+          <div style="width:16px; height:16px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-size:9px; color:white; font-weight:800;">🛡</div>
+          <span style="white-space:nowrap;">인증(선택)</span>
+        </div>
+      </div>
+
+      <!-- 가입 완료 알림 -->
+      <div style="background:var(--done-bg); border-radius:10px; padding:10px 12px; display:flex; align-items:center; gap:8px; margin-top:6px;">
+        <span style="font-size:18px;">🎉</span>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:var(--done);">가입이 완료되었습니다!</div>
+          <div style="font-size:11px; color:var(--gray600);">본인인증을 진행하거나 건너뛸 수 있어요</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:16px 24px 8px; text-align:center;">
+      <div style="font-size:48px; margin-bottom:10px;">🛡️</div>
+      <div style="font-size:20px; font-weight:900; color:var(--black); letter-spacing:-0.5px; line-height:1.3;">
+        신뢰할 수 있는<br/>여행 메이트 되기
+      </div>
+      <div style="font-size:13px; color:var(--gray400); margin-top:10px; line-height:1.7;">
+        본인인증 시 <strong>🛡️ 인증 뱃지</strong>가 부여돼요.<br/>
+        더 많은 여행 메이트에게 신뢰받을 수 있어요!
+      </div>
+    </div>
+
+    <!-- Benefits -->
+    <div style="background:var(--gray100); border-radius:14px; margin:0 20px; padding:14px;">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; gap:10px; align-items:flex-start; font-size:12px;">
+          <span>✅</span><div><strong>신뢰도 상승</strong> — 인증 뱃지로 안전한 여행 메이트 인증</div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start; font-size:12px;">
+          <span>✅</span><div><strong>보안 강화</strong> — CI 기반 중복 가입 완전 차단</div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start; font-size:12px;">
+          <span>✅</span><div><strong>나중에도 가능</strong> — MY 탭에서 언제든 인증 가능</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p20" style="padding-top:14px;">
+      <button class="btn-primary" style="margin-bottom:10px;">지금 본인인증 하기</button>
+      <!-- 건너뛰기: 클릭 시 여행 홈으로 이동 (isVerified=false 유지) -->
+      <button class="btn-gray">건너뛰기 (나중에 하기)</button>
+      <div style="text-align:center; margin-top:10px; font-size:11px; color:var(--gray400);">
+        포트원(PortOne) 실명 인증 · 건너뛰어도 서비스 이용 가능
+      </div>
+    </div>
+    <div style="height:16px;"></div>
+  </div>
+  <div class="phone-label">본인인증 유도 ✅ 확정</div>
+  <div class="phone-sublabel">가입 직후 자동 진입 · 건너뛰기 가능</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     MY SCREENS
+════════════════════════════════════════════ -->
+
+<!-- MY: 미인증 -->
+<div class="phone screen" id="my-unverified">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>🔋</span></div></div>
+
+    <div class="profile-header">
+      <div class="avatar-wrap">
+        <div class="avatar">👤</div>
+        <div class="avatar-edit">✏️</div>
+      </div>
+      <div>
+        <div class="profile-name">
+          홍길동
+          <div class="unverified-badge">미인증</div>
+        </div>
+      </div>
+      <div class="profile-bio">사진 찍는 걸 좋아하는 뚜벅이 여행러입니다</div>
+      <div class="style-tags">
+        <div class="style-tag">#계획철저</div>
+        <div class="style-tag">#사진광</div>
+      </div>
+    </div>
+
+    <!-- 인증 CTA -->
+    <div style="padding:12px 16px;">
+      <div class="verify-cta">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:24px;">🛡️</span>
+          <div>
+            <h3>본인인증으로 신뢰도 올리기</h3>
+            <p>인증 뱃지를 달면 더 많은 여행 메이트를 만날 수 있어요</p>
+          </div>
+        </div>
+        <button style="background:white; color:#764BA2; border:none; border-radius:8px; padding:10px; font-size:13px; font-weight:700; width:100%;">지금 인증하기 →</button>
+      </div>
+    </div>
+
+    <div class="list-separator"></div>
+
+    <!-- 프로필 관리 -->
+    <div class="list-section">
+      <div class="list-section-title">프로필 관리</div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-purple">👤</div>
+          <div><div class="list-item-title">프로필 편집</div><div class="list-item-sub">이름, 소개, 여행 스타일</div></div>
+        </div>
+        <div class="list-chevron">›</div>
+      </div>
+    </div>
+
+    <div class="list-separator"></div>
+
+    <!-- 여행 히스토리 -->
+    <div class="list-section">
+      <div class="list-section-title">여행 히스토리</div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-blue">💌</div>
+          <div><div class="list-item-title">초대함</div><div class="list-item-sub">받은 초대 내역 전체</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;"><div class="list-badge">3</div><div class="list-chevron">›</div></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-green">🙋</div>
+          <div><div class="list-item-title">신청함</div><div class="list-item-sub">내가 신청한 여행 내역</div></div>
+        </div>
+        <div class="list-chevron">›</div>
+      </div>
+    </div>
+
+    <div class="list-separator"></div>
+
+    <!-- 설정 -->
+    <div class="list-section">
+      <div class="list-section-title">설정</div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-orange">🔔</div>
+          <div><div class="list-item-title">알림 설정</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;"><div class="toggle on"><div class="toggle-thumb"></div></div><div class="list-chevron">›</div></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-gray">⚙️</div>
+          <div><div class="list-item-title">계정 관리</div></div>
+        </div>
+        <div class="list-chevron">›</div>
+      </div>
+    </div>
+
+    <div class="list-separator"></div>
+
+    <!-- 기타 -->
+    <div class="list-section">
+      <div class="list-section-title">기타</div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-gray">📄</div>
+          <div><div class="list-item-title">이용약관</div></div>
+        </div>
+        <div class="list-chevron">›</div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-gray">ℹ️</div>
+          <div><div class="list-item-title">버전 정보</div><div class="list-item-sub">v1.0.0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:8px;"></div>
+    <div class="bottom-tabs">
+      <div class="tab-item"><div class="tab-icon">✈️</div>여행</div>
+      <div class="tab-item"><div class="tab-icon">🚲</div>나의 여정</div>
+      <div class="tab-item active"><div class="tab-icon">🕵🏻‍♀️</div>MY</div>
+    </div>
+  </div>
+  <div class="phone-label">MY 탭 (미인증)</div>
+  <div class="phone-sublabel">본인인증 CTA 노출</div>
+</div>
+
+<!-- MY: 인증 완료 -->
+<div class="phone screen" id="my-verified">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>🔋</span></div></div>
+
+    <div class="profile-header">
+      <div class="avatar-wrap">
+        <div class="avatar" style="background:rgba(255,255,255,0.3); font-size:0; overflow:hidden;">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg,#a8edea,#fed6e3);"></div>
+        </div>
+        <div class="avatar-edit">✏️</div>
+      </div>
+      <div>
+        <div class="profile-name">
+          홍길동
+          <div class="verified-badge">🛡️ 인증완료</div>
+        </div>
+      </div>
+      <div class="profile-bio">사진 찍는 걸 좋아하는 뚜벅이 여행러입니다</div>
+      <div class="style-tags">
+        <div class="style-tag">#계획철저</div>
+        <div class="style-tag">#사진광</div>
+        <div class="style-tag">#혼여행가능</div>
+      </div>
+    </div>
+
+    <!-- 프로필 관리 -->
+    <div class="list-section">
+      <div class="list-section-title">프로필 관리</div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-purple">👤</div>
+          <div><div class="list-item-title">프로필 편집</div><div class="list-item-sub">소개, MBTI, 여행 스타일</div></div>
+        </div>
+        <div class="list-chevron">›</div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-purple" style="background:#F0FFF4;">🛡️</div>
+          <div><div class="list-item-title">신원 확인</div><div class="list-item-sub" style="color:var(--green);">인증 완료 · 2024.03.15</div></div>
+        </div>
+        <div style="font-size:12px; color:var(--green); font-weight:600;">완료</div>
+      </div>
+    </div>
+
+    <div class="list-separator"></div>
+
+    <!-- 여행 히스토리 -->
+    <div class="list-section">
+      <div class="list-section-title">여행 히스토리</div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-blue">💌</div>
+          <div><div class="list-item-title">초대함</div><div class="list-item-sub">받은 초대 내역 전체</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;"><div class="list-badge">2</div><div class="list-chevron">›</div></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-green">🙋</div>
+          <div><div class="list-item-title">신청함</div><div class="list-item-sub">내가 신청한 여행 내역</div></div>
+        </div>
+        <div class="list-chevron">›</div>
+      </div>
+    </div>
+
+    <div class="list-separator"></div>
+
+    <!-- 설정 -->
+    <div class="list-section">
+      <div class="list-section-title">설정</div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-orange">🔔</div>
+          <div><div class="list-item-title">알림 설정</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;"><div class="toggle on"><div class="toggle-thumb"></div></div><div class="list-chevron">›</div></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div class="list-icon icon-gray">⚙️</div>
+          <div><div class="list-item-title">계정 관리</div></div>
+        </div>
+        <div class="list-chevron">›</div>
+      </div>
+    </div>
+
+    <div class="list-separator"></div>
+
+    <div class="list-section">
+      <div class="list-section-title">기타</div>
+      <div class="list-item">
+        <div class="list-item-left"><div class="list-icon icon-gray">📄</div><div class="list-item-title">이용약관</div></div>
+        <div class="list-chevron">›</div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-left"><div class="list-icon icon-gray">ℹ️</div><div><div class="list-item-title">버전 정보</div><div class="list-item-sub">v1.0.0</div></div></div>
+      </div>
+    </div>
+    <div style="height:8px;"></div>
+    <div class="bottom-tabs">
+      <div class="tab-item"><div class="tab-icon">✈️</div>여행</div>
+      <div class="tab-item"><div class="tab-icon">🚲</div>나의 여정</div>
+      <div class="tab-item active"><div class="tab-icon">🕵🏻‍♀️</div>MY</div>
+    </div>
+  </div>
+  <div class="phone-label">MY 탭 (인증완료)</div>
+  <div class="phone-sublabel">🛡️ 뱃지 + 잠금 표시</div>
+</div>
+
+<!-- MY: 프로필 편집 -->
+<div class="phone screen" id="my-profile-edit">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>🔋</span></div></div>
+    <div class="app-bar">
+      <div class="back-btn">←</div>
+      <div class="title">프로필 편집</div>
+      <div class="action">저장</div>
+    </div>
+
+    <div style="padding:24px 20px 0; text-align:center;">
+      <div class="avatar-wrap" style="display:inline-block;">
+        <div class="avatar" style="width:90px;height:90px;font-size:40px;background:var(--primary-light);">👤</div>
+        <div class="avatar-edit">📷</div>
+      </div>
+      <div style="font-size:12px; color:var(--gray400); margin-top:8px;">1:1 비율로 크롭됩니다</div>
+    </div>
+
+    <div class="p20">
+      <!-- 이름 (잠금) -->
+      <div class="input-group">
+        <label class="input-label">
+          이름
+          <span style="background:var(--green);color:white;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:6px;font-weight:700;">🛡️ 인증완료</span>
+        </label>
+        <div class="input-box locked">홍길동 🔒</div>
+        <div class="input-hint">본인인증 완료 후 수정이 제한됩니다</div>
+      </div>
+
+      <!-- Bio -->
+      <div class="input-group">
+        <label class="input-label">한 줄 소개<span style="color:var(--gray400); font-weight:400; font-size:12px; margin-left:4px;">0/30자</span></label>
+        <div class="input-box filled">사진 찍는 걸 좋아하는 뚜벅이 여행러입니다</div>
+      </div>
+
+      <!-- MBTI -->
+      <div class="input-group">
+        <label class="input-label">MBTI</label>
+        <div class="input-box filled" style="display:flex; justify-content:space-between; align-items:center;">
+          <span>INFP</span><span style="color:var(--gray400);">▼</span>
+        </div>
+        <div class="input-hint">16가지 유형 또는 비공개 선택 가능</div>
+      </div>
+
+      <!-- 여행 스타일 -->
+      <div class="input-group">
+        <label class="input-label">여행 스타일 <span style="color:var(--gray400);font-size:12px;font-weight:400;">최대 3개</span></label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+          <div class="chip selected">✓ 계획철저</div>
+          <div class="chip selected">✓ 사진광</div>
+          <div class="chip unselected">즉흥적</div>
+          <div class="chip unselected">맛집탐방</div>
+          <div class="chip selected">✓ 혼여행가능</div>
+          <div class="chip unselected">쇼핑러버</div>
+          <div class="chip unselected">힐링추구</div>
+          <div class="chip unselected">액티비티</div>
+        </div>
+      </div>
+
+      <!-- 생년월일 (잠금) -->
+      <div class="input-group">
+        <label class="input-label">생년월일
+          <span style="background:var(--green);color:white;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:6px;font-weight:700;">🛡️ 인증완료</span>
+        </label>
+        <div class="input-box locked">1998-03-15 🔒</div>
+      </div>
+    </div>
+  </div>
+  <div class="phone-label">프로필 편집</div>
+  <div class="phone-sublabel">인증 완료 시 이름/생년월일 잠금</div>
+</div>
+
+<!-- MY: 알림 설정 -->
+<div class="phone screen" id="my-notification">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>🔋</span></div></div>
+    <div class="app-bar">
+      <div class="back-btn">←</div>
+      <div class="title">알림 설정</div>
+      <div style="width:32px;"></div>
+    </div>
+
+    <div class="p16" style="padding-top:20px;">
+      <!-- 마스터 토글 -->
+      <div style="background:var(--primary-light); border-radius:14px; padding:16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div>
+          <div style="font-size:16px; font-weight:700; color:var(--primary);">전체 알림</div>
+          <div style="font-size:12px; color:var(--primary); opacity:0.7; margin-top:2px;">모든 알림을 한 번에 켜고 끌 수 있어요</div>
+        </div>
+        <div class="toggle on"><div class="toggle-thumb"></div></div>
+      </div>
+
+      <!-- PRD 결정: 마스터 토글만 구현 -->
+      <div class="annotation">
+        📌 2차 테스트 범위: 마스터 토글(전체 ON/OFF)만 구현<br/>
+        세부 토글(여행/초대/신청)은 추후 업데이트 예정
+      </div>
+
+      <div style="background:var(--gray100); border-radius:12px; padding:16px; margin-top:12px;">
+        <div style="font-size:14px; font-weight:700; color:var(--gray600); margin-bottom:10px;">알림 유형 (다음 버전)</div>
+        <div style="opacity:0.4;">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--gray200);">
+            <div style="display:flex; align-items:center; gap:10px;"><span>✈️</span><span style="font-size:14px;">여행 알림</span></div>
+            <div class="toggle on" style="opacity:0.5;"><div class="toggle-thumb"></div></div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--gray200);">
+            <div style="display:flex; align-items:center; gap:10px;"><span>💌</span><span style="font-size:14px;">초대 알림</span></div>
+            <div class="toggle on" style="opacity:0.5;"><div class="toggle-thumb"></div></div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0;">
+            <div style="display:flex; align-items:center; gap:10px;"><span>🙋</span><span style="font-size:14px;">신청 알림</span></div>
+            <div class="toggle on" style="opacity:0.5;"><div class="toggle-thumb"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="phone-label">알림 설정</div>
+  <div class="phone-sublabel">마스터 토글만 구현</div>
+</div>
+
+<!-- MY: 여행 히스토리 -->
+<div class="phone screen" id="my-history">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>🔋</span></div></div>
+    <div class="app-bar">
+      <div class="back-btn">←</div>
+      <div class="title">여행 히스토리</div>
+      <div style="width:32px;"></div>
+    </div>
+
+    <!-- 탭 -->
+    <div style="display:flex; border-bottom:2px solid var(--gray200);">
+      <div style="flex:1; padding:12px; text-align:center; font-size:14px; font-weight:700; color:var(--primary); border-bottom:2px solid var(--primary); margin-bottom:-2px;">💌 초대함 <span style="background:var(--red);color:white;border-radius:10px;font-size:11px;padding:1px 6px;">3</span></div>
+      <div style="flex:1; padding:12px; text-align:center; font-size:14px; font-weight:600; color:var(--gray400);">🙋 신청함</div>
+    </div>
+
+    <div class="p16" style="padding-top:16px;">
+      <!-- 대기중 -->
+      <div class="history-card">
+        <div class="history-card-header">
+          <div class="history-trip-name">제주 한달살기 🌊</div>
+          <div class="status-pill status-pending">대기중</div>
+        </div>
+        <div class="history-meta">📅 2026.04.10 ~ 04.20 · 방장: 김여행</div>
+        <div class="history-meta" style="margin-top:4px; color:var(--red);">⏰ 응답 기한: 2026.03.25</div>
+        <div class="history-actions">
+          <div class="mini-btn accept">수락</div>
+          <div class="mini-btn reject">거절</div>
+        </div>
+      </div>
+
+      <!-- 수락됨 -->
+      <div class="history-card">
+        <div class="history-card-header">
+          <div class="history-trip-name">도쿄 벚꽃 여행 🌸</div>
+          <div class="status-pill status-accepted">수락</div>
+        </div>
+        <div class="history-meta">📅 2026.03.28 ~ 04.02 · 방장: 이탐험</div>
+      </div>
+
+      <!-- 만료됨 -->
+      <div class="history-card">
+        <div class="history-card-header">
+          <div class="history-trip-name">방콕 맛집 투어 🍜</div>
+          <div class="status-pill status-expired">만료</div>
+        </div>
+        <div class="history-meta">📅 2026.02.15 ~ 02.20 · 방장: 박여정</div>
+      </div>
+    </div>
+  </div>
+  <div class="phone-label">여행 히스토리 (초대함)</div>
+  <div class="phone-sublabel">상태별 카드 UI</div>
+</div>
+
+<!-- MY: 계정 관리 -->
+<div class="phone screen" id="my-account">
+  <div class="phone-notch"><span></span></div>
+  <div class="phone-screen">
+    <div class="status-bar"><span class="time">9:41</span><div class="icons"><span>🔋</span></div></div>
+    <div class="app-bar">
+      <div class="back-btn">←</div>
+      <div class="title">계정 관리</div>
+      <div style="width:32px;"></div>
+    </div>
+
+    <div class="p16" style="padding-top:16px;">
+
+      <!-- 연동 계정 -->
+      <div style="font-size:12px; font-weight:700; color:var(--gray400); margin-bottom:8px; letter-spacing:0.3px;">연동된 계정</div>
+      <div style="background:var(--white); border:1.5px solid var(--gray200); border-radius:12px; padding:0 14px;">
+        <div class="provider-row">
+          <div class="provider-icon p-email">✉️</div>
+          <div class="provider-info">
+            <div class="provider-name">이메일</div>
+            <div class="provider-email">user@example.com</div>
+          </div>
+          <div class="provider-current">현재</div>
+        </div>
+      </div>
+
+      <div class="annotation" style="margin: 10px 0;">
+        소셜 로그인 가입 시: 해당 소셜 아이콘이 "현재"로 표시되며, 비밀번호 변경 메뉴는 숨김 처리됩니다<br/>
+        분기 기준: GET /users/me 의 <code>hasPassword</code> 필드 (<code>false</code> = 소셜 전용 → 비밀번호 변경 메뉴 숨김)
+      </div>
+
+      <!-- 소셜 예시 (참고용) -->
+      <div style="background:var(--gray100); border-radius:12px; padding:0 14px; margin-bottom:16px; opacity:0.5;">
+        <div style="font-size:11px; color:var(--gray400); padding:8px 0; text-align:center;">소셜 로그인 가입 시 예시</div>
+        <div class="provider-row">
+          <div class="provider-icon p-kakao">K</div>
+          <div class="provider-info">
+            <div class="provider-name">카카오</div>
+            <div class="provider-email">kakao_user@kakao.com</div>
+          </div>
+          <div class="provider-current">현재</div>
+        </div>
+      </div>
+
+      <!-- 비밀번호 변경 -->
+      <div style="font-size:12px; font-weight:700; color:var(--gray400); margin-bottom:8px; margin-top:8px; letter-spacing:0.3px;">보안</div>
+      <div style="background:white; border:1.5px solid var(--gray200); border-radius:12px;">
+        <div class="list-item">
+          <div class="list-item-left">
+            <div class="list-icon icon-blue">🔑</div>
+            <div>
+              <div class="list-item-title">비밀번호 변경</div>
+              <div class="list-item-sub">변경 시 전 기기 로그아웃</div>
+            </div>
+          </div>
+          <div class="list-chevron">›</div>
+        </div>
+      </div>
+
+      <!-- 계정 액션 -->
+      <div style="font-size:12px; font-weight:700; color:var(--gray400); margin-bottom:8px; margin-top:16px; letter-spacing:0.3px;">계정</div>
+      <div style="background:white; border:1.5px solid var(--gray200); border-radius:12px;">
+        <div class="list-item">
+          <div class="list-item-left">
+            <div class="list-icon icon-gray">🚪</div>
+            <div><div class="list-item-title">로그아웃</div></div>
+          </div>
+          <div class="list-chevron">›</div>
+        </div>
+        <div class="list-item">
+          <div class="list-item-left">
+            <div class="list-icon icon-red">⚠️</div>
+            <div>
+              <div class="list-item-title" style="color:var(--red);">회원 탈퇴</div>
+              <div class="list-item-sub">모든 데이터가 파기됩니다</div>
+            </div>
+          </div>
+          <div class="list-chevron" style="color:var(--red);">›</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="phone-label">계정 관리</div>
+  <div class="phone-sublabel">연동계정 · 보안 · 탈퇴</div>
+</div>
+
+</main>
+</div>
+
+<!-- PRD Summary Panel -->
+<div style="background:white; border-top: 3px solid var(--primary); padding:24px 32px;">
+  <h2 style="font-size:18px;font-weight:900;color:var(--primary);margin-bottom:16px;">📋 PRD 리뷰 & 업계 표준 반영 결과</h2>
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap:16px;">
+
+    <div style="background:#F8F9FF; border-radius:12px; padding:16px; border-left:4px solid var(--primary);">
+      <div style="font-weight:800; font-size:14px; color:var(--primary); margin-bottom:8px;">✅ 결정 사항</div>
+      <div style="font-size:13px; line-height:1.8; color:#333;">
+        1. 알림: <strong>마스터 ON/OFF만</strong> 구현 (세부 토글 다음 배포)<br/>
+        2. 인증 잠금: 이름·생년월일 <strong>isVerified 체크</strong><br/>
+        3. 소셜 비밀번호: <strong>API 차단 + UI 숨김</strong><br/>
+        4. 탈퇴: <strong>Soft Delete 유지</strong><br/>
+        5. 비밀번호 정책: <strong>업계 표준 적용</strong><br/>
+        6. MBTI 검증: <strong>다음 배포</strong>
+      </div>
+    </div>
+
+    <div style="background:#FFF8F0; border-radius:12px; padding:16px; border-left:4px solid #F5A623;">
+      <div style="font-weight:800; font-size:14px; color:#C17A00; margin-bottom:8px;">🔐 비밀번호 정책 (업계 표준)</div>
+      <div style="font-size:13px; line-height:1.8; color:#333;">
+        • 최소 <strong>8자 ~ 최대 20자</strong><br/>
+        • 영문 대소문자 / 숫자 / 특수문자 중 <strong>3가지 이상</strong><br/>
+        • 허용 특수문자: <code>!@#$%^&*()-_=+[]{}|;:,./</code><br/>
+        • <code>@Pattern</code> 정규식: <code>^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,20}$</code><br/>
+        • 참고: 카카오/네이버 기준
+      </div>
+    </div>
+
+    <div style="background:#F0FFF8; border-radius:12px; padding:16px; border-left:4px solid #2DCA73;">
+      <div style="font-weight:800; font-size:14px; color:#1B8A4B; margin-bottom:8px;">🌐 소셜 로그인 비밀번호 (업계 표준)</div>
+      <div style="font-size:13px; line-height:1.8; color:#333;">
+        소셜 가입 유저는 소셜 플랫폼에서 비밀번호 관리<br/>
+        → 앱 내 비밀번호 없음 (null) → <code>hasPassword() == false</code><br/>
+        → <strong>API에서 <code>hasPassword() == false</code> 시 403 반환 ✅ 구현완료</strong><br/>
+        → <strong>프론트에 <code>hasPassword</code> 필드 전달 → UI 숨김</strong><br/>
+        참고: 카카오톡, 네이버, 토스 동일 정책
+      </div>
+    </div>
+
+    <div style="background:#FFF0F0; border-radius:12px; padding:16px; border-left:4px solid var(--red);">
+      <div style="font-weight:800; font-size:14px; color:var(--red); margin-bottom:8px;">⚠️ 회원탈퇴 PRD 보완 제안</div>
+      <div style="font-size:13px; line-height:1.8; color:#333;">
+        현 PRD: "모든 개인정보 즉시 파기"<br/>
+        현 코드: Soft Delete만 (isDeleted=true)<br/>
+        → <strong>법적 요구사항 충족 위해:</strong><br/>
+        소셜 유저: CI/DI null 처리<br/>
+        이메일 유저: 재가입 불가 체크용 해시만 보존<br/>
+        개인식별정보(이름, 이메일원문)는 마스킹 권장
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const target = document.getElementById('s-' + id) || document.getElementById(id);
+  if (target) target.classList.add('visible');
+  event.target.classList.add('active');
+}
+
+function showGroup(group) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  if (group === 'auth') {
+    ['s-login-home','s-login-email','signup1','signup2','signup3','verify-id'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('visible');
+    });
+  } else if (group === 'all') {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('visible'));
+  }
+}
+</script>
+</body>
+</html>

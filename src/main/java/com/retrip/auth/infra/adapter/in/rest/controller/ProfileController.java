@@ -31,8 +31,8 @@ public class ProfileController {
     public ApiResponse<ProfileResponse> getMyProfile(
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        String email = userDetails.getUsername();
-        ProfileResponse profile = profileService.getProfile(email);
+        String memberId = userDetails.getUsername();
+        ProfileResponse profile = profileService.getProfile(memberId);
         return ApiResponse.ok(profile);
     }
 
@@ -44,8 +44,8 @@ public class ProfileController {
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request
     ) {
-        String email = userDetails.getUsername();
-        ProfileResponse profile = profileService.updateProfile(email, request);
+        String memberId = userDetails.getUsername();
+        ProfileResponse profile = profileService.updateProfile(memberId, request);
         return ApiResponse.ok(profile);
     }
 
@@ -57,8 +57,8 @@ public class ProfileController {
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdateNotificationRequest request
     ) {
-        String email = userDetails.getUsername();
-        profileService.updateNotificationSettings(email, request);
+        String memberId = userDetails.getUsername();
+        profileService.updateNotificationSettings(memberId, request);
         return ApiResponse.ok(null);
     }
 
@@ -70,10 +70,10 @@ public class ProfileController {
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody VerifyIdentityRequest request
     ) {
-        String email = userDetails.getUsername();
+        String memberId = userDetails.getUsername();
         VerifyIdentityResponse response = identityVerificationService.verifyAndSave(
                 request.getImpUid(),
-                email
+                memberId
         );
         return ApiResponse.ok(response);
     }
