@@ -23,6 +23,7 @@ public enum ErrorCode {
     VERIFIED_MEMBER_CANNOT_CHANGE(HttpStatus.BAD_REQUEST, "Member-006", "본인인증 완료 후 이름/생년월일은 변경할 수 없습니다."),
     SOCIAL_MEMBER_CANNOT_CHANGE_PASSWORD(HttpStatus.FORBIDDEN, "Member-007", "소셜 로그인 계정은 비밀번호를 변경할 수 없습니다."),
     PASSWORD_ALREADY_EXISTS(HttpStatus.CONFLICT, "Member-008", "이미 비밀번호가 설정된 계정입니다."),
+    TERMS_NOT_AGREED(HttpStatus.BAD_REQUEST, "Member-009", "필수 약관에 동의해야 합니다."),
 
     EXTENSION_NOT_FOUND(BAD_REQUEST, "Image-001", "지원하지 않는 이미지 확장자입니다."),
     ;

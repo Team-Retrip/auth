@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +33,7 @@ public class MemberController {
     @PostMapping
     @Schema(description = "회원 가입")
     public ResponseEntity<ApiResponse<MemberCreateResponse>> createUser(
-            @RequestBody MemberCreateRequest request) {
+            @Valid @RequestBody MemberCreateRequest request) {
         MemberCreateResponse response = manageMemberUseCase.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(response));
@@ -72,7 +73,7 @@ public class MemberController {
     @Schema(description = "비밀번호 변경")
     public ApiResponse<ChangePasswordResponse> changePassword(
             Authentication authentication,
-            @RequestBody ChangePasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequest request) {
         UUID memberId = extractMemberId(authentication);
         return ApiResponse.ok(manageMemberUseCase.changePassword(memberId, request));
     }

@@ -177,7 +177,7 @@ code{background:var(--gray100);padding:2px 6px;border-radius:4px;font-family:'Co
 <aside class="sidebar">
   <div class="sb-logo">
     <h1>retrip</h1>
-    <p>Auth 도메인 명세서 v2.1<br/><span style="font-size:10px;color:#aaa;">최종 업데이트: 2026-04-02</span></p>
+    <p>Auth 도메인 명세서 v2.2<br/><span style="font-size:10px;color:#aaa;">최종 업데이트: 2026-04-04</span></p>
   </div>
 
   <div class="sb-group">범례</div>
@@ -287,8 +287,7 @@ code{background:var(--gray100);padding:2px 6px;border-radius:4px;font-family:'Co
       <div class="sub-title">Error Cases</div>
       <table class="err-table">
         <tr><th>HTTP</th><th>code</th><th>message</th><th>상황</th></tr>
-        <tr><td>401</td><td>Member-001</td><td>멤버 엔티티를 찾을 수 없습니다.</td><td>존재하지 않는 이메일</td></tr>
-        <tr><td>401</td><td>Member-002</td><td>비밀 번호가 다릅니다.</td><td>비밀번호 불일치</td></tr>
+        <tr><td>401</td><td>Member-001</td><td>멤버 엔티티를 찾을 수 없습니다.</td><td>존재하지 않는 이메일 또는 비밀번호 불일치 (보안상 통합 응답)</td></tr>
         <tr><td>400</td><td>Member-003</td><td>탈퇴한 이메일은 재가입할 수 없습니다.</td><td>탈퇴 계정 로그인 시도</td></tr>
       </table>
     </div>
@@ -380,8 +379,8 @@ code{background:var(--gray100);padding:2px 6px;border-radius:4px;font-family:'Co
       <table>
         <tr><th>필드</th><th>타입</th><th>필수</th><th>설명/제약</th></tr>
         <tr><td><code>email</code></td><td class="type">String</td><td><span class="req">필수</span></td><td>이메일 형식 검증</td></tr>
-        <tr><td><code>password</code></td><td class="type">String</td><td><span class="req">필수</span></td><td>8~20자, 영문+숫자+특수문자 포함 <span class="badge badge-todo">🔧 정책 추가 필요</span></td></tr>
-        <tr><td><code>name</code></td><td class="type">String</td><td><span class="req">필수</span></td><td>최대 10자</td></tr>
+        <tr><td><code>password</code></td><td class="type">String</td><td><span class="req">필수</span></td><td>8~20자, 영문+숫자+특수문자 포함 <span class="badge badge-done">✅ 서버 검증 완료</span></td></tr>
+        <tr><td><code>name</code></td><td class="type">String</td><td><span class="req">필수</span></td><td>최대 10자, 한글·영문만 허용 (숫자·특수문자 불가) <span class="badge badge-done">✅ 서버 검증 완료</span></td></tr>
         <tr><td><code>gender</code></td><td class="type">String</td><td><span class="req">필수</span></td><td><code>"M"</code> 또는 <code>"F"</code></td></tr>
         <tr><td><code>birthDate</code></td><td class="type">String</td><td><span class="req">필수</span></td><td>형식: <code>YYYY-MM-DD</code></td></tr>
         <tr><td><code>nickname</code></td><td class="type">String</td><td><span class="opt">선택</span></td><td>최대 15자. 미입력 시 <code>name</code>으로 자동 설정</td></tr>
@@ -413,6 +412,8 @@ code{background:var(--gray100);padding:2px 6px;border-radius:4px;font-family:'Co
       <div class="sub-title">Error Cases</div>
       <table class="err-table">
         <tr><th>HTTP</th><th>code</th><th>message</th><th>상황</th></tr>
+        <tr><td>400</td><td>Member-009</td><td>필수 약관에 동의해야 합니다.</td><td>termsAgreed=false</td></tr>
+        <tr><td>400</td><td>Common-002</td><td>Invalid input value</td><td>이메일 형식 오류 / 비밀번호 정책 미달 / 이름 형식 오류 / 생년월일 형식·범위 오류</td></tr>
         <tr><td>409</td><td>Member-004</td><td>이미 존재하는 이메일입니다.</td><td>중복 이메일</td></tr>
         <tr><td>400</td><td>Member-003</td><td>탈퇴한 이메일은 재가입할 수 없습니다.</td><td>탈퇴 계정 이메일로 가입 시도</td></tr>
       </table>
@@ -480,7 +481,7 @@ code{background:var(--gray100);padding:2px 6px;border-radius:4px;font-family:'Co
       <table class="err-table">
         <tr><th>HTTP</th><th>code</th><th>상황</th></tr>
         <tr><td>401</td><td>Member-002</td><td>현재 비밀번호 불일치</td></tr>
-        <tr><td>400</td><td>Member-006 <span class="badge badge-todo">🔧 추가</span></td><td>인증 완료 사용자가 이름/생년월일 변경 시도</td></tr>
+        <tr><td>400</td><td>Member-006</td><td>인증 완료 사용자가 이름/생년월일 변경 시도</td></tr>
       </table>
     </div>
   </div>
@@ -840,6 +841,8 @@ ALTER TABLE member ADD COLUMN nickname VARCHAR(15);</pre>
         <tr><td>Member-005</td><td>409</td><td>이미 가입된 정보입니다. (CI 중복)</td><td><span class="badge badge-done">✅</span></td></tr>
         <tr><td>Member-006</td><td>400</td><td>본인인증 완료 후 이름/생년월일은 변경할 수 없습니다.</td><td><span class="badge badge-done">✅</span></td></tr>
         <tr><td>Member-007</td><td>403</td><td>소셜 로그인 회원은 비밀번호를 변경할 수 없습니다.</td><td><span class="badge badge-done">✅</span></td></tr>
+        <tr><td>Member-008</td><td>409</td><td>이미 비밀번호가 설정된 계정입니다.</td><td><span class="badge badge-done">✅</span></td></tr>
+        <tr><td>Member-009</td><td>400</td><td>필수 약관에 동의해야 합니다.</td><td><span class="badge badge-done">✅</span></td></tr>
       </table>
     </div>
   </div>

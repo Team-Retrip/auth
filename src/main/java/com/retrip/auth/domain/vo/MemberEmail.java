@@ -19,8 +19,9 @@ public class MemberEmail {
     private String value;
 
     public MemberEmail(String value) {
-        validate(value);
-        this.value = value;
+        String trimmed = value.trim();
+        validate(trimmed);
+        this.value = trimmed;
     }
 
     private void validate(String value) {

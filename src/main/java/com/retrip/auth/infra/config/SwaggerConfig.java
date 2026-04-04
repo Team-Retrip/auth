@@ -48,10 +48,21 @@ public class SwaggerConfig {
                                         "- **이메일 로그인**: `POST /login` → Access Token 발급\n" +
                                         "- **소셜 로그인**: 브라우저에서 `GET /oauth2/authorization/{provider}` → 콜백 URL로 Token 전달\n" +
                                         "- **Refresh Token**: HttpOnly Cookie 방식 (자동 전송)\n\n" +
+                                        "## ⚠️ 프론트엔드 필수 설정\n" +
+                                        "### withCredentials 설정 (쿠키 전송)\n" +
+                                        "`/login` · `/auth/reissue` · `/auth/logout` 은 HttpOnly 쿠키(refreshToken)를 사용합니다.\n" +
+                                        "**크로스 오리진 환경에서 반드시 아래 설정이 필요합니다.**\n" +
+                                        "- axios: `withCredentials: true`\n" +
+                                        "- fetch: `credentials: 'include'`\n\n" +
+                                        "이 설정이 없으면 쿠키가 전송되지 않아 **토큰 재발급과 로그아웃이 동작하지 않습니다.**\n\n" +
+                                        "### refreshToken 저장 금지\n" +
+                                        "로그인 응답 body에 refreshToken이 포함되더라도 **localStorage/sessionStorage에 저장하지 마세요.**\n" +
+                                        "서버가 Set-Cookie로 자동 관리합니다. 프론트는 **accessToken만** 저장하세요.\n\n" +
                                         "## 주요 특이사항\n" +
                                         "- `/login` 요청 시 이메일 필드명은 `email`이 아닌 **`id`** 입니다.\n" +
                                         "- 소셜 전용 계정은 `hasPassword=false`. PATCH /users/password → 403, POST /users/password로 최초 설정 가능.\n" +
-                                        "- 본인인증 완료 후(`isVerified=true`) name/birthDate 변경 불가.")
+                                        "- 본인인증 완료 후(`isVerified=true`) name/birthDate 변경 불가.\n" +
+                                        "- `travelStyles` 필드는 ID가 아닌 **이름 문자열 배열**입니다. (예: `[\"계획철저\", \"사진광\"]`)")
                 )
                 .addSecurityItem(new SecurityRequirement().addList("BearerAuth"))
                 // Spring Security 필터 레벨 엔드포인트 수동 등록

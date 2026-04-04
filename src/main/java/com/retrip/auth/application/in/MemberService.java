@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,6 +39,20 @@ public class MemberService implements ManageMemberUseCase {
 
     @Override
     public MemberCreateResponse createUser(MemberCreateRequest request) {
+        if (!request.termsAgreed()) {
+            throw new BusinessException(ErrorCode.TERMS_NOT_AGREED);
+        }
+
+        if (request.birthDate() != null) {
+            LocalDate birth = LocalDate.parse(request.birthDate());
+            if (birth.isAfter(LocalDate.now())) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            if (birth.isBefore(LocalDate.now().minusYears(100))) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+        }
+
         String encode = passwordEncoder.encode(request.password());
 
         List<Member> existingMembers = memberRepository.findByEmail(new MemberEmail(request.email()));
