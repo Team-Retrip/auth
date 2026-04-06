@@ -12,6 +12,8 @@ import com.retrip.auth.domain.entity.MemberSocialProvider;
 import com.retrip.auth.domain.entity.MemberTravelStyle;
 import com.retrip.auth.domain.entity.TravelStyle;
 import com.retrip.auth.domain.exception.MemberNotFoundException;
+import com.retrip.auth.domain.exception.common.BusinessException;
+import com.retrip.auth.domain.exception.common.ErrorCode;
 import com.retrip.auth.domain.exception.common.InvalidValueException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +54,10 @@ public class ProfileService {
         Member member = memberRepository.findById(UUID.fromString(memberId))
                 .orElseThrow(MemberNotFoundException::new);
 
-        if (request.getNickname() != null) member.updateNickname(request.getNickname());
+        if (request.getNickname() != null) {
+            validateNicknameNotDuplicated(request.getNickname(), member.getId().toString());
+            member.updateNickname(request.getNickname());
+        }
         member.updateProfile(request.getBio(), request.getMbti(), request.getProfileImageUrl());
 
         if (request.getTravelStyles() != null) {
@@ -74,6 +79,16 @@ public class ProfileService {
         Member member = memberRepository.findById(UUID.fromString(memberId))
                 .orElseThrow(MemberNotFoundException::new);
         member.updateNotificationSettings(request.getEnabled());
+    }
+
+    public boolean isNicknameAvailable(String nickname) {
+        return !memberRepository.existsByNicknameAndIsDeletedFalse(nickname);
+    }
+
+    private void validateNicknameNotDuplicated(String nickname, String currentMemberId) {
+        memberRepository.findByNicknameAndIsDeletedFalse(nickname)
+                .filter(existing -> !existing.getId().toString().equals(currentMemberId))
+                .ifPresent(ignored -> { throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXISTS); });
     }
 
     private void updateTravelStyles(Member member, List<String> styleNames) {

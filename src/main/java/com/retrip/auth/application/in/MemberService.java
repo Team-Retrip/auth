@@ -62,6 +62,11 @@ public class MemberService implements ManageMemberUseCase {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
+        if (request.nickname() != null && !request.nickname().isBlank()
+                && memberRepository.existsByNicknameAndIsDeletedFalse(request.nickname())) {
+            throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXISTS);
+        }
+
         Member member = memberRepository.save(request.to(encode));
 
         Authentication authentication = createAuthentication(member);
