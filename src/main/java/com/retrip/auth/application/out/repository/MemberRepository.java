@@ -20,6 +20,10 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
     // 추가: CI 중복 체크
     boolean existsByCi(String ci);
 
+    // 닉네임 중복 체크
+    boolean existsByNicknameAndIsDeletedFalse(String nickname);
+    Optional<Member> findByNicknameAndIsDeletedFalse(String nickname);
+
     @Query("SELECT m FROM Member m WHERE LOWER(m.name.value) LIKE LOWER(CONCAT('%', :name, '%')) AND m.isDeleted = false")
     List<Member> searchByNameContainingIgnoreCase(@Param("name") String name);
 

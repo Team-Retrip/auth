@@ -9,6 +9,8 @@ import com.retrip.auth.application.service.IdentityVerificationService;
 import com.retrip.auth.application.service.ProfileService;
 import com.retrip.auth.infra.adapter.in.rest.common.ApiResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -47,6 +49,16 @@ public class ProfileController {
         String memberId = userDetails.getUsername();
         ProfileResponse profile = profileService.updateProfile(memberId, request);
         return ApiResponse.ok(profile);
+    }
+
+    /**
+     * 닉네임 중복 확인 (비로그인 가능)
+     */
+    @GetMapping("/users/check-nickname")
+    public ApiResponse<Boolean> checkNickname(
+            @RequestParam @NotBlank @Size(max = 15) String nickname
+    ) {
+        return ApiResponse.ok(profileService.isNicknameAvailable(nickname));
     }
 
     /**
