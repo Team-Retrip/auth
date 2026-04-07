@@ -26,6 +26,11 @@ cloud:
 
 app:
   frontend-callback-url: http://localhost:3000/auth/callback
+  mail:
+    from: noreply@test.com
+  password-reset:
+    url: http://localhost:3000/reset-password
+    expire-minutes: 30
 
 spring:
   security:

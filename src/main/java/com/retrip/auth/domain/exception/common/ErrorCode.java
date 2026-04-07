@@ -27,6 +27,12 @@ public enum ErrorCode {
     NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "Member-010", "이미 사용 중인 닉네임입니다."),
 
     EXTENSION_NOT_FOUND(BAD_REQUEST, "Image-001", "지원하지 않는 이미지 확장자입니다."),
+
+    RESET_TOKEN_NOT_FOUND(BAD_REQUEST, "Auth-001", "유효하지 않은 재설정 토큰입니다."),
+    RESET_TOKEN_EXPIRED(BAD_REQUEST, "Auth-002", "만료된 재설정 토큰입니다."),
+    RESET_TOKEN_ALREADY_USED(BAD_REQUEST, "Auth-003", "이미 사용된 재설정 토큰입니다."),
+    ACCOUNT_NOT_FOUND_BY_VERIFICATION(NOT_FOUND, "Auth-004", "본인인증 정보와 일치하는 계정을 찾을 수 없습니다."),
+    SOCIAL_MEMBER_NO_PASSWORD_RESET(BAD_REQUEST, "Auth-005", "소셜 로그인 전용 계정은 비밀번호 재설정이 불가합니다."),
     ;
 
     private final HttpStatus status;

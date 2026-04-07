@@ -28,4 +28,9 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
     List<Member> searchByNameContainingIgnoreCase(@Param("name") String name);
 
     List<Member> findAllByIdInAndIsDeletedFalse(List<UUID> ids);
+
+    Optional<Member> findByCiAndIsDeletedFalse(String ci);
+
+    @Query("SELECT m FROM Member m WHERE m.name.value = :name AND m.birthDate = :birthDate AND m.isDeleted = false")
+    List<Member> findByNameAndBirthDateAndIsDeletedFalse(@Param("name") String name, @Param("birthDate") String birthDate);
 }

@@ -117,6 +117,11 @@ public class SecurityConfig {
                         // ✅ 수정: /api/users 경로 추가
                         .requestMatchers(HttpMethod.POST, "/users", "/api/users").permitAll()
                         .requestMatchers("/login/**", "/oauth2/**", "/auth/reissue", "/auth/logout", "/").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/auth/find-email",
+                                "/auth/password-reset/by-verification",
+                                "/auth/password-reset/by-email",
+                                "/auth/password-reset").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
                         // ✅ 추가: 본인인증 및 여행 스타일 조회 API 허용
                         .requestMatchers(HttpMethod.GET, "/api/travel-styles", "/api/users/check-nickname").permitAll()

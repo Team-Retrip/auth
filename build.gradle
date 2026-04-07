@@ -61,6 +61,9 @@ dependencies {
 
     // AWS S3
     implementation 'software.amazon.awssdk:s3:2.17.41'
+
+    // Email (Gmail SMTP)
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 tasks.named('test') {
