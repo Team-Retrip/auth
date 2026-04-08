@@ -134,6 +134,8 @@
         <a href="#s11">11.토큰/로그아웃</a>
         <a href="#s12">12.회원탈퇴</a>
         <a href="#s13">13.시나리오검증</a>
+        <a href="#s14">14.닉네임중복확인</a>
+        <a href="#s15">15.아이디/비번찾기</a>
     </div>
 </div>
 
@@ -652,6 +654,110 @@
 
 </div>
 
+<!-- ==================== 섹션 14: 닉네임 중복 확인 ==================== -->
+<div class="section" id="s14">
+    <div class="section-title">14. 닉네임 중복 확인</div>
+    <div class="grid">
+
+        <div class="card">
+            <h3><span class="badge badge-get">GET</span> /api/users/check-nickname</h3>
+            <div class="desc">인증 불필요. true = 사용 가능, false = 이미 사용 중</div>
+            <label>닉네임 (최대 15자)</label>
+            <input type="text" id="checkNickname" placeholder="확인할 닉네임 입력" maxlength="15">
+            <button class="btn btn-success btn-block" onclick="checkNickname()">중복 확인</button>
+            <div id="nicknameCheckMsg" style="margin-top:10px;font-size:13px;font-weight:600;display:none;"></div>
+            <div class="result-box" id="checkNicknameResult">
+                <div class="result-header"><span class="status" id="checkNicknameStatus"></span><span>GET /api/users/check-nickname</span></div>
+                <div class="result-body" id="checkNicknameBody"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== 섹션 15: 아이디/비밀번호 찾기 ==================== -->
+<div class="section" id="s15">
+    <div class="section-title">15. 아이디 / 비밀번호 찾기</div>
+
+    <div class="info-box" style="margin-bottom:16px;">
+        <strong>본인인증 경로</strong>: 상단 Config 바에 PortOne Store ID와 Channel Key가 입력돼 있어야 합니다.<br>
+        <strong>이메일 경로</strong>: 서버에 MAIL_USERNAME / MAIL_PASSWORD 환경변수가 설정돼 있어야 합니다.
+    </div>
+
+    <div class="grid">
+
+        <!-- 아이디 찾기 (본인인증) -->
+        <div class="card">
+            <h3><span class="badge badge-post">POST</span> /auth/find-email &nbsp;아이디 찾기 (본인인증)</h3>
+            <div class="desc">인증 불필요. PortOne 본인인증 후 maskedEmail 반환. isNowVerified=true면 이번 요청에서 본인인증이 처음 연결된 것.</div>
+            <div id="findEmailPortoneStatus" style="font-size:12px;color:#667eea;margin-bottom:8px;"></div>
+            <button class="btn btn-primary btn-block" onclick="startFindEmail()">① 본인인증 팝업 열기</button>
+            <div style="margin-top:10px;font-size:11px;color:#94a3b8;margin-bottom:4px;">또는 impUid 직접 입력 (팝업 불가 시)</div>
+            <input type="text" id="findEmailImpUid" placeholder="identity-xxx (PortOne identityVerificationId)">
+            <button class="btn btn-warning btn-block" onclick="findEmailManual()">② 아이디 찾기 API 호출</button>
+            <div id="findEmailMsg" style="margin-top:10px;font-size:13px;font-weight:600;display:none;"></div>
+            <div class="result-box" id="findEmailResult">
+                <div class="result-header"><span class="status" id="findEmailStatus"></span><span>POST /auth/find-email</span></div>
+                <div class="result-body" id="findEmailBody"></div>
+            </div>
+        </div>
+
+        <!-- 비밀번호 재설정 - 이메일 경로 -->
+        <div class="card">
+            <h3><span class="badge badge-post">POST</span> /auth/password-reset/by-email &nbsp;비밀번호 찾기 (이메일)</h3>
+            <div class="desc">인증 불필요. 입력한 이메일로 재설정 링크 발송. 소셜 전용 계정은 Auth-005 오류.</div>
+            <label>이메일 (가입된 이메일+비밀번호 계정)</label>
+            <input type="email" id="resetByEmail" placeholder="test@example.com">
+            <button class="btn btn-primary btn-block" onclick="sendResetEmail()">① 재설정 메일 발송</button>
+            <div class="result-box" id="sendResetEmailResult">
+                <div class="result-header"><span class="status" id="sendResetEmailStatus"></span><span>POST /auth/password-reset/by-email</span></div>
+                <div class="result-body" id="sendResetEmailBody"></div>
+            </div>
+            <div style="margin-top:16px;border-top:1px solid #e2e8f0;padding-top:14px;">
+                <div class="desc">메일함에서 링크의 <code>?token=</code> 값 복사 후 아래에 붙여넣기</div>
+                <label>재설정 토큰 (메일에서 복사)</label>
+                <input type="text" id="resetTokenFromEmail" placeholder="uuid-xxxxx-xxxxx">
+                <label>새 비밀번호 (영문+숫자+특수문자 8~20자)</label>
+                <input type="password" id="resetNewPwEmail" placeholder="NewPass1!">
+                <button class="btn btn-success btn-block" onclick="resetPasswordByToken('email')">② 비밀번호 재설정</button>
+                <div class="result-box" id="resetPasswordEmailResult">
+                    <div class="result-header"><span class="status" id="resetPasswordEmailStatus"></span><span>POST /auth/password-reset</span></div>
+                    <div class="result-body" id="resetPasswordEmailBody"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 비밀번호 재설정 - 본인인증 경로 -->
+        <div class="card">
+            <h3><span class="badge badge-post">POST</span> /auth/password-reset/by-verification &nbsp;비밀번호 찾기 (본인인증)</h3>
+            <div class="desc">인증 불필요. PortOne 본인인증 후 재설정 토큰 발급. 소셜 전용 계정은 Auth-005 오류.</div>
+            <div id="resetByVerifPortoneStatus" style="font-size:12px;color:#667eea;margin-bottom:8px;"></div>
+            <button class="btn btn-primary btn-block" onclick="startResetByVerification()">① 본인인증 팝업 열기</button>
+            <div style="margin-top:10px;font-size:11px;color:#94a3b8;margin-bottom:4px;">또는 impUid 직접 입력</div>
+            <input type="text" id="resetVerifImpUid" placeholder="identity-xxx">
+            <button class="btn btn-warning btn-block" onclick="issueResetTokenByVerif()">② 재설정 토큰 발급</button>
+            <div id="resetVerifTokenDisplay" class="token-display"></div>
+            <div class="result-box" id="resetByVerifResult">
+                <div class="result-header"><span class="status" id="resetByVerifStatus"></span><span>POST /auth/password-reset/by-verification</span></div>
+                <div class="result-body" id="resetByVerifBody"></div>
+            </div>
+            <div style="margin-top:16px;border-top:1px solid #e2e8f0;padding-top:14px;">
+                <div class="desc">위에서 발급된 토큰이 자동 입력됩니다.</div>
+                <label>재설정 토큰</label>
+                <input type="text" id="resetTokenFromVerif" placeholder="위 버튼 클릭 시 자동 입력">
+                <label>새 비밀번호 (영문+숫자+특수문자 8~20자)</label>
+                <input type="password" id="resetNewPwVerif" placeholder="NewPass1!">
+                <button class="btn btn-success btn-block" onclick="resetPasswordByToken('verif')">③ 비밀번호 재설정</button>
+                <div class="result-box" id="resetPasswordVerifResult">
+                    <div class="result-header"><span class="status" id="resetPasswordVerifStatus"></span><span>POST /auth/password-reset</span></div>
+                    <div class="result-body" id="resetPasswordVerifBody"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 </div><!-- /content -->
 
 <script>
@@ -1100,6 +1206,127 @@
                 ? `linkedProviders: [${providers}] (${linked.length}개 연동됨) ✅`
                 : `linkedProviders가 비어있습니다. 소셜 로그인 후 재시도하세요.`
         );
+    }
+
+    // ===================== 섹션 14: 닉네임 중복 확인 =====================
+    async function checkNickname() {
+        const nickname = document.getElementById('checkNickname').value.trim();
+        if (!nickname) { alert('닉네임을 입력하세요.'); return; }
+        const r = await api('GET', '/api/users/check-nickname?nickname=' + encodeURIComponent(nickname), null, 'checkNickname', false);
+        const msg = document.getElementById('nicknameCheckMsg');
+        msg.style.display = 'block';
+        const available = r.data?.data === true;
+        msg.style.color = available ? '#10b981' : '#ef4444';
+        msg.textContent = available ? `✅ "${nickname}" 사용 가능합니다.` : `❌ "${nickname}" 이미 사용 중입니다.`;
+    }
+
+    // ===================== 섹션 15: 아이디/비밀번호 찾기 =====================
+
+    // 공통: PortOne 본인인증 팝업 열기
+    async function openPortoneForFindAccount(statusElId, impUidElId) {
+        const storeId = STATE.storeId || document.getElementById('cfgStoreId').value;
+        const channelKey = STATE.channelKey || document.getElementById('cfgChannelKey').value;
+        if (!storeId || !channelKey) {
+            alert('상단 Config 바에 PortOne Store ID와 Channel Key를 먼저 입력하고 저장하세요.');
+            return null;
+        }
+        if (typeof PortOne === 'undefined') {
+            document.getElementById(statusElId).textContent = '⚠️ PortOne SDK 로드 실패. impUid를 직접 입력하세요.';
+            return null;
+        }
+        document.getElementById(statusElId).textContent = '⏳ 본인인증 팝업을 여는 중...';
+        try {
+            const result = await PortOne.requestIdentityVerification({
+                storeId, channelKey,
+                identityVerificationId: 'identity-' + Date.now(),
+                customer: { name: '' }
+            });
+            if (result.code) {
+                document.getElementById(statusElId).textContent = '❌ 인증 실패: ' + (result.message || result.code);
+                return null;
+            }
+            document.getElementById(statusElId).textContent = '✅ 본인인증 완료. API 호출 중...';
+            document.getElementById(impUidElId).value = result.identityVerificationId;
+            return result.identityVerificationId;
+        } catch(e) {
+            document.getElementById(statusElId).textContent = '❌ 오류: ' + e.message;
+            return null;
+        }
+    }
+
+    // 아이디 찾기 — PortOne 팝업
+    async function startFindEmail() {
+        const impUid = await openPortoneForFindAccount('findEmailPortoneStatus', 'findEmailImpUid');
+        if (impUid) await doFindEmail(impUid);
+    }
+
+    // 아이디 찾기 — 수동 impUid
+    async function findEmailManual() {
+        const impUid = document.getElementById('findEmailImpUid').value.trim();
+        if (!impUid) { alert('impUid를 입력하세요.'); return; }
+        await doFindEmail(impUid);
+    }
+
+    async function doFindEmail(impUid) {
+        const r = await api('POST', '/auth/find-email', { impUid }, 'findEmail', false);
+        const msg = document.getElementById('findEmailMsg');
+        if (r.ok && r.data?.data) {
+            const d = r.data.data;
+            msg.style.display = 'block';
+            msg.style.color = '#10b981';
+            msg.textContent = `✅ 이메일: ${d.maskedEmail}${d.isNowVerified ? '  (이번에 본인인증이 처음 연결됐습니다)' : ''}`;
+        } else {
+            msg.style.display = 'none';
+        }
+    }
+
+    // 비밀번호 재설정 메일 발송
+    async function sendResetEmail() {
+        const email = document.getElementById('resetByEmail').value.trim();
+        if (!email) { alert('이메일을 입력하세요.'); return; }
+        await api('POST', '/auth/password-reset/by-email', { email }, 'sendResetEmail', false);
+    }
+
+    // 비밀번호 재설정 — 본인인증 팝업
+    async function startResetByVerification() {
+        const impUid = await openPortoneForFindAccount('resetByVerifPortoneStatus', 'resetVerifImpUid');
+        if (impUid) await doIssueResetTokenByVerif(impUid);
+    }
+
+    // 비밀번호 재설정 — 본인인증 수동 impUid
+    async function issueResetTokenByVerif() {
+        const impUid = document.getElementById('resetVerifImpUid').value.trim();
+        if (!impUid) { alert('impUid를 입력하세요.'); return; }
+        await doIssueResetTokenByVerif(impUid);
+    }
+
+    async function doIssueResetTokenByVerif(impUid) {
+        const r = await api('POST', '/auth/password-reset/by-verification', { impUid }, 'resetByVerif', false);
+        if (r.ok && r.data?.data?.resetToken) {
+            const token = r.data.data.resetToken;
+            document.getElementById('resetVerifImpUid').value = impUid;
+            document.getElementById('resetTokenFromVerif').value = token;
+            const d = document.getElementById('resetVerifTokenDisplay');
+            d.style.display = 'block';
+            d.textContent = '발급된 토큰: ' + token;
+        }
+    }
+
+    // 비밀번호 재설정 (토큰 + 새 비밀번호)
+    async function resetPasswordByToken(source) {
+        const tokenEl = source === 'email' ? 'resetTokenFromEmail' : 'resetTokenFromVerif';
+        const pwEl    = source === 'email' ? 'resetNewPwEmail'     : 'resetNewPwVerif';
+        const resultId = source === 'email' ? 'resetPasswordEmail'  : 'resetPasswordVerif';
+        const token = document.getElementById(tokenEl).value.trim();
+        const newPassword = document.getElementById(pwEl).value;
+        if (!token) { alert('재설정 토큰을 입력하세요.'); return; }
+        if (!newPassword) { alert('새 비밀번호를 입력하세요.'); return; }
+        const r = await api('POST', '/auth/password-reset', { token, newPassword }, resultId, false);
+        if (r.ok) {
+            STATE.accessToken = '';
+            document.getElementById('tokenBar').style.display = 'none';
+            alert('✅ 비밀번호가 변경됐습니다. 기존 로그인 세션이 만료됩니다. 새 비밀번호로 다시 로그인하세요.');
+        }
     }
 
     async function runScenarioE() {
