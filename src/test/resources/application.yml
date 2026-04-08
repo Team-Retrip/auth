@@ -33,6 +33,9 @@ app:
     expire-minutes: 30
 
 spring:
+  mail:
+    host: localhost
+    port: 25
   security:
     oauth2:
       client:
