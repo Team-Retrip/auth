@@ -1,23 +1,16 @@
 package com.retrip.auth.application.service.recovery;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.retrip.auth.application.dto.CertificationInfo;
 import com.retrip.auth.application.out.repository.MemberRepository;
+import com.retrip.auth.infra.adapter.out.external.PortOneApiClient;
 import com.retrip.auth.domain.entity.Member;
-import com.retrip.auth.domain.exception.PortOneApiException;
 import com.retrip.auth.domain.exception.common.BusinessException;
 import com.retrip.auth.domain.exception.common.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,30 +20,27 @@ import java.util.Optional;
 public class PortOneVerificationStrategy {
 
     private final MemberRepository memberRepository;
-
-    @Value("${portone.api_secret}")
-    private String apiSecret;
+    private final PortOneApiClient portOneApiClient;
 
     /**
-     * impUid로 본인인증 후 매칭되는 Member를 반환한다.
-     * <p>
-     * 1. CI로 직접 조회 (본인인증 이력 있는 사용자)
-     * 2. CI 미매칭 시 이름+생년월일로 조회 (미인증 사용자) → 자동으로 CI 연결
+     * PortOne 본인인증 결과로 회원을 조회한다. HTTP 호출은 호출자가 선행해야 한다.
+     *
+     * 1. CI로 직접 조회 (이미 본인인증된 사용자) → wasJustVerified=false
+     * 2. CI 미매칭 시 이름+생년월일로 조회 (미인증 사용자) → CI 자동 연결, wasJustVerified=true
      */
     @Transactional
-    public Member findMember(String impUid) {
-        CertificationInfo certInfo = getCertificationInfo(impUid);
+    public VerificationResult findMemberByCert(CertificationInfo certInfo) {
         String ci = certInfo.getUniqueKey();
 
-        // 1. CI로 먼저 조회
+        // 1. CI로 먼저 조회 — 이미 인증된 사용자
         if (ci != null) {
             Optional<Member> byCI = memberRepository.findByCiAndIsDeletedFalse(ci);
             if (byCI.isPresent()) {
-                return byCI.get();
+                return new VerificationResult(byCI.get(), false);
             }
         }
 
-        // 2. 이름 + 생년월일로 조회 (미인증 사용자)
+        // 2. 이름 + 생년월일로 조회 — 미인증 사용자
         String name = certInfo.getName();
         String birthDate = certInfo.getBirthday();
         List<Member> candidates = memberRepository.findByNameAndBirthDateAndIsDeletedFalse(name, birthDate);
@@ -64,64 +54,21 @@ public class PortOneVerificationStrategy {
 
         Member member = candidates.get(0);
 
-        // 3. 본인인증 처리 — PortOne 데이터를 source of truth로 덮어씀 (기존 updateIdentityVerification과 동일 정책)
+        // 3. 본인인증 처리 — 이번 요청에서 최초 연결
         if (ci != null) {
             String gender = "MALE".equals(certInfo.getGender()) ? "M" : "F";
             member.updateIdentityVerification(certInfo.getName(), gender, birthDate, ci, certInfo.getUniqueInSite());
             log.info("미인증 사용자 본인인증 처리 완료 - memberId: {}", member.getId());
         }
 
-        return member;
+        return new VerificationResult(member, true);
     }
 
-    private CertificationInfo getCertificationInfo(String impUid) {
-        OkHttpClient client = new OkHttpClient();
-        String url = "https://api.portone.io/identity-verifications/" + impUid;
-
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("Authorization", "PortOne " + apiSecret)
-                .get()
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            String body = response.body().string();
-            if (!response.isSuccessful()) {
-                throw new PortOneApiException("본인인증 조회 실패: " + response.code());
-            }
-
-            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
-            if (!json.has("verifiedCustomer")) {
-                throw new PortOneApiException("Missing verifiedCustomer in response");
-            }
-
-            JsonObject vc = json.getAsJsonObject("verifiedCustomer");
-            String birthday = vc.has("birthDate")
-                    ? getStringField(vc, "birthDate")
-                    : getStringField(vc, "birthday");
-
-            return CertificationInfo.builder()
-                    .name(getStringField(vc, "name"))
-                    .gender(getStringField(vc, "gender"))
-                    .birthday(birthday)
-                    .uniqueKey(getOptionalStringField(vc, "ci"))
-                    .uniqueInSite(getOptionalStringField(vc, "di"))
-                    .build();
-        } catch (IOException e) {
-            throw new PortOneApiException("IO Error: " + e.getMessage());
-        }
-    }
-
-    private String getStringField(JsonObject json, String field) {
-        if (!json.has(field) || json.get(field).isJsonNull()) {
-            throw new PortOneApiException("Missing required field: " + field);
-        }
-        return json.get(field).getAsString();
-    }
-
-    private String getOptionalStringField(JsonObject json, String field) {
-        if (!json.has(field) || json.get(field).isJsonNull()) return null;
-        String v = json.get(field).getAsString();
-        return v.isEmpty() ? null : v;
+    /**
+     * impUid로 PortOne API를 호출해 본인인증 정보를 조회한다.
+     * DB 트랜잭션 밖에서 호출해야 커넥션 점유 시간을 줄일 수 있다.
+     */
+    public CertificationInfo getCertificationInfo(String impUid) {
+        return portOneApiClient.getCertificationInfo(impUid);
     }
 }
