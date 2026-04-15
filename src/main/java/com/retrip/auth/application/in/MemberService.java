@@ -15,7 +15,6 @@ import com.retrip.auth.domain.exception.common.BusinessException;
 import com.retrip.auth.domain.exception.common.ErrorCode;
 import com.retrip.auth.domain.vo.MemberEmail;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -92,7 +91,7 @@ public class MemberService implements ManageMemberUseCase {
         // 비밀번호 있는 계정만 현재 비밀번호 검증
         if (member.hasPassword()) {
             if (!passwordEncoder.matches(request.password(), member.getPasswordValue()))
-                throw new BadCredentialsException("현재 비밀번호가 일치하지 않습니다.");
+                throw new BusinessException(ErrorCode.PASSWORD_NOT_MATCH);
         }
 
         String encodedNewPassword = request.newPassword() != null
@@ -114,7 +113,7 @@ public class MemberService implements ManageMemberUseCase {
         // 비밀번호 있는 계정만 비밀번호 검증
         if (member.hasPassword()) {
             if (!passwordEncoder.matches(request.password(), member.getPasswordValue()))
-                throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
+                throw new BusinessException(ErrorCode.PASSWORD_NOT_MATCH);
         }
 
         refreshTokenRepository.deleteByMemberId(memberId.toString());
@@ -129,7 +128,7 @@ public class MemberService implements ManageMemberUseCase {
         if (!member.hasPassword()) throw new BusinessException(ErrorCode.SOCIAL_MEMBER_CANNOT_CHANGE_PASSWORD);
 
         if (!passwordEncoder.matches(request.currentPassword(), member.getPasswordValue()))
-            throw new BadCredentialsException("현재 비밀번호가 일치하지 않습니다.");
+            throw new BusinessException(ErrorCode.PASSWORD_NOT_MATCH);
 
         String encodedNewPassword = passwordEncoder.encode(request.newPassword());
         member.updatePassword(encodedNewPassword);
