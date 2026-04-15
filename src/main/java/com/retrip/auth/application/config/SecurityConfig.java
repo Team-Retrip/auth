@@ -141,6 +141,7 @@ public class SecurityConfig {
                 "http://127.0.0.1:*",
                 "https://retrip-web.vercel.app",
                 "https://retrip-web-*.vercel.app",
+                "https://*-*.vercel.app",
                 "https://retrip.io",
                 "https://*.retrip.io"
         ));
