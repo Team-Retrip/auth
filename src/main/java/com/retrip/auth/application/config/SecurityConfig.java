@@ -8,6 +8,7 @@ import com.retrip.auth.infra.adapter.in.rest.filter.JwtAuthenticationFilter;
 import com.retrip.auth.infra.adapter.in.rest.filter.LoginAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +34,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -67,6 +69,9 @@ public class SecurityConfig {
 
     @Value("${app.cookie.secure:true}")
     private boolean cookieSecure;
+
+    @Value("${app.frontend-callback-url:http://localhost:3000/auth/callback}")
+    private String frontendCallbackUrl;
 
     @Bean
     public LoginAuthenticationFilter loginAuthenticationFilter(
@@ -111,6 +116,11 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService)
                         )
                         .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler((request, response, exception) -> {
+                            log.error("OAuth2 로그인 실패: {}", exception.getMessage());
+                            response.sendRedirect(frontendCallbackUrl + "?error=" +
+                                    java.net.URLEncoder.encode(exception.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
+                        })
                 )
 
                 .authorizeHttpRequests(auth -> auth
