@@ -122,7 +122,8 @@ public class SecurityConfig {
                                 "/auth/password-reset/by-verification",
                                 "/auth/password-reset/by-email",
                                 "/auth/password-reset").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
+                        .requestMatchers("/test.html", "/").permitAll()
                         // ✅ 추가: 본인인증 및 여행 스타일 조회 API 허용
                         .requestMatchers(HttpMethod.GET, "/api/travel-styles", "/api/users/check-nickname").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-identity").authenticated()
