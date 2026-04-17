@@ -36,7 +36,6 @@ spring:
             authorization-grant-type: authorization_code
             scope:
               - profile_nickname
-              - account_email
             redirect-uri: "${APP_BASE_URL:http://localhost:8080}/login/oauth2/code/kakao"
             client-name: Kakao
 
