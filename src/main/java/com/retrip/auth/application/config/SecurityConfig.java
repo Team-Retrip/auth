@@ -84,7 +84,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            LoginAuthenticationFilter loginAuthenticationFilter) throws Exception {
+            LoginAuthenticationFilter loginAuthenticationFilter,
+            HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository) throws Exception {
 
         SecurityContextRepository securityContextRepository = new DelegatingSecurityContextRepository(
                 new RequestAttributeSecurityContextRepository(),
@@ -112,6 +113,9 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
+                        )
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
