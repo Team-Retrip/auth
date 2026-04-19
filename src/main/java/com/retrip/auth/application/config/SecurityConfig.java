@@ -22,6 +22,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
@@ -40,135 +41,148 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final MemberRepository memberRepository;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final CustomOAuth2UserService customOAuth2UserService;
+        private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+        private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+        private final RefreshTokenRepository refreshTokenRepository;
+        private final MemberRepository memberRepository;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(
-            HttpSecurity http,
-            UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider,
-            MemberQueryService memberQueryService) throws Exception {
+        @Bean
+        public AuthenticationManager authenticationManager(
+                        HttpSecurity http,
+                        UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider,
+                        MemberQueryService memberQueryService) throws Exception {
 
-        AuthenticationManagerBuilder authenticationManagerBuilder =
-                http.getSharedObject(AuthenticationManagerBuilder.class);
+                AuthenticationManagerBuilder authenticationManagerBuilder = http
+                                .getSharedObject(AuthenticationManagerBuilder.class);
 
-        authenticationManagerBuilder
-                .authenticationProvider(usernamePasswordAuthenticationProvider)
-                .userDetailsService(memberQueryService);
+                authenticationManagerBuilder
+                                .authenticationProvider(usernamePasswordAuthenticationProvider)
+                                .userDetailsService(memberQueryService);
 
-        return authenticationManagerBuilder.build();
-    }
+                return authenticationManagerBuilder.build();
+        }
 
-    @Value("${app.cookie.secure:true}")
-    private boolean cookieSecure;
+        @Value("${app.cookie.secure:true}")
+        private boolean cookieSecure;
 
-    @Value("${app.frontend-callback-url:http://localhost:3000/auth/callback}")
-    private String frontendCallbackUrl;
+        @Value("${app.frontend-callback-url:http://localhost:3000/auth/callback}")
+        private String frontendCallbackUrl;
 
-    @Bean
-    public LoginAuthenticationFilter loginAuthenticationFilter(
-            JwtConfig jwtConfig,
-            AuthenticationManager authenticationManager,
-            JwtProvider jwtProvider) {
-        return new LoginAuthenticationFilter(jwtConfig, authenticationManager, jwtProvider, refreshTokenRepository, memberRepository, cookieSecure);
-    }
+        @Bean
+        public LoginAuthenticationFilter loginAuthenticationFilter(
+                        JwtConfig jwtConfig,
+                        AuthenticationManager authenticationManager,
+                        JwtProvider jwtProvider) {
+                return new LoginAuthenticationFilter(jwtConfig, authenticationManager, jwtProvider,
+                                refreshTokenRepository, memberRepository, cookieSecure);
+        }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            LoginAuthenticationFilter loginAuthenticationFilter,
-            HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository) throws Exception {
+        @Bean
+        public SecurityFilterChain securityFilterChain(
+                        HttpSecurity http,
+                        LoginAuthenticationFilter loginAuthenticationFilter) throws Exception {
 
-        SecurityContextRepository securityContextRepository = new DelegatingSecurityContextRepository(
-                new RequestAttributeSecurityContextRepository(),
-                new HttpSessionSecurityContextRepository()
-        );
+                SecurityContextRepository securityContextRepository = new DelegatingSecurityContextRepository(
+                                new RequestAttributeSecurityContextRepository(),
+                                new HttpSessionSecurityContextRepository());
 
-        http
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
+                http
+                                .formLogin(AbstractHttpConfigurer::disable)
+                                .httpBasic(AbstractHttpConfigurer::disable)
+                                .csrf(AbstractHttpConfigurer::disable)
+                                .cors(Customizer.withDefaults())
 
-                .securityContext(context -> context
-                        .securityContextRepository(securityContextRepository)
-                )
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(handler -> handler
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-                        })
-                )
+                                .securityContext(context -> context
+                                                .securityContextRepository(securityContextRepository))
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .exceptionHandling(handler -> handler
+                                                .authenticationEntryPoint((request, response, authException) -> {
+                                                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED,
+                                                                        "Unauthorized");
+                                                }))
 
-                .addFilterAt(loginAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                                .addFilterAt(loginAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
-                .oauth2Login(oauth2 -> oauth2
-                        .authorizationEndpoint(authorization -> authorization
-                                .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
-                        )
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
-                        .successHandler(oAuth2LoginSuccessHandler)
-                        .failureHandler((request, response, exception) -> {
-                            log.error("OAuth2 로그인 실패: {}", exception.getMessage());
-                            response.sendRedirect(frontendCallbackUrl + "?error=" +
-                                    java.net.URLEncoder.encode(exception.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
-                        })
-                )
+                                .oauth2Login(oauth2 -> oauth2
+                                                .authorizationEndpoint(authorization -> authorization
+                                                                .authorizationRequestRepository(cookieAuthorizationRequestRepository))
+                                                // OAuth2LoginAuthenticationFilter(콜백 처리 필터)에도 직접 주입
+                                                .withObjectPostProcessor(new org.springframework.security.config.annotation.ObjectPostProcessor<OAuth2LoginAuthenticationFilter>() {
+                                                        @Override
+                                                        public <O extends OAuth2LoginAuthenticationFilter> O postProcess(O filter) {
+                                                                filter.setAuthorizationRequestRepository(cookieAuthorizationRequestRepository);
+                                                                return filter;
+                                                        }
+                                                })
+                                                .userInfoEndpoint(userInfo -> userInfo
+                                                                .userService(customOAuth2UserService))
+                                                .successHandler(oAuth2LoginSuccessHandler)
+                                                .failureHandler((request, response, exception) -> {
+                                                        log.error("OAuth2 로그인 실패: {}", exception.getMessage());
+                                                        response.sendRedirect(frontendCallbackUrl + "?error=" +
+                                                                        java.net.URLEncoder.encode(
+                                                                                        exception.getMessage(),
+                                                                                        java.nio.charset.StandardCharsets.UTF_8));
+                                                }))
 
-                .authorizeHttpRequests(auth -> auth
-                        // ✅ 수정: /api/users 경로 추가
-                        .requestMatchers(HttpMethod.POST, "/users", "/api/users").permitAll()
-                        .requestMatchers("/login/**", "/oauth2/**", "/auth/reissue", "/auth/logout", "/").permitAll()
-                        .requestMatchers(HttpMethod.POST,
-                                "/auth/find-email",
-                                "/auth/password-reset/by-verification",
-                                "/auth/password-reset/by-email",
-                                "/auth/password-reset").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
-                        .requestMatchers("/test.html", "/").permitAll()
-                        // ✅ 추가: 본인인증 및 여행 스타일 조회 API 허용
-                        .requestMatchers(HttpMethod.GET, "/api/travel-styles", "/api/users/check-nickname").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/verify-identity").authenticated()
-                        .anyRequest().authenticated()
-                );
+                                .authorizeHttpRequests(auth -> auth
+                                                // ✅ 수정: /api/users 경로 추가
+                                                .requestMatchers(HttpMethod.POST, "/users", "/api/users").permitAll()
+                                                .requestMatchers("/login/**", "/oauth2/**", "/auth/reissue",
+                                                                "/auth/logout", "/")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/auth/find-email",
+                                                                "/auth/password-reset/by-verification",
+                                                                "/auth/password-reset/by-email",
+                                                                "/auth/password-reset")
+                                                .permitAll()
+                                                .requestMatchers("/swagger-ui/**", "/swagger-ui.html",
+                                                                "/v3/api-docs/**", "/swagger-resources/**",
+                                                                "/webjars/**")
+                                                .permitAll()
+                                                .requestMatchers("/test.html", "/").permitAll()
+                                                // ✅ 추가: 본인인증 및 여행 스타일 조회 API 허용
+                                                .requestMatchers(HttpMethod.GET, "/api/travel-styles",
+                                                                "/api/users/check-nickname")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/auth/verify-identity")
+                                                .authenticated()
+                                                .anyRequest().authenticated());
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOriginPatterns(List.of(
-                "http://localhost:*",
-                "http://127.0.0.1:*",
-                "https://retrip-web.vercel.app",
-                "https://retrip-web-*.vercel.app",
-                "https://*-*.vercel.app",
-                "https://retrip.io",
-                "https://*.retrip.io"
-        ));
+                config.setAllowedOriginPatterns(List.of(
+                                "http://localhost:*",
+                                "http://127.0.0.1:*",
+                                "https://retrip-web.vercel.app",
+                                "https://retrip-web-*.vercel.app",
+                                "https://*-*.vercel.app",
+                                "https://retrip.io",
+                                "https://*.retrip.io"));
 
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
-        config.setExposedHeaders(List.of("Authorization"));
-        config.setMaxAge(3600L);
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+                config.setAllowedHeaders(List.of("*"));
+                config.setAllowCredentials(true);
+                config.setExposedHeaders(List.of("Authorization"));
+                config.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", config);
+                return source;
+        }
 }
