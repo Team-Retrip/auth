@@ -105,7 +105,7 @@
 <div class="sticky-top">
     <div class="config-bar">
         <label>Auth URL</label>
-        <input type="text" id="apiBase" value="http://localhost:8080">
+        <input type="text" id="apiBase">
         <label style="margin-left:8px;">Trip URL</label>
         <input type="text" id="tripBase" value="http://localhost:8081">
         <label style="margin-left:8px;">PortOne Store ID</label>
@@ -762,7 +762,7 @@
 
 <script>
     let STATE = {
-        apiBase: 'http://localhost:8080',
+        apiBase: window.location.origin,
         tripBase: 'http://localhost:8081',
         accessToken: '',
         storeId: '',
@@ -772,6 +772,10 @@
     };
 
     // ===================== CONFIG =====================
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('apiBase').value = STATE.apiBase;
+    });
+
     function saveConfig() {
         STATE.apiBase = document.getElementById('apiBase').value.replace(/\/$/, '');
         STATE.tripBase = document.getElementById('tripBase').value.replace(/\/$/, '');
