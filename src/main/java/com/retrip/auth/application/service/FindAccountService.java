@@ -63,9 +63,7 @@ public class FindAccountService {
         return tx.execute(status -> {
             VerificationResult result = portOneStrategy.findMemberByCert(certInfo);
             Member member = result.member();
-            if (!member.hasPassword()) {
-                throw new BusinessException(ErrorCode.SOCIAL_MEMBER_NO_PASSWORD_RESET);
-            }
+            // 비밀번호가 없는 소셜 계정도 본인인증을 통해 처음으로 비밀번호를 설정할 수 있다.
             return new PasswordResetTokenResponse(createToken(member).getToken());
         });
     }
