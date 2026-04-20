@@ -114,6 +114,7 @@ jobs:
               -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
               -e MAIL_USERNAME="${{ secrets.MAIL_USERNAME }}" \
               -e MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}" \
+              -e FRONTEND_PASSWORD_RESET_URL="${{ secrets.FRONTEND_PASSWORD_RESET_URL }}" \
               --restart always \
               "$IMAGE"
 
