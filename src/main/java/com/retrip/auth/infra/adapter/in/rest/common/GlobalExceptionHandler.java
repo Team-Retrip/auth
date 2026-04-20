@@ -4,6 +4,7 @@ import com.retrip.auth.domain.exception.common.BusinessException;
 import com.retrip.auth.domain.exception.common.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.MailException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,6 +39,12 @@ public class GlobalExceptionHandler {
         return handle(e.getErrorCode(), request);
     }
 
+
+    @ExceptionHandler(MailException.class)
+    public ApiResponse<ErrorResponse> handleMailException(HttpServletRequest request, MailException e) {
+        log.error("handleMailException: ", e);
+        return handle(ErrorCode.MAIL_SEND_FAILED, request);
+    }
 
     @ExceptionHandler(Exception.class)
     public ApiResponse<ErrorResponse> handleException(HttpServletRequest request, Exception e) {

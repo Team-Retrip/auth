@@ -14,6 +14,7 @@ public enum ErrorCode {
     ILLEGAL_STATE(BAD_REQUEST, "Common-005", "Illegal state"),
     INVALID_ACCESS(FORBIDDEN, "Common-006","접근 권한이 존재하지 않습니다."),
     EXTERNAL_API_ERROR(INTERNAL_SERVER_ERROR, "Common-007", "외부 API 호출 중 오류가 발생했습니다."),
+    MAIL_SEND_FAILED(INTERNAL_SERVER_ERROR, "Common-008", "이메일 발송에 실패했습니다."),
 
     MEMBER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "Member-001", "멤버 엔티티를 찾을 수 없습니다."),
     PASSWORD_NOT_MATCH(HttpStatus.UNAUTHORIZED, "Member-002", "비밀 번호가 다릅니다."),
