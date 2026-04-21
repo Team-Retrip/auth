@@ -14,8 +14,7 @@ public class EmailVerificationStrategy {
     private final MemberRepository memberRepository;
 
     /**
-     * 이메일로 회원을 조회한다.
-     * 비밀번호가 없는 소셜 계정도 이메일 인증을 통해 처음으로 비밀번호를 설정할 수 있다.
+     * 이메일로 회원을 조회한다. 소셜 전용 계정(비밀번호 없음) 여부는 호출부에서 검사한다.
      */
     public Member findMember(String email) {
         Member member = memberRepository.findByEmail_Value(email)

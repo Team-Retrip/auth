@@ -4,12 +4,14 @@ import com.retrip.auth.application.dto.CertificationInfo;
 import com.retrip.auth.application.dto.response.FindEmailResponse;
 import com.retrip.auth.application.dto.response.PasswordResetTokenResponse;
 import com.retrip.auth.application.out.repository.MemberRepository;
+import com.retrip.auth.application.out.repository.MemberSocialProviderRepository;
 import com.retrip.auth.application.out.repository.PasswordResetTokenRepository;
 import com.retrip.auth.application.out.repository.RefreshTokenRepository;
 import com.retrip.auth.application.service.recovery.EmailVerificationStrategy;
 import com.retrip.auth.application.service.recovery.PortOneVerificationStrategy;
 import com.retrip.auth.application.service.recovery.VerificationResult;
 import com.retrip.auth.domain.entity.Member;
+import com.retrip.auth.domain.entity.MemberSocialProvider;
 import com.retrip.auth.domain.entity.PasswordResetToken;
 import com.retrip.auth.domain.exception.MemberNotFoundException;
 import com.retrip.auth.domain.exception.common.BusinessException;
@@ -23,6 +25,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -34,6 +37,7 @@ public class FindAccountService {
     private final EmailVerificationStrategy emailStrategy;
     private final PasswordResetTokenRepository resetTokenRepository;
     private final MemberRepository memberRepository;
+    private final MemberSocialProviderRepository socialProviderRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
@@ -49,7 +53,13 @@ public class FindAccountService {
     public FindEmailResponse findEmailByVerification(String impUid) {
         CertificationInfo certInfo = portOneApiClient.getCertificationInfo(impUid); // HTTP, 트랜잭션 밖
         VerificationResult result = portOneStrategy.findMemberByCert(certInfo);     // @Transactional
-        return FindEmailResponse.of(result.member().getEmailValue(), result.wasJustVerified());
+        Member member = result.member();
+        List<String> socialProviders = socialProviderRepository.findByMemberId(member.getId())
+                .stream().map(MemberSocialProvider::getProvider).toList();
+        List<String> providers = new java.util.ArrayList<>(socialProviders);
+        if (member.hasPassword()) providers.add("local");
+        if (providers.isEmpty()) providers = List.of(member.getProvider());
+        return FindEmailResponse.of(member.getEmailValue(), providers, result.wasJustVerified());
     }
 
     /**
@@ -63,7 +73,7 @@ public class FindAccountService {
         return tx.execute(status -> {
             VerificationResult result = portOneStrategy.findMemberByCert(certInfo);
             Member member = result.member();
-            // 비밀번호가 없는 소셜 계정도 본인인증을 통해 처음으로 비밀번호를 설정할 수 있다.
+            if (!member.hasPassword()) throw new BusinessException(ErrorCode.SOCIAL_MEMBER_NO_PASSWORD_RESET);
             return new PasswordResetTokenResponse(createToken(member).getToken());
         });
     }
@@ -77,6 +87,7 @@ public class FindAccountService {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         String[] tokenData = tx.execute(status -> {
             Member member = emailStrategy.findMember(email);
+            if (!member.hasPassword()) throw new BusinessException(ErrorCode.SOCIAL_MEMBER_NO_PASSWORD_RESET);
             String token = createToken(member).getToken();
             return new String[]{member.getEmailValue(), token};
         });
