@@ -27,6 +27,27 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    public void sendVerificationCode(String toEmail, String code) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
+        message.setTo(toEmail);
+        message.setSubject("[Retrip] 이메일 인증번호 안내");
+        message.setText(String.format("""
+                안녕하세요, Retrip입니다.
+
+                아래 인증번호를 입력해 이메일을 인증해주세요.
+                인증번호는 10분 동안 유효합니다.
+
+                인증번호: %s
+
+                본인이 요청하지 않은 경우 이 메일을 무시하셔도 됩니다.
+
+                감사합니다.
+                Retrip 팀
+                """, code));
+        mailSender.send(message);
+    }
+
     private String buildEmailBody(String token) {
         return String.format("""
                 안녕하세요, Retrip입니다.

@@ -142,9 +142,15 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.POST,
                                                                 "/auth/find-email",
+                                                                "/auth/find-email/send-code",
+                                                                "/auth/find-email/confirm",
                                                                 "/auth/password-reset/by-verification",
+                                                                "/auth/password-reset/by-verification/send-code",
+                                                                "/auth/password-reset/by-verification/confirm",
                                                                 "/auth/password-reset/by-email",
-                                                                "/auth/password-reset")
+                                                                "/auth/password-reset",
+                                                                "/auth/email/send-code",
+                                                                "/auth/email/verify-code")
                                                 .permitAll()
                                                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html",
                                                                 "/v3/api-docs/**", "/swagger-resources/**",

@@ -26,6 +26,7 @@ public enum ErrorCode {
     PASSWORD_ALREADY_EXISTS(HttpStatus.CONFLICT, "Member-008", "이미 비밀번호가 설정된 계정입니다."),
     TERMS_NOT_AGREED(HttpStatus.BAD_REQUEST, "Member-009", "필수 약관에 동의해야 합니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "Member-010", "이미 사용 중인 닉네임입니다."),
+    EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "Member-011", "이메일 인증이 완료되지 않았습니다. 이메일 인증을 먼저 진행해주세요."),
 
     EXTENSION_NOT_FOUND(BAD_REQUEST, "Image-001", "지원하지 않는 이미지 확장자입니다."),
 
@@ -34,6 +35,12 @@ public enum ErrorCode {
     RESET_TOKEN_ALREADY_USED(BAD_REQUEST, "Auth-003", "이미 사용된 재설정 토큰입니다."),
     ACCOUNT_NOT_FOUND_BY_VERIFICATION(NOT_FOUND, "Auth-004", "본인인증 정보와 일치하는 계정을 찾을 수 없습니다."),
     SOCIAL_MEMBER_NO_PASSWORD_RESET(BAD_REQUEST, "Auth-005", "소셜 로그인 전용 계정은 비밀번호 재설정이 불가합니다."),
+    EMAIL_CODE_NOT_FOUND(BAD_REQUEST, "Auth-006", "이메일 인증 코드를 찾을 수 없습니다."),
+    EMAIL_CODE_EXPIRED(BAD_REQUEST, "Auth-007", "이메일 인증 코드가 만료되었습니다."),
+    EMAIL_CODE_INVALID(BAD_REQUEST, "Auth-008", "이메일 인증 코드가 올바르지 않습니다."),
+    VERIFICATION_SESSION_NOT_FOUND(BAD_REQUEST, "Auth-009", "인증 세션을 찾을 수 없거나 만료되었습니다."),
+    VERIFICATION_SESSION_EXPIRED(BAD_REQUEST, "Auth-010", "인증 세션이 만료되었습니다."),
+    EMAIL_NOT_MATCH(BAD_REQUEST, "Auth-011", "입력한 이메일이 등록된 정보와 일치하지 않습니다."),
     ;
 
     private final HttpStatus status;

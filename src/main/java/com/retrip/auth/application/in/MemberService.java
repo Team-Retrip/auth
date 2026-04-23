@@ -8,6 +8,7 @@ import com.retrip.auth.application.in.response.MemberSearchResponse;
 import com.retrip.auth.application.in.usercase.ManageMemberUseCase;
 import com.retrip.auth.application.out.repository.MemberRepository;
 import com.retrip.auth.application.out.repository.RefreshTokenRepository;
+import com.retrip.auth.application.service.EmailVerificationService;
 import com.retrip.auth.domain.entity.Member;
 import com.retrip.auth.domain.entity.RefreshToken;
 import com.retrip.auth.domain.exception.MemberNotFoundException;
@@ -35,12 +36,15 @@ public class MemberService implements ManageMemberUseCase {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final EmailVerificationService emailVerificationService;
 
     @Override
     public MemberCreateResponse createUser(MemberCreateRequest request) {
         if (!request.termsAgreed()) {
             throw new BusinessException(ErrorCode.TERMS_NOT_AGREED);
         }
+
+        emailVerificationService.assertVerified(request.email());
 
         if (request.birthDate() != null) {
             LocalDate birth = LocalDate.parse(request.birthDate());
