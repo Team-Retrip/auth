@@ -3,12 +3,14 @@ package com.retrip.auth.application.service;
 import com.retrip.auth.application.dto.CertificationInfo;
 import com.retrip.auth.application.dto.response.FindEmailResponse;
 import com.retrip.auth.application.dto.response.PasswordResetTokenResponse;
+import com.retrip.auth.application.dto.response.VerificationPendingResponse;
 import com.retrip.auth.application.out.repository.MemberRepository;
 import com.retrip.auth.application.out.repository.PasswordResetTokenRepository;
-import com.retrip.auth.domain.entity.PasswordResetToken;
+import com.retrip.auth.application.out.repository.PortOneVerificationSessionRepository;
 import com.retrip.auth.application.service.recovery.PortOneVerificationStrategy;
-import com.retrip.auth.application.service.recovery.VerificationResult;
 import com.retrip.auth.domain.entity.Member;
+import com.retrip.auth.domain.entity.PasswordResetToken;
+import com.retrip.auth.domain.entity.PortOneVerificationSession;
 import com.retrip.auth.domain.exception.common.BusinessException;
 import com.retrip.auth.infra.adapter.out.external.PortOneApiClient;
 import jakarta.transaction.Transactional;
@@ -21,13 +23,14 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
 @Transactional
@@ -36,17 +39,21 @@ class FindAccountServiceTest {
     @Autowired FindAccountService findAccountService;
     @Autowired MemberRepository memberRepository;
     @Autowired PasswordResetTokenRepository resetTokenRepository;
+    @Autowired PortOneVerificationSessionRepository sessionRepository;
     @Autowired PasswordEncoder passwordEncoder;
 
-    // PortOne HTTP 호출 차단
     @MockBean PortOneApiClient portOneApiClient;
     @MockBean PortOneVerificationStrategy portOneStrategy;
-    // Gmail SMTP 연결 차단
     @MockBean JavaMailSender javaMailSender;
 
-    private static final CertificationInfo DUMMY_CERT = CertificationInfo.builder()
+    private static final CertificationInfo CERT_WITH_CI = CertificationInfo.builder()
             .name("홍길동").gender("MALE").birthday("1990-01-01")
-            .uniqueKey("ci-dummy").uniqueInSite("di-dummy")
+            .uniqueKey("ci-test").uniqueInSite("di-test")
+            .build();
+
+    private static final CertificationInfo CERT_WITHOUT_CI = CertificationInfo.builder()
+            .name("홍길동").gender("MALE").birthday("1990-01-01")
+            .uniqueKey(null).uniqueInSite(null)
             .build();
 
     private Member localMember;
@@ -61,34 +68,115 @@ class FindAccountServiceTest {
         socialMember = memberRepository.save(Member.createSocialMember(
                 "김소셜", "social@example.com", "google"
         ));
-
-        // PortOne HTTP 호출은 항상 DUMMY_CERT 반환
-        given(portOneApiClient.getCertificationInfo(anyString())).willReturn(DUMMY_CERT);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 아이디 찾기
+    // 아이디 찾기 - CI 매칭 경로
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    void 아이디찾기_기존인증사용자_isNowVerified_false() {
-        given(portOneStrategy.findMemberByCert(any())).willReturn(new VerificationResult(localMember, false));
+    void 아이디찾기_CI매칭_즉시이메일반환() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.of(localMember));
 
-        FindEmailResponse response = findAccountService.findEmailByVerification("imp_test");
+        Object result = findAccountService.findEmailByVerification("imp_test");
 
+        assertThat(result).isInstanceOf(FindEmailResponse.class);
+        FindEmailResponse response = (FindEmailResponse) result;
         assertThat(response.maskedEmail()).endsWith("@example.com");
-        assertThat(response.maskedEmail()).doesNotContain("local@");
         assertThat(response.maskedEmail()).contains("*");
         assertThat(response.isNowVerified()).isFalse();
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // 아이디 찾기 - CI 미매칭 → OTP 플로우
+    // ─────────────────────────────────────────────────────────────────────────
+
     @Test
-    void 아이디찾기_신규인증사용자_isNowVerified_true() {
-        given(portOneStrategy.findMemberByCert(any())).willReturn(new VerificationResult(localMember, true));
+    void 아이디찾기_CI미매칭_세션반환() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.empty());
+        given(portOneStrategy.findCandidates("홍길동", "1990-01-01")).willReturn(List.of(localMember));
 
-        FindEmailResponse response = findAccountService.findEmailByVerification("imp_test");
+        Object result = findAccountService.findEmailByVerification("imp_test");
 
-        assertThat(response.isNowVerified()).isTrue();
+        assertThat(result).isInstanceOf(VerificationPendingResponse.class);
+        VerificationPendingResponse pending = (VerificationPendingResponse) result;
+        assertThat(pending.sessionId()).isNotBlank();
+        assertThat(sessionRepository.findById(pending.sessionId())).isPresent();
+    }
+
+    @Test
+    void 아이디찾기_CI없음_세션반환() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITHOUT_CI);
+        given(portOneStrategy.findCandidates("홍길동", "1990-01-01")).willReturn(List.of(localMember));
+
+        Object result = findAccountService.findEmailByVerification("imp_test");
+
+        assertThat(result).isInstanceOf(VerificationPendingResponse.class);
+    }
+
+    @Test
+    void 아이디찾기_후보없음_예외() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITHOUT_CI);
+        given(portOneStrategy.findCandidates(anyString(), anyString())).willReturn(List.of());
+
+        assertThatThrownBy(() -> findAccountService.findEmailByVerification("imp_test"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("계정을 찾을 수 없습니다");
+    }
+
+    @Test
+    void 아이디찾기_OTP발송_성공() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.empty());
+        given(portOneStrategy.findCandidates("홍길동", "1990-01-01")).willReturn(List.of(localMember));
+
+        VerificationPendingResponse pending = (VerificationPendingResponse) findAccountService.findEmailByVerification("imp_test");
+
+        findAccountService.sendFindEmailCode(pending.sessionId());
+
+        then(javaMailSender).should().send(any(org.springframework.mail.SimpleMailMessage.class));
+        PortOneVerificationSession session = sessionRepository.findById(pending.sessionId()).orElseThrow();
+        assertThat(session.getEmailCode()).isNotBlank();
+    }
+
+    @Test
+    void 아이디찾기_OTP확인_성공_이메일반환() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.empty());
+        given(portOneStrategy.findCandidates("홍길동", "1990-01-01")).willReturn(List.of(localMember));
+
+        VerificationPendingResponse pending = (VerificationPendingResponse) findAccountService.findEmailByVerification("imp_test");
+        findAccountService.sendFindEmailCode(pending.sessionId());
+
+        String code = sessionRepository.findById(pending.sessionId()).orElseThrow().getEmailCode();
+        FindEmailResponse result = findAccountService.confirmFindEmail(pending.sessionId(), code);
+
+        assertThat(result.maskedEmail()).endsWith("@example.com");
+        assertThat(result.isNowVerified()).isTrue();
+        assertThat(sessionRepository.findById(pending.sessionId()).orElseThrow().isUsed()).isTrue();
+    }
+
+    @Test
+    void 아이디찾기_OTP틀림_예외() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.empty());
+        given(portOneStrategy.findCandidates("홍길동", "1990-01-01")).willReturn(List.of(localMember));
+
+        VerificationPendingResponse pending = (VerificationPendingResponse) findAccountService.findEmailByVerification("imp_test");
+        findAccountService.sendFindEmailCode(pending.sessionId());
+
+        assertThatThrownBy(() -> findAccountService.confirmFindEmail(pending.sessionId(), "000000"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("올바르지 않습니다");
+    }
+
+    @Test
+    void 아이디찾기_OTP발송_세션없음_예외() {
+        assertThatThrownBy(() -> findAccountService.sendFindEmailCode("non-existent-session"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("인증 세션을 찾을 수 없");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -96,22 +184,92 @@ class FindAccountServiceTest {
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    void 비밀번호재설정_본인인증_토큰발급_성공() {
-        given(portOneStrategy.findMemberByCert(any())).willReturn(new VerificationResult(localMember, false));
+    void 비밀번호재설정_CI매칭_즉시토큰발급() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.of(localMember));
 
-        PasswordResetTokenResponse response = findAccountService.issueResetTokenByVerification("imp_test");
+        Object result = findAccountService.issueResetTokenByVerification("imp_test");
 
+        assertThat(result).isInstanceOf(PasswordResetTokenResponse.class);
+        PasswordResetTokenResponse response = (PasswordResetTokenResponse) result;
         assertThat(response.resetToken()).isNotBlank();
         assertThat(resetTokenRepository.findByToken(response.resetToken())).isPresent();
     }
 
     @Test
-    void 비밀번호재설정_본인인증_소셜전용계정_실패() {
-        given(portOneStrategy.findMemberByCert(any())).willReturn(new VerificationResult(socialMember, false));
+    void 비밀번호재설정_CI미매칭_세션반환() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.empty());
+        given(portOneStrategy.findCandidates("홍길동", "1990-01-01")).willReturn(List.of(localMember));
+
+        Object result = findAccountService.issueResetTokenByVerification("imp_test");
+
+        assertThat(result).isInstanceOf(VerificationPendingResponse.class);
+    }
+
+    @Test
+    void 비밀번호재설정_CI매칭_소셜전용계정_예외() {
+        given(portOneStrategy.getCertificationInfo("imp_social")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.of(socialMember));
 
         assertThatThrownBy(() -> findAccountService.issueResetTokenByVerification("imp_social"))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("소셜");
+    }
+
+    @Test
+    void 비밀번호재설정_CI미매칭_소셜전용계정_예외() {
+        given(portOneStrategy.getCertificationInfo("imp_social")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.empty());
+        given(portOneStrategy.findCandidates("홍길동", "1990-01-01")).willReturn(List.of(socialMember));
+
+        assertThatThrownBy(() -> findAccountService.issueResetTokenByVerification("imp_social"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("소셜");
+    }
+
+    @Test
+    void 비밀번호재설정_OTP발송_이메일검증_성공() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.empty());
+        given(portOneStrategy.findCandidates("홍길동", "1990-01-01")).willReturn(List.of(localMember));
+
+        VerificationPendingResponse pending = (VerificationPendingResponse) findAccountService.issueResetTokenByVerification("imp_test");
+
+        findAccountService.sendPasswordResetCode(pending.sessionId(), "local@example.com");
+
+        then(javaMailSender).should().send(any(org.springframework.mail.SimpleMailMessage.class));
+        PortOneVerificationSession session = sessionRepository.findById(pending.sessionId()).orElseThrow();
+        assertThat(session.getEmailCode()).isNotBlank();
+    }
+
+    @Test
+    void 비밀번호재설정_OTP발송_이메일불일치_예외() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.empty());
+        given(portOneStrategy.findCandidates("홍길동", "1990-01-01")).willReturn(List.of(localMember));
+
+        VerificationPendingResponse pending = (VerificationPendingResponse) findAccountService.issueResetTokenByVerification("imp_test");
+
+        assertThatThrownBy(() -> findAccountService.sendPasswordResetCode(pending.sessionId(), "other@example.com"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("이메일이 등록된 정보와 일치하지 않습니다");
+    }
+
+    @Test
+    void 비밀번호재설정_OTP확인_성공_토큰발급() {
+        given(portOneStrategy.getCertificationInfo("imp_test")).willReturn(CERT_WITH_CI);
+        given(portOneStrategy.findByCi("ci-test")).willReturn(Optional.empty());
+        given(portOneStrategy.findCandidates("홍길동", "1990-01-01")).willReturn(List.of(localMember));
+
+        VerificationPendingResponse pending = (VerificationPendingResponse) findAccountService.issueResetTokenByVerification("imp_test");
+        findAccountService.sendPasswordResetCode(pending.sessionId(), "local@example.com");
+
+        String code = sessionRepository.findById(pending.sessionId()).orElseThrow().getEmailCode();
+        PasswordResetTokenResponse result = findAccountService.confirmPasswordReset(pending.sessionId(), code);
+
+        assertThat(result.resetToken()).isNotBlank();
+        assertThat(resetTokenRepository.findByToken(result.resetToken())).isPresent();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -140,7 +298,7 @@ class FindAccountServiceTest {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 비밀번호 재설정 (토큰 검증 + 새 비밀번호 저장)
+    // 비밀번호 재설정 - 토큰 검증 + 새 비밀번호 저장
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
@@ -155,14 +313,12 @@ class FindAccountServiceTest {
     }
 
     @Test
-    void 비밀번호재설정_성공_기존세션_무효화() {
-        // 비밀번호 재설정 후 RefreshToken이 삭제되는지 확인
+    void 비밀번호재설정_성공_토큰_used_마킹() {
         findAccountService.sendPasswordResetEmail("local@example.com");
         String token = resetTokenRepository.findAll().get(0).getToken();
 
         findAccountService.resetPassword(token, "NewPass1!");
 
-        // 토큰이 used 상태로 변경됐는지 확인
         PasswordResetToken used = resetTokenRepository.findByToken(token).orElseThrow();
         assertThat(used.isUsed()).isTrue();
     }
@@ -189,7 +345,6 @@ class FindAccountServiceTest {
     void 비밀번호재설정_이미사용된토큰_실패() {
         findAccountService.sendPasswordResetEmail("local@example.com");
         String token = resetTokenRepository.findAll().get(0).getToken();
-
         findAccountService.resetPassword(token, "NewPass1!");
 
         assertThatThrownBy(() -> findAccountService.resetPassword(token, "NewPass2!"))
@@ -198,12 +353,12 @@ class FindAccountServiceTest {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 이메일 마스킹 로직 검증
+    // 이메일 마스킹 로직
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
     void 이메일마스킹_짧은로컬파트() {
-        FindEmailResponse response = FindEmailResponse.of("ab@test.com", false);
+        FindEmailResponse response = FindEmailResponse.of("ab@test.com", List.of("local"), false);
         assertThat(response.maskedEmail()).startsWith("a");
         assertThat(response.maskedEmail()).contains("*");
         assertThat(response.maskedEmail()).endsWith("@test.com");
@@ -211,7 +366,7 @@ class FindAccountServiceTest {
 
     @Test
     void 이메일마스킹_긴로컬파트() {
-        FindEmailResponse response = FindEmailResponse.of("hello@test.com", false);
+        FindEmailResponse response = FindEmailResponse.of("hello@test.com", List.of("local"), false);
         assertThat(response.maskedEmail()).startsWith("hel");
         assertThat(response.maskedEmail()).endsWith("@test.com");
         assertThat(response.maskedEmail()).contains("**");
