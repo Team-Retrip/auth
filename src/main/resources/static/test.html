@@ -179,6 +179,30 @@
             </div>
         </div>
 
+ㅅㅅㄷ        <!-- 회원가입 이메일 인증 (신규) -->
+        <div class="card" style="border-left: 3px solid #667eea;">
+            <h3><span class="badge badge-post">POST /auth/email/send-code</span> &nbsp; <span class="badge badge-post">POST /auth/email/verify-code</span> 회원가입 이메일 인증 <span style="font-size:10px;color:#f59e0b;font-weight:600;">NEW</span></h3>
+            <div class="desc">회원가입 전 이메일 인증 필수. ① 코드 발송 → ② 코드 확인 (10분 유효) → 30분 내에 회원가입 완료.</div>
+            <div class="info-box">이미 가입된 이메일이면 409, 탈퇴한 이메일이면 400 반환.</div>
+            <label>이메일</label>
+            <input type="email" id="emailVerifEmail" value="user@test.com" oninput="syncSignupEmail(this.value)">
+            <button class="btn btn-primary btn-block" onclick="sendSignupEmailCode()">① 인증코드 발송</button>
+            <div class="result-box" id="sendSignupCodeResult">
+                <div class="result-header"><span class="status" id="sendSignupCodeStatus"></span><span>POST /auth/email/send-code</span></div>
+                <div class="result-body" id="sendSignupCodeBody"></div>
+            </div>
+            <div style="margin-top:12px;">
+                <label>인증코드 (6자리, 메일 확인)</label>
+                <input type="text" id="emailVerifCode" placeholder="123456" maxlength="6">
+                <button class="btn btn-success btn-block" onclick="verifySignupEmailCode()">② 인증코드 확인</button>
+                <div class="result-box" id="verifySignupCodeResult">
+                    <div class="result-header"><span class="status" id="verifySignupCodeStatus"></span><span>POST /auth/email/verify-code</span></div>
+                    <div class="result-body" id="verifySignupCodeBody"></div>
+                </div>
+                <div id="emailVerifSuccessMsg" style="display:none;margin-top:8px;font-size:12px;color:#10b981;font-weight:600;">✅ 이메일 인증 완료! 30분 내에 위 회원가입 카드에서 가입을 완료하세요.</div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -700,6 +724,24 @@
                 <div class="result-header"><span class="status" id="findEmailStatus"></span><span>POST /auth/find-email</span></div>
                 <div class="result-body" id="findEmailBody"></div>
             </div>
+
+            <!-- CI 미매칭 OTP 플로우 (202 응답 시 자동 표시) NEW -->
+            <div id="findEmailOtpSection" style="display:none;margin-top:16px;border-top:1px solid #e2e8f0;padding-top:14px;">
+                <div class="warn-box">CI 미매칭: 본인인증 정보와 연결된 계정을 이름+생년월일로 탐색했습니다.<br>등록된 이메일로 OTP를 발송해 이메일 소유권을 확인합니다.</div>
+                <button class="btn btn-primary btn-block" onclick="sendFindEmailOtp()">③ OTP 발송 (등록 이메일로)</button>
+                <div class="result-box" id="sendFindEmailOtpResult">
+                    <div class="result-header"><span class="status" id="sendFindEmailOtpStatus"></span><span>POST /auth/find-email/send-code</span></div>
+                    <div class="result-body" id="sendFindEmailOtpBody"></div>
+                </div>
+                <label style="margin-top:10px;">OTP 코드 (6자리, 메일 확인)</label>
+                <input type="text" id="findEmailOtpCode" placeholder="123456" maxlength="6">
+                <button class="btn btn-success btn-block" onclick="confirmFindEmailOtp()">④ OTP 확인 → 이메일 반환</button>
+                <div class="result-box" id="confirmFindEmailOtpResult">
+                    <div class="result-header"><span class="status" id="confirmFindEmailOtpStatus"></span><span>POST /auth/find-email/confirm</span></div>
+                    <div class="result-body" id="confirmFindEmailOtpBody"></div>
+                </div>
+                <div id="findEmailOtpSuccessMsg" style="display:none;margin-top:8px;font-size:13px;color:#10b981;font-weight:600;"></div>
+            </div>
         </div>
 
         <!-- 비밀번호 재설정 - 이메일 경로 -->
@@ -741,6 +783,26 @@
                 <div class="result-header"><span class="status" id="resetByVerifStatus"></span><span>POST /auth/password-reset/by-verification</span></div>
                 <div class="result-body" id="resetByVerifBody"></div>
             </div>
+
+            <!-- CI 미매칭 OTP 플로우 (202 응답 시 자동 표시) NEW -->
+            <div id="resetVerifOtpSection" style="display:none;margin-top:16px;border-top:1px solid #e2e8f0;padding-top:14px;">
+                <div class="warn-box">CI 미매칭: 이름+생년월일로 계정을 탐색했습니다.<br>가입 시 사용한 이메일을 입력하면 OTP로 소유권을 확인합니다.</div>
+                <label>가입 이메일 (소유권 확인용)</label>
+                <input type="email" id="resetVerifOtpEmail" placeholder="가입할 때 사용한 이메일">
+                <button class="btn btn-primary btn-block" onclick="sendResetVerifOtp()">③ OTP 발송</button>
+                <div class="result-box" id="sendResetVerifOtpResult">
+                    <div class="result-header"><span class="status" id="sendResetVerifOtpStatus"></span><span>POST /auth/password-reset/by-verification/send-code</span></div>
+                    <div class="result-body" id="sendResetVerifOtpBody"></div>
+                </div>
+                <label style="margin-top:10px;">OTP 코드 (6자리, 메일 확인)</label>
+                <input type="text" id="resetVerifOtpCode" placeholder="123456" maxlength="6">
+                <button class="btn btn-success btn-block" onclick="confirmResetVerifOtp()">④ OTP 확인 → 재설정 토큰 발급</button>
+                <div class="result-box" id="confirmResetVerifOtpResult">
+                    <div class="result-header"><span class="status" id="confirmResetVerifOtpStatus"></span><span>POST /auth/password-reset/by-verification/confirm</span></div>
+                    <div class="result-body" id="confirmResetVerifOtpBody"></div>
+                </div>
+            </div>
+
             <div style="margin-top:16px;border-top:1px solid #e2e8f0;padding-top:14px;">
                 <div class="desc">위에서 발급된 토큰이 자동 입력됩니다.</div>
                 <label>재설정 토큰</label>
@@ -768,7 +830,9 @@
         storeId: '',
         channelKey: '',
         presignedUrl: '',
-        readImageUrl: ''
+        readImageUrl: '',
+        findEmailSessionId: '',
+        resetVerifSessionId: ''
     };
 
     // ===================== CONFIG =====================
@@ -834,6 +898,28 @@
         } catch(e) {
             if (resultId) showResult(resultId, '네트워크 오류 ❌', e.message, true);
             return { ok: false, status: 0, data: e.message };
+        }
+    }
+
+    // ===================== 섹션 1 — 이메일 인증 =====================
+    function syncSignupEmail(val) {
+        document.getElementById('signupEmail').value = val;
+    }
+
+    async function sendSignupEmailCode() {
+        const email = document.getElementById('emailVerifEmail').value.trim();
+        if (!email) { alert('이메일을 입력하세요.'); return; }
+        document.getElementById('emailVerifSuccessMsg').style.display = 'none';
+        await api('POST', '/auth/email/send-code', { email }, 'sendSignupCode', false);
+    }
+
+    async function verifySignupEmailCode() {
+        const email = document.getElementById('emailVerifEmail').value.trim();
+        const code  = document.getElementById('emailVerifCode').value.trim();
+        if (!email || !code) { alert('이메일과 인증코드를 모두 입력하세요.'); return; }
+        const r = await api('POST', '/auth/email/verify-code', { email, code }, 'verifySignupCode', false);
+        if (r.status === 204 || r.ok) {
+            document.getElementById('emailVerifSuccessMsg').style.display = 'block';
         }
     }
 
@@ -1272,15 +1358,47 @@
     }
 
     async function doFindEmail(impUid) {
+        STATE.findEmailSessionId = '';
+        document.getElementById('findEmailOtpSection').style.display = 'none';
+        document.getElementById('findEmailOtpSuccessMsg').style.display = 'none';
+
         const r = await api('POST', '/auth/find-email', { impUid }, 'findEmail', false);
         const msg = document.getElementById('findEmailMsg');
-        if (r.ok && r.data?.data) {
+
+        if (r.status === 200 && r.data?.data?.maskedEmail) {
             const d = r.data.data;
             msg.style.display = 'block';
             msg.style.color = '#10b981';
             msg.textContent = `✅ 이메일: ${d.maskedEmail}${d.isNowVerified ? '  (이번에 본인인증이 처음 연결됐습니다)' : ''}`;
+        } else if (r.status === 202 && r.data?.data?.sessionId) {
+            // CI 미매칭 → OTP 플로우
+            STATE.findEmailSessionId = r.data.data.sessionId;
+            msg.style.display = 'block';
+            msg.style.color = '#f59e0b';
+            msg.textContent = '⚠️ CI 미매칭: 아래 단계에서 이메일로 OTP를 발송해 소유권을 확인하세요.';
+            document.getElementById('findEmailOtpSection').style.display = 'block';
         } else {
             msg.style.display = 'none';
+        }
+    }
+
+    async function sendFindEmailOtp() {
+        if (!STATE.findEmailSessionId) { alert('먼저 본인인증을 진행하세요.'); return; }
+        await api('POST', '/auth/find-email/send-code', { sessionId: STATE.findEmailSessionId }, 'sendFindEmailOtp', false);
+    }
+
+    async function confirmFindEmailOtp() {
+        if (!STATE.findEmailSessionId) { alert('먼저 본인인증을 진행하세요.'); return; }
+        const code = document.getElementById('findEmailOtpCode').value.trim();
+        if (!code) { alert('OTP 코드를 입력하세요.'); return; }
+        const r = await api('POST', '/auth/find-email/confirm',
+            { sessionId: STATE.findEmailSessionId, code }, 'confirmFindEmailOtp', false);
+        if (r.ok && r.data?.data?.maskedEmail) {
+            const d = r.data.data;
+            const successMsg = document.getElementById('findEmailOtpSuccessMsg');
+            successMsg.style.display = 'block';
+            successMsg.textContent = `✅ 이메일: ${d.maskedEmail}  (본인인증이 계정에 연결됐습니다)`;
+            STATE.findEmailSessionId = '';
         }
     }
 
@@ -1305,14 +1423,45 @@
     }
 
     async function doIssueResetTokenByVerif(impUid) {
+        STATE.resetVerifSessionId = '';
+        document.getElementById('resetVerifOtpSection').style.display = 'none';
+
         const r = await api('POST', '/auth/password-reset/by-verification', { impUid }, 'resetByVerif', false);
-        if (r.ok && r.data?.data?.resetToken) {
+
+        if (r.status === 200 && r.data?.data?.resetToken) {
             const token = r.data.data.resetToken;
-            document.getElementById('resetVerifImpUid').value = impUid;
             document.getElementById('resetTokenFromVerif').value = token;
             const d = document.getElementById('resetVerifTokenDisplay');
             d.style.display = 'block';
             d.textContent = '발급된 토큰: ' + token;
+        } else if (r.status === 202 && r.data?.data?.sessionId) {
+            // CI 미매칭 → OTP 플로우
+            STATE.resetVerifSessionId = r.data.data.sessionId;
+            document.getElementById('resetVerifOtpSection').style.display = 'block';
+        }
+    }
+
+    async function sendResetVerifOtp() {
+        if (!STATE.resetVerifSessionId) { alert('먼저 본인인증을 진행하세요.'); return; }
+        const email = document.getElementById('resetVerifOtpEmail').value.trim();
+        if (!email) { alert('가입 이메일을 입력하세요.'); return; }
+        await api('POST', '/auth/password-reset/by-verification/send-code',
+            { sessionId: STATE.resetVerifSessionId, email }, 'sendResetVerifOtp', false);
+    }
+
+    async function confirmResetVerifOtp() {
+        if (!STATE.resetVerifSessionId) { alert('먼저 본인인증을 진행하세요.'); return; }
+        const code = document.getElementById('resetVerifOtpCode').value.trim();
+        if (!code) { alert('OTP 코드를 입력하세요.'); return; }
+        const r = await api('POST', '/auth/password-reset/by-verification/confirm',
+            { sessionId: STATE.resetVerifSessionId, code }, 'confirmResetVerifOtp', false);
+        if (r.ok && r.data?.data?.resetToken) {
+            const token = r.data.data.resetToken;
+            document.getElementById('resetTokenFromVerif').value = token;
+            const d = document.getElementById('resetVerifTokenDisplay');
+            d.style.display = 'block';
+            d.textContent = '발급된 토큰: ' + token + ' (이제 아래에서 비밀번호 재설정을 진행하세요)';
+            STATE.resetVerifSessionId = '';
         }
     }
 
