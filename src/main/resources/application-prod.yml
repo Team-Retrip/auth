@@ -3,7 +3,7 @@ server:
 
 app:
   cookie:
-    secure: false
+    secure: true
 
 spring:
   datasource:

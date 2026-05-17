@@ -179,7 +179,9 @@ public class SecurityConfig {
                                 "https://retrip-web-*.vercel.app",
                                 "https://*-*.vercel.app",
                                 "https://retrip.io",
-                                "https://*.retrip.io"));
+                                "https://*.retrip.io",
+                                "https://retrip.site",
+                                "https://*.retrip.site"));
 
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
                 config.setAllowedHeaders(List.of("*"));
